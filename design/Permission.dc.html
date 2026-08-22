@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@200;300;400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #5cc7b4; } a:hover { color: #8ad9c8; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #0c0c0e; color: #e8f3ef; overflow: hidden; display: flex; flex-direction: column;">
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 36px; gap: 30px;">
+
+    <div style="width: 108px; height: 108px; border-radius: 30px; background: #101614; border: 1px solid #1e2826; display: flex; align-items: center; justify-content: center;">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#5cc7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"></rect><path d="M10 10v5l4.5-2.5z"></path></svg>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 14px;">
+      <div style="font-size: 22px; font-weight: 400; letter-spacing: -0.5px; line-height: 1.4; text-align: center;">기기에 있는 동영상을<br>불러올게요</div>
+      <div style="font-size: 14px; font-weight: 300; line-height: 1.65; text-align: center; color: #8fa6a1;">보관함을 만들려면 동영상 파일에 접근할 수 있어야 합니다. 파일을 읽기만 하고, 어디에도 보내지 않습니다.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; padding-top: 4px;">
+      <div style="display: flex; align-items: center; gap: 11px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5cc7b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+        <div style="font-size: 13px; font-weight: 300; color: #cfe2dd;">네트워크 없이 완전히 오프라인으로 동작</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 11px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5cc7b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+        <div style="font-size: 13px; font-weight: 300; color: #cfe2dd;">파일을 수정하거나 삭제하지 않음</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 11px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5cc7b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+        <div style="font-size: 13px; font-weight: 300; color: #cfe2dd;">계정 가입이나 로그인 없음</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="padding: 0 24px 44px; display: flex; flex-direction: column; gap: 8px;">
+    <div style="height: 52px; border-radius: 14px; background: #5cc7b4; display: flex; align-items: center; justify-content: center;">
+      <div style="font-size: 15px; font-weight: 500; color: #06201b;">동영상 접근 허용</div>
+    </div>
+    <div style="height: 48px; display: flex; align-items: center; justify-content: center;">
+      <div style="font-size: 14px; font-weight: 300; color: #8fa6a1;">폴더를 직접 선택할게요</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
