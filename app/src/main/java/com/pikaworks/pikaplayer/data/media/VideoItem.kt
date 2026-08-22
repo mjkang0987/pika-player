@@ -13,7 +13,14 @@ data class VideoItem(
     val height: Int,
     val dateModifiedSec: Long,
     val folderName: String?,
+    /** API 29+ 에서만 채워진다. 같은 폴더의 자막 파일을 찾을 때 쓴다. */
+    val relativePath: String? = null,
+    /** API 28 이하 폴백. 전체 파일 경로. */
+    val filePath: String? = null,
 ) {
+    /** 확장자를 뗀 이름. 자막 파일 자동 매칭의 기준. */
+    val baseName: String get() = displayName.substringBeforeLast('.')
+
     val resolutionLabel: String?
         get() = if (width > 0 && height > 0) "${width}×${height}" else null
 }

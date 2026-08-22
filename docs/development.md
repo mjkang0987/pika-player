@@ -18,6 +18,7 @@ subtitle/                 순수 Kotlin 모듈 (Android 의존성 없음)
   SmiParser.kt            SAMI(.smi) 파서
   SrtParser.kt            SubRip(.srt) 파서
   SubtitleLoader.kt       바이트 → 판별 → 파싱
+  SubtitleTrack.kt        재생 위치로 자막 조회 (이진 탐색 + 싱크 오프셋)
 
 app/src/main/java/com/pikaworks/pikaplayer/
   PikaApp.kt            의존성 조립 (DI 프레임워크 없이 손으로)
@@ -28,9 +29,11 @@ app/src/main/java/com/pikaworks/pikaplayer/
     media/              MediaStore 조회, VideoItem 모델
     db/                 Room — 재생 위치(이어보기)
     prefs/              DataStore — 설정 화면 값
+  data/subtitle/        영상 옆 자막 파일 찾기 + 읽기 (Android 쪽)
   ui/
     theme/              기획서 7.4 디자인 토큰
     library/            라이브러리 화면(S1)
+    player/             플레이어 화면(S3)
     Format.kt           재생시간·용량·남은시간 표기
 ```
 
@@ -58,10 +61,12 @@ app/src/main/java/com/pikaworks/pikaplayer/
 
 우선순위 순:
 
-1. **자막 렌더링 연결** — `SubtitleLoader`가 만든 큐를 재생 위치에 맞춰 화면에 그리기. 파싱은 끝났고 표시가 남았습니다
-2. **자막 파일 자동 매칭** — 영상과 같은 이름의 자막 파일 찾기 (`LibraryRow.subtitleFormat` 채우기)
-3. 플레이어 화면(S3) — Media3 + 커스텀 컨트롤 오버레이
-4. 권한 온보딩(S5) — 현재는 진입 즉시 요청하는 임시 처리. **거부 시 SAF 우회로가 반드시 필요**
+1. **플레이어 컨트롤 아이콘** — 지금은 동작 확인용 텍스트(`−10`, `▶`)다. 시안대로 벡터 아이콘으로 교체
+2. **제스처** — 좌우 스와이프(탐색), 상하(밝기/볼륨), 더블탭 10초
+3. **전체화면(가로) 전환** — 자동회전 연동 포함
+4. **다음 영상 목록** — 플레이어 하단, 같은 폴더
+5. **라이브러리 목록의 자막 배지** — `SubtitleMatcher` 를 목록에도 연결해 `LibraryRow.subtitleFormat` 채우기
+6. 권한 온보딩(S5) — 현재는 진입 즉시 요청하는 임시 처리. **거부 시 SAF 우회로가 반드시 필요**
 5. 폴더 탐색(S2) — SAF 기반
 6. 설정 화면(S6) — `SettingsStore`는 이미 있음, 화면만 연결
 7. 저장소 사용량 표시 — `StatFs`

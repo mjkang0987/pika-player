@@ -2,6 +2,7 @@ package com.pikaworks.pikaplayer.data.media
 
 import android.content.ContentUris
 import android.content.Context
+import android.os.Build
 import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,7 +25,12 @@ class MediaStoreSource(private val context: Context) {
             MediaStore.Video.Media.HEIGHT,
             MediaStore.Video.Media.DATE_MODIFIED,
             MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
-        )
+        ) + if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(MediaStore.Video.Media.RELATIVE_PATH)
+        } else {
+            @Suppress("DEPRECATION")
+            arrayOf(MediaStore.Video.Media.DATA)
+        }
 
         val collection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
         val sortOrder = "${MediaStore.Video.Media.DATE_MODIFIED} DESC"
@@ -39,6 +45,12 @@ class MediaStoreSource(private val context: Context) {
             val hCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.HEIGHT)
             val dateCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED)
             val bucketCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME)
+            val pathCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                c.getColumnIndex(MediaStore.Video.Media.RELATIVE_PATH)
+            } else {
+                @Suppress("DEPRECATION")
+                c.getColumnIndex(MediaStore.Video.Media.DATA)
+            }
 
             while (c.moveToNext()) {
                 val id = c.getLong(idCol)
@@ -52,6 +64,12 @@ class MediaStoreSource(private val context: Context) {
                     height = c.getInt(hCol),
                     dateModifiedSec = c.getLong(dateCol),
                     folderName = c.getString(bucketCol),
+                    relativePath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && pathCol >= 0) {
+                        c.getString(pathCol)
+                    } else null,
+                    filePath = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && pathCol >= 0) {
+                        c.getString(pathCol)
+                    } else null,
                 )
             }
         }
