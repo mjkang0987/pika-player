@@ -1,19 +1,96 @@
 {
   "pages": [
-    { "id": "page-1", "name": "최종안" },
-    { "id": "page-2", "name": "초기 3안" }
+    {
+      "id": "page-1",
+      "name": "최종안"
+    },
+    {
+      "id": "page-2",
+      "name": "초기 3안"
+    }
   ],
   "artboards": [
-    { "file": "Main.dc.html",         "title": "라이브러리 — 다크",   "page": "page-1", "x": 0,    "y": 0, "w": 390, "h": 844 },
-    { "file": "LibraryLight.dc.html", "title": "라이브러리 — 라이트", "page": "page-1", "x": 530,  "y": 0, "w": 390, "h": 844 },
-    { "file": "Player.dc.html",       "title": "플레이어 — 다크",     "page": "page-1", "x": 1060, "y": 0, "w": 390, "h": 844 },
-
-    { "file": "ALibrary.dc.html", "title": "A · 라이브러리 — 다크 미니멀",   "page": "page-2", "x": 0,    "y": 0,    "w": 390, "h": 844 },
-    { "file": "APlayer.dc.html",  "title": "A · 플레이어",                   "page": "page-2", "x": 0,    "y": 1010, "w": 390, "h": 844 },
-    { "file": "BLibrary.dc.html", "title": "B · 라이브러리 — 실용 밀도형",   "page": "page-2", "x": 530,  "y": 0,    "w": 390, "h": 844 },
-    { "file": "BPlayer.dc.html",  "title": "B · 플레이어",                   "page": "page-2", "x": 530,  "y": 1010, "w": 390, "h": 844 },
-    { "file": "CLibrary.dc.html", "title": "C · 라이브러리 — M3 Expressive", "page": "page-2", "x": 1060, "y": 0,    "w": 390, "h": 844 },
-    { "file": "CPlayer.dc.html",  "title": "C · 플레이어",                   "page": "page-2", "x": 1060, "y": 1010, "w": 390, "h": 844 }
+    {
+      "file": "Main.dc.html",
+      "title": "라이브러리 — 다크",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "LibraryLight.dc.html",
+      "title": "라이브러리 — 라이트",
+      "page": "page-1",
+      "x": 530,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Player.dc.html",
+      "title": "플레이어 — 다크",
+      "page": "page-1",
+      "x": 1060,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ALibrary.dc.html",
+      "title": "A · 라이브러리 — 다크 미니멀",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "APlayer.dc.html",
+      "title": "A · 플레이어",
+      "page": "page-2",
+      "x": 0,
+      "y": 1010,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "BLibrary.dc.html",
+      "title": "B · 라이브러리 — 실용 밀도형",
+      "page": "page-2",
+      "x": 530,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "BPlayer.dc.html",
+      "title": "B · 플레이어",
+      "page": "page-2",
+      "x": 530,
+      "y": 1010,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "CLibrary.dc.html",
+      "title": "C · 라이브러리 — M3 Expressive",
+      "page": "page-2",
+      "x": 1060,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "CPlayer.dc.html",
+      "title": "C · 플레이어",
+      "page": "page-2",
+      "x": 1060,
+      "y": 1010,
+      "w": 390,
+      "h": 844
+    }
   ],
   "annotations": [
     {
@@ -21,7 +98,7 @@
       "x": 0,
       "y": -292,
       "w": 920,
-      "text": "확정안 — A안의 다크 배경(#0c0c0e) + B안의 상단 탭·정렬·용량 + 이어보기 가로 캐러셀\n\n키컬러: 시안. 다크 #3ddbe8 / 라이트 #0e8fa3 — 흰 배경에서 밝은 시안은 대비가 부족해 라이트 모드는 한 단계 어두운 값을 씁니다.\n중성색은 순회색 대신 시안 쪽으로 미세하게 틀어 톤을 맞췄습니다.\n\n이어보기: 가로 스크롤, 최대 10개. 썸네일 하단 진행 바 + '38분 남음'으로 어디까지 봤는지 두 번 알려줍니다.\n리스트 행에도 62% 칩으로 같은 정보를 겹쳐 둡니다.\n\n썸네일은 색 블록 플레이스홀더, 파일명·시간·용량은 예시 값입니다."
+      "text": "확정안 — A안의 다크 배경(#0c0c0e) + B안의 상단 탭·정렬·용량 + 이어보기 가로 캐러셀\n\n키컬러: 초록 쪽으로 튼 시안(hue 약 170°). 다크 #37e0c4 / 라이트 #0a7f6a — 흰 배경에서 밝은 값은 대비가 부족해 라이트 모드는 더 어두운 값을 씁니다.\n중성색은 순회색 대신 시안 쪽으로 미세하게 틀어 톤을 맞췄습니다.\n\n이어보기: 가로 스크롤, 최대 10개. 썸네일 하단 진행 바 + '38분 남음'으로 어디까지 봤는지 두 번 알려줍니다.\n리스트 행에도 62% 칩으로 같은 정보를 겹쳐 둡니다.\n\n썸네일은 색 블록 플레이스홀더, 파일명·시간·용량은 예시 값입니다."
     },
     {
       "id": "light-note",
@@ -63,5 +140,8 @@
       "text": "C · Material 3 Expressive\n\n미채택. 구현 속도는 가장 빨랐지만 다른 M3 앱과 차별화가 약했음.\n\n남는 것: 44px 이상 터치 타깃과 다크모드 대응은 확정안에도 그대로 반영."
     }
   ],
-  "launch": { "view": "canvas", "page": "page-1" }
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
 }
