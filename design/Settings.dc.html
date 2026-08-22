@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@200;300;400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #37e0c4; } a:hover { color: #7fefdc; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #0c0c0e; color: #e8f3ef; overflow: hidden; display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; gap: 14px; padding: 60px 20px 10px;">
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#e8f3ef" stroke-width="1.9" stroke-linecap="round"><path d="M15 5 8 12l7 7"></path></svg>
+    <div style="font-size: 20px; font-weight: 400; letter-spacing: -0.4px;">설정</div>
+  </div>
+
+  <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
+    <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.8px; color: #37e0c4; padding: 18px 20px 6px;">재생</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">기본 재생속도</div>
+      <div style="display: flex; align-items: center; gap: 8px;"><div style="font-size: 13px; font-weight: 300; color: #7d9691;">1.0×</div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#647a75" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15.5 12l-6 6"></path></svg></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">이어보기</div>
+      <div style="width: 42px; height: 25px; border-radius: 13px; background: #37e0c4; display: flex; align-items: center; justify-content: flex-end; padding: 0 3px;"><div style="width: 19px; height: 19px; border-radius: 10px; background: #0c0c0e;"></div></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">다음 영상 자동 재생</div>
+      <div style="width: 42px; height: 25px; border-radius: 13px; background: #37e0c4; display: flex; align-items: center; justify-content: flex-end; padding: 0 3px;"><div style="width: 19px; height: 19px; border-radius: 10px; background: #0c0c0e;"></div></div>
+    </div>
+    <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.8px; color: #37e0c4; padding: 18px 20px 6px;">자막</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">기본 인코딩</div>
+      <div style="display: flex; align-items: center; gap: 8px;"><div style="font-size: 13px; font-weight: 300; color: #7d9691;">자동 감지</div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#647a75" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15.5 12l-6 6"></path></svg></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">글자 크기</div>
+      <div style="display: flex; align-items: center; gap: 8px;"><div style="font-size: 13px; font-weight: 300; color: #7d9691;">보통</div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#647a75" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15.5 12l-6 6"></path></svg></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">표시 위치</div>
+      <div style="display: flex; align-items: center; gap: 8px;"><div style="font-size: 13px; font-weight: 300; color: #7d9691;">영상 하단</div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#647a75" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15.5 12l-6 6"></path></svg></div>
+    </div>
+    <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.8px; color: #37e0c4; padding: 18px 20px 6px;">제스처</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">밝기 · 볼륨 스와이프</div>
+      <div style="width: 42px; height: 25px; border-radius: 13px; background: #37e0c4; display: flex; align-items: center; justify-content: flex-end; padding: 0 3px;"><div style="width: 19px; height: 19px; border-radius: 10px; background: #0c0c0e;"></div></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">더블탭 10초 이동</div>
+      <div style="width: 42px; height: 25px; border-radius: 13px; background: #37e0c4; display: flex; align-items: center; justify-content: flex-end; padding: 0 3px;"><div style="width: 19px; height: 19px; border-radius: 10px; background: #0c0c0e;"></div></div>
+    </div>
+    <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.8px; color: #37e0c4; padding: 18px 20px 6px;">화면</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">테마</div>
+      <div style="display: flex; align-items: center; gap: 8px;"><div style="font-size: 13px; font-weight: 300; color: #7d9691;">다크</div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#647a75" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15.5 12l-6 6"></path></svg></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">자동회전 연동</div>
+      <div style="width: 42px; height: 25px; border-radius: 13px; background: #37e0c4; display: flex; align-items: center; justify-content: flex-end; padding: 0 3px;"><div style="width: 19px; height: 19px; border-radius: 10px; background: #0c0c0e;"></div></div>
+    </div>
+    <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.8px; color: #37e0c4; padding: 18px 20px 6px;">정보</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">버전</div>
+      <div style="display: flex; align-items: center; gap: 8px;"><div style="font-size: 13px; font-weight: 300; color: #7d9691;">0.1.0</div></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 20px; min-height: 50px;">
+      <div style="font-size: 14px; font-weight: 400; color: #e8f3ef;">오픈소스 라이선스</div>
+      <div style="display: flex; align-items: center; gap: 8px;"><div style="font-size: 13px; font-weight: 300; color: #7d9691;"></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#647a75" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 15.5 12l-6 6"></path></svg></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
