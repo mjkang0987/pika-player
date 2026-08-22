@@ -9,6 +9,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import com.pikaworks.pikaplayer.ui.library.LibraryScreen
 import com.pikaworks.pikaplayer.ui.library.LibraryViewModel
 import com.pikaworks.pikaplayer.ui.player.PlayerScreen
 import com.pikaworks.pikaplayer.ui.player.PlayerViewModel
+import com.pikaworks.pikaplayer.ui.player.SystemControls
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 class MainActivity : ComponentActivity() {
@@ -89,7 +91,16 @@ class MainActivity : ComponentActivity() {
                     )
                     val playerState by playerVm.uiState.collectAsStateWithLifecycle()
 
+                    val systemControls = remember { SystemControls(this@MainActivity) }
+
                     LaunchedEffect(video.uri) { playerVm.open(video, resume = true) }
+                    // 재생 중에는 화면이 꺼지지 않게 한다. 화면을 벗어나면 되돌린다.
+                    LaunchedEffect(playerState.isPlaying) {
+                        systemControls.keepScreenOn(playerState.isPlaying)
+                    }
+                    DisposableEffect(Unit) {
+                        onDispose { systemControls.keepScreenOn(false) }
+                    }
                     BackHandler { playing = null }
 
                     PlayerScreen(
@@ -99,6 +110,9 @@ class MainActivity : ComponentActivity() {
                         onSkip = playerVm::skip,
                         onSeek = playerVm::seekTo,
                         onToggleControls = playerVm::toggleControls,
+                        onToggleSubtitle = playerVm::toggleSubtitle,
+                        onBrightnessDelta = systemControls::adjustBrightness,
+                        onVolumeDelta = systemControls::adjustVolume,
                         onBack = { playing = null },
                     )
                 }

@@ -11,20 +11,27 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,11 +41,12 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import kotlin.math.abs
 
 /**
  * 플레이어(S3, 세로).
  *
- * 시안 구조: 상단바 → 영상(컨트롤 오버레이) → 시크바 → 보조 버튼 → 다음 영상 목록
+ * 시안 구조: 상단바 → 영상(컨트롤 오버레이) → 시크바 → 보조 버튼
  * 컨트롤은 영상 위에 얹는다. 영상 아래 따로 두면 세로 화면에서 빈 공간이 크게 남는다.
  */
 @OptIn(UnstableApi::class)
@@ -50,10 +58,15 @@ fun PlayerScreen(
     onSkip: (Long) -> Unit,
     onSeek: (Long) -> Unit,
     onToggleControls: () -> Unit,
+    onToggleSubtitle: () -> Unit,
+    onBrightnessDelta: (Float) -> Float,
+    onVolumeDelta: (Float) -> Float,
     onBack: () -> Unit,
+    gesturesEnabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
+    var feedback by remember { mutableStateOf<GestureFeedback?>(null) }
 
     Column(modifier = modifier.fillMaxSize().background(Color.Black)) {
 
@@ -63,7 +76,17 @@ fun PlayerScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clickable(onClick = onToggleControls),
+                .playerGestures(
+                    enabled = gesturesEnabled,
+                    durationMs = state.durationMs,
+                    currentPositionMs = { state.positionMs },
+                    onTap = onToggleControls,
+                    onDoubleTapSeek = onSkip,
+                    onSeekCommit = onSeek,
+                    onBrightnessDelta = { d -> feedback = GestureFeedback.Brightness(onBrightnessDelta(d)) },
+                    onVolumeDelta = { d -> feedback = GestureFeedback.Volume(onVolumeDelta(d)) },
+                    onFeedback = { feedback = it },
+                ),
         ) {
             VideoSurface(player = player, modifier = Modifier.fillMaxSize())
 
@@ -79,7 +102,7 @@ fun PlayerScreen(
             }
 
             state.cue?.let { cue ->
-                // 자막은 영상 프레임 안쪽 하단에 고정. 컨트롤이 보이면 시크바를 피해 올라간다.
+                // 자막은 영상 프레임 안쪽 하단에 고정한다.
                 Text(
                     text = cue.text,
                     color = Color.White,
@@ -92,18 +115,18 @@ fun PlayerScreen(
                         .padding(horizontal = 26.dp, bottom = 10.dp),
                 )
             }
+
+            feedback?.let { GestureIndicator(it, state.positionMs, Modifier.align(Alignment.Center)) }
         }
 
         Spacer(Modifier.height(20.dp))
         SeekBar(state = state, onSeek = onSeek)
         Spacer(Modifier.height(20.dp))
-        SecondaryControls(state = state)
+        SecondaryControls(state = state, onToggleSubtitle = onToggleSubtitle)
     }
 }
 
-/**
- * 영상 표면. Compose 가 직접 그리지 못하는 유일한 부분이라 뷰를 빌려온다.
- */
+/** 영상 표면. Compose 가 직접 그리지 못하는 유일한 부분이라 뷰를 빌려온다. */
 @OptIn(UnstableApi::class)
 @Composable
 private fun VideoSurface(player: ExoPlayer, modifier: Modifier = Modifier) {
@@ -125,8 +148,19 @@ private fun TopBar(title: String, onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("‹", fontSize = 26.sp, color = colors.textPrimary, modifier = Modifier.clickable(onClick = onBack))
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Light, color = colors.textSecondary, maxLines = 1)
+        Icon(
+            imageVector = PlayerIcons.Back,
+            contentDescription = "뒤로",
+            tint = colors.textPrimary,
+            modifier = Modifier.size(24.dp).clickable(onClick = onBack),
+        )
+        Text(
+            title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Light,
+            color = colors.textSecondary,
+            maxLines = 1,
+        )
     }
 }
 
@@ -143,58 +177,77 @@ private fun TransportControls(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // TODO: 아이콘을 시안대로 벡터로 교체한다. 지금은 동작 확인용 텍스트.
-        Text("−10", fontSize = 14.sp, color = colors.textPrimary,
-            modifier = Modifier.size(44.dp).clickable { onSkip(-10_000) }.padding(10.dp))
+        SkipButton(PlayerIcons.Replay10, "10초 뒤로") { onSkip(-10_000) }
 
         Box(
             modifier = Modifier
                 .size(54.dp)
                 .clip(RoundedCornerShape(27.dp))
+                // 반투명이라 뒤 영상이 비친다. 아이콘은 흰색 불투명으로 또렷하게.
                 .background(colors.key.copy(alpha = 0.45f))
                 .clickable(onClick = onTogglePlay),
             contentAlignment = Alignment.Center,
         ) {
-            Text(if (isPlaying) "❚❚" else "▶", fontSize = 18.sp, color = Color.White)
+            Icon(
+                imageVector = if (isPlaying) PlayerIcons.Pause else PlayerIcons.Play,
+                contentDescription = if (isPlaying) "일시정지" else "재생",
+                tint = Color.White,
+                modifier = Modifier.size(34.dp),
+            )
         }
 
-        Text("+10", fontSize = 14.sp, color = colors.textPrimary,
-            modifier = Modifier.size(44.dp).clickable { onSkip(10_000) }.padding(10.dp))
+        SkipButton(PlayerIcons.Forward10, "10초 앞으로") { onSkip(10_000) }
+    }
+}
+
+/** 원 안에 '10' 을 겹쳐 그린다. 벡터에 숫자를 넣으면 폰트를 따라가지 못한다. */
+@Composable
+private fun SkipButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier.size(44.dp).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(imageVector = icon, contentDescription = label, tint = Color.White,
+            modifier = Modifier.size(30.dp))
+        Text("10", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
     }
 }
 
 @Composable
 private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit) {
     val colors = PikaTheme.colors
-    val density = LocalDensity.current
-    var widthPx = 0f
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(3.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(Color.White.copy(alpha = 0.16f))
+                .height(24.dp) // 터치 영역. 보이는 바는 3dp 지만 그대로 두면 잡기 어렵다
                 .pointerInput(state.durationMs) {
-                    widthPx = size.width.toFloat()
                     detectHorizontalDragGestures { change, _ ->
-                        if (widthPx > 0 && state.durationMs > 0) {
-                            val ratio = (change.position.x / widthPx).coerceIn(0f, 1f)
+                        if (size.width > 0 && state.durationMs > 0) {
+                            val ratio = (change.position.x / size.width).coerceIn(0f, 1f)
                             onSeek((state.durationMs * ratio).toLong())
                         }
                     }
                 },
+            contentAlignment = Alignment.Center,
         ) {
             Box(
-                Modifier
-                    .fillMaxWidth(state.progress)
+                modifier = Modifier
+                    .fillMaxWidth()
                     .height(3.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(colors.key)
-            )
+                    .background(Color.White.copy(alpha = 0.16f)),
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(state.progress)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(colors.key)
+                )
+            }
         }
-        Spacer(Modifier.height(9.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -208,28 +261,83 @@ private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit) {
 }
 
 @Composable
-private fun SecondaryControls(state: PlayerUiState) {
-    val colors = PikaTheme.colors
+private fun SecondaryControls(state: PlayerUiState, onToggleSubtitle: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        LabeledItem("${state.speed}×", "속도", active = false)
-        LabeledItem("CC", state.subtitleLabel.substringBefore(" ·"), active = state.subtitleEnabled)
-        LabeledItem("⤢", "화면비", active = false)
-        LabeledItem("↻", "회전", active = false)
-        LabeledItem("🔒", "잠금", active = false)
+        SpeedItem(state.speed)
+        IconItem(PlayerIcons.Subtitle, "자막", active = state.subtitleEnabled, onClick = onToggleSubtitle)
+        IconItem(PlayerIcons.AspectRatio, "화면비", active = false) { /* TODO */ }
+        IconItem(PlayerIcons.Rotate, "회전", active = false) { /* TODO: 전체화면 전환 */ }
+        IconItem(PlayerIcons.Lock, "잠금", active = false) { /* TODO */ }
     }
 }
 
 @Composable
-private fun LabeledItem(value: String, label: String, active: Boolean) {
+private fun SpeedItem(speed: Float) {
+    val colors = PikaTheme.colors
+    Column(
+        modifier = Modifier.width(56.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("${speed}×", fontSize = 13.sp, color = colors.key)
+        Spacer(Modifier.height(7.dp))
+        Text("속도", fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.textFaint)
+    }
+}
+
+@Composable
+private fun IconItem(icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
     val colors = PikaTheme.colors
     val tint = if (active) colors.key else colors.textSecondary
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 13.sp, color = tint)
+    Column(
+        modifier = Modifier.width(56.dp).clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
         Spacer(Modifier.height(7.dp))
         Text(label, fontSize = 10.sp, fontWeight = FontWeight.Light,
             color = if (active) colors.key else colors.textFaint)
+    }
+}
+
+/** 제스처 중에만 뜨는 표시. 값이 얼마나 바뀌는지 보여주지 않으면 감으로 조작하게 된다. */
+@Composable
+private fun GestureIndicator(feedback: GestureFeedback, positionMs: Long, modifier: Modifier = Modifier) {
+    val colors = PikaTheme.colors
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color.Black.copy(alpha = 0.72f))
+            .padding(horizontal = 18.dp, vertical = 12.dp),
+    ) {
+        when (feedback) {
+            is GestureFeedback.Seek -> {
+                val sign = if (feedback.deltaMs >= 0) "+" else "−"
+                Text(
+                    "${formatDuration(feedback.targetMs)}   $sign${formatDuration(abs(feedback.deltaMs))}",
+                    fontSize = 15.sp, color = Color.White,
+                )
+            }
+            is GestureFeedback.Brightness -> Bar(PlayerIcons.Brightness, "밝기", feedback.value, colors.key)
+            is GestureFeedback.Volume -> Bar(PlayerIcons.Volume, "볼륨", feedback.value, colors.key)
+        }
+    }
+}
+
+@Composable
+private fun Bar(icon: ImageVector, label: String, value: Float, accent: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Icon(imageVector = icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(18.dp))
+        Box(
+            modifier = Modifier
+                .width(96.dp).height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color.White.copy(alpha = 0.24f)),
+        ) {
+            Box(Modifier.fillMaxWidth(value).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(accent))
+        }
+        Text("${(value * 100).toInt()}%", fontSize = 12.sp, color = Color.White)
     }
 }
