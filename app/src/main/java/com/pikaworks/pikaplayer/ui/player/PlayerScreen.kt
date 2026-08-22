@@ -1,6 +1,6 @@
 package com.pikaworks.pikaplayer.ui.player
 
-import android.view.SurfaceView
+import android.view.View
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlin.math.abs
@@ -59,9 +61,14 @@ fun PlayerScreen(
     onSeek: (Long) -> Unit,
     onToggleControls: () -> Unit,
     onToggleSubtitle: () -> Unit,
+    onToggleLock: () -> Unit,
+    onCycleResize: () -> Unit,
+    onCycleSpeed: () -> Unit,
+    onToggleFullscreen: () -> Unit,
     onBrightnessDelta: (Float) -> Float,
     onVolumeDelta: (Float) -> Float,
     onBack: () -> Unit,
+    isFullscreen: Boolean = false,
     gesturesEnabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -70,14 +77,13 @@ fun PlayerScreen(
 
     Column(modifier = modifier.fillMaxSize().background(Color.Black)) {
 
-        TopBar(title = state.title, onBack = onBack)
+        if (!isFullscreen) TopBar(title = state.title, onBack = onBack)
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(16f / 9f)
+            modifier = (if (isFullscreen) Modifier.weight(1f).fillMaxWidth()
+                        else Modifier.fillMaxWidth().aspectRatio(16f / 9f))
                 .playerGestures(
-                    enabled = gesturesEnabled,
+                    enabled = gesturesEnabled && !state.locked,
                     durationMs = state.durationMs,
                     currentPositionMs = { state.positionMs },
                     onTap = onToggleControls,
@@ -88,9 +94,23 @@ fun PlayerScreen(
                     onFeedback = { feedback = it },
                 ),
         ) {
-            VideoSurface(player = player, modifier = Modifier.fillMaxSize())
+            VideoSurface(player = player, resizeMode = state.resizeMode, modifier = Modifier.fillMaxSize())
 
-            if (state.controlsVisible) {
+            if (state.locked) {
+                // 잠금 중에는 해제 버튼 하나만. 실수로 눌리는 것을 막는 게 목적이다.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 20.dp)
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.Black.copy(alpha = 0.55f))
+                        .clickable(onClick = onToggleLock),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(PlayerIcons.Lock, "잠금 해제", tint = Color.White, modifier = Modifier.size(20.dp))
+                }
+            } else if (state.controlsVisible) {
                 // 밝은 장면에서 흰 아이콘이 묻히지 않도록 스크림을 깐다.
                 Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.30f)))
                 TransportControls(
@@ -99,6 +119,31 @@ fun PlayerScreen(
                     onSkip = onSkip,
                     modifier = Modifier.align(Alignment.Center),
                 )
+
+                if (isFullscreen) {
+                    // 가로에서는 컨트롤이 전부 영상 위에 얹힌다. 아래에 둘 자리가 없다.
+                    FullscreenTopBar(
+                        title = state.title,
+                        onBack = onBack,
+                        modifier = Modifier.align(Alignment.TopStart),
+                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                    ) {
+                        SeekBar(state = state, onSeek = onSeek)
+                        Spacer(Modifier.height(10.dp))
+                        SecondaryControls(
+                            state = state,
+                            onToggleSubtitle = onToggleSubtitle,
+                            onCycleResize = onCycleResize,
+                            onCycleSpeed = onCycleSpeed,
+                            onToggleFullscreen = onToggleFullscreen,
+                            onToggleLock = onToggleLock,
+                        )
+                    }
+                }
             }
 
             state.cue?.let { cue ->
@@ -119,24 +164,68 @@ fun PlayerScreen(
             feedback?.let { GestureIndicator(it, state.positionMs, Modifier.align(Alignment.Center)) }
         }
 
-        Spacer(Modifier.height(20.dp))
-        SeekBar(state = state, onSeek = onSeek)
-        Spacer(Modifier.height(20.dp))
-        SecondaryControls(state = state, onToggleSubtitle = onToggleSubtitle)
+        if (!isFullscreen) {
+            Spacer(Modifier.height(20.dp))
+            SeekBar(state = state, onSeek = onSeek)
+            Spacer(Modifier.height(20.dp))
+            SecondaryControls(
+                state = state,
+                onToggleSubtitle = onToggleSubtitle,
+                onCycleResize = onCycleResize,
+                onCycleSpeed = onCycleSpeed,
+                onToggleFullscreen = onToggleFullscreen,
+                onToggleLock = onToggleLock,
+            )
+        }
     }
 }
 
-/** 영상 표면. Compose 가 직접 그리지 못하는 유일한 부분이라 뷰를 빌려온다. */
+@Composable
+private fun FullscreenTopBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(PlayerIcons.Back, "뒤로", tint = Color.White,
+            modifier = Modifier.size(24.dp).clickable(onClick = onBack))
+        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White, maxLines = 1)
+    }
+}
+
+/**
+ * 영상 표면. Compose 가 직접 그리지 못하는 유일한 부분이라 뷰를 빌려온다.
+ *
+ * 컨트롤은 우리가 그리지만(`useController = false`) 표면 자체는 Media3 의
+ * PlayerView 를 쓴다. 화면비 처리와 표면 생명주기를 직접 다루면 실수하기 쉽다.
+ * 자막도 우리가 그리므로 내장 자막 뷰는 숨긴다.
+ */
 @OptIn(UnstableApi::class)
 @Composable
-private fun VideoSurface(player: ExoPlayer, modifier: Modifier = Modifier) {
+private fun VideoSurface(player: ExoPlayer, resizeMode: Int, modifier: Modifier = Modifier) {
     AndroidView(
         modifier = modifier,
-        factory = { context -> SurfaceView(context) },
-        update = { view -> player.setVideoSurfaceView(view) },
-        onRelease = { player.clearVideoSurface() },
+        factory = { context ->
+            PlayerView(context).apply {
+                useController = false
+                setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+                subtitleView?.visibility = View.GONE
+            }
+        },
+        update = { view ->
+            view.player = player
+            view.resizeMode = RESIZE_MODES[resizeMode.coerceIn(RESIZE_MODES.indices)]
+        },
+        onRelease = { it.player = null },
     )
 }
+
+/** 맞춤 / 채움 / 늘이기 */
+private val RESIZE_MODES = intArrayOf(
+    AspectRatioFrameLayout.RESIZE_MODE_FIT,
+    AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
+    AspectRatioFrameLayout.RESIZE_MODE_FILL,
+)
 
 @Composable
 private fun TopBar(title: String, onBack: () -> Unit) {
@@ -261,24 +350,36 @@ private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit) {
 }
 
 @Composable
-private fun SecondaryControls(state: PlayerUiState, onToggleSubtitle: () -> Unit) {
+private fun SecondaryControls(
+    state: PlayerUiState,
+    onToggleSubtitle: () -> Unit,
+    onCycleResize: () -> Unit,
+    onCycleSpeed: () -> Unit,
+    onToggleFullscreen: () -> Unit,
+    onToggleLock: () -> Unit,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        SpeedItem(state.speed)
+        SpeedItem(state.speed, onCycleSpeed)
         IconItem(PlayerIcons.Subtitle, "자막", active = state.subtitleEnabled, onClick = onToggleSubtitle)
-        IconItem(PlayerIcons.AspectRatio, "화면비", active = false) { /* TODO */ }
-        IconItem(PlayerIcons.Rotate, "회전", active = false) { /* TODO: 전체화면 전환 */ }
-        IconItem(PlayerIcons.Lock, "잠금", active = false) { /* TODO */ }
+        IconItem(
+            PlayerIcons.AspectRatio,
+            PlayerViewModel.RESIZE_MODE_LABELS[state.resizeMode.coerceIn(PlayerViewModel.RESIZE_MODE_LABELS.indices)],
+            active = state.resizeMode != 0,
+            onClick = onCycleResize,
+        )
+        IconItem(PlayerIcons.Fullscreen, "전체화면", active = false, onClick = onToggleFullscreen)
+        IconItem(PlayerIcons.Lock, "잠금", active = state.locked, onClick = onToggleLock)
     }
 }
 
 @Composable
-private fun SpeedItem(speed: Float) {
+private fun SpeedItem(speed: Float, onClick: () -> Unit) {
     val colors = PikaTheme.colors
     Column(
-        modifier = Modifier.width(56.dp),
+        modifier = Modifier.width(56.dp).clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text("${speed}×", fontSize = 13.sp, color = colors.key)

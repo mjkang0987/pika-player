@@ -9,6 +9,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import android.content.res.Configuration
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,12 +18,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.map
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.ui.library.LibraryScreen
 import com.pikaworks.pikaplayer.ui.library.LibraryViewModel
 import com.pikaworks.pikaplayer.ui.player.PlayerScreen
 import com.pikaworks.pikaplayer.ui.player.PlayerViewModel
+import com.pikaworks.pikaplayer.ui.player.PlayerOrientation
 import com.pikaworks.pikaplayer.ui.player.SystemControls
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
@@ -93,6 +97,33 @@ class MainActivity : ComponentActivity() {
 
                     val systemControls = remember { SystemControls(this@MainActivity) }
 
+                    val isLandscape =
+                        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    // 전체화면은 곧 가로 방향이다. 별도 상태로 두면 기기를 돌렸을 때와
+                    // 버튼을 눌렀을 때가 어긋난다.
+                    var forcedLandscape by remember { mutableStateOf<Boolean?>(null) }
+
+                    val followAutoRotate by remember { app.settings.settings.map { it.followAutoRotate } }
+                        .collectAsStateWithLifecycle(initialValue = true)
+
+                    LaunchedEffect(playerState.locked, followAutoRotate, forcedLandscape) {
+                        PlayerOrientation.apply(
+                            activity = this@MainActivity,
+                            locked = playerState.locked,
+                            followAutoRotate = followAutoRotate,
+                            forcedLandscape = forcedLandscape,
+                        )
+                    }
+                    LaunchedEffect(isLandscape) {
+                        PlayerOrientation.setImmersive(this@MainActivity, isLandscape)
+                    }
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            PlayerOrientation.setImmersive(this@MainActivity, false)
+                            PlayerOrientation.apply(this@MainActivity, false, true, null)
+                        }
+                    }
+
                     LaunchedEffect(video.uri) { playerVm.open(video, resume = true) }
                     // 재생 중에는 화면이 꺼지지 않게 한다. 화면을 벗어나면 되돌린다.
                     LaunchedEffect(playerState.isPlaying) {
@@ -111,9 +142,14 @@ class MainActivity : ComponentActivity() {
                         onSeek = playerVm::seekTo,
                         onToggleControls = playerVm::toggleControls,
                         onToggleSubtitle = playerVm::toggleSubtitle,
+                        onToggleLock = playerVm::toggleLock,
+                        onCycleResize = playerVm::cycleResizeMode,
+                        onCycleSpeed = playerVm::cycleSpeed,
+                        onToggleFullscreen = { forcedLandscape = !isLandscape },
                         onBrightnessDelta = systemControls::adjustBrightness,
                         onVolumeDelta = systemControls::adjustVolume,
                         onBack = { playing = null },
+                        isFullscreen = isLandscape,
                     )
                 }
             }

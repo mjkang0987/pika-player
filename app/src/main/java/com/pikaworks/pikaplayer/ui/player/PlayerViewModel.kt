@@ -35,6 +35,9 @@ data class PlayerUiState(
     val subtitleLabel: String = "자막 없음",
     val subtitleEnabled: Boolean = false,
     val controlsVisible: Boolean = true,
+    val locked: Boolean = false,
+    /** AspectRatioFrameLayout 의 resize mode. 화면비 버튼이 순환시킨다. */
+    val resizeMode: Int = 0,
 ) {
     val progress: Float
         get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -157,6 +160,29 @@ class PlayerViewModel(
 
     fun toggleControls() {
         _uiState.update { it.copy(controlsVisible = !it.controlsVisible) }
+    }
+
+    fun toggleLock() {
+        // 잠그면 컨트롤도 같이 숨긴다. 잠금 해제 버튼 하나만 남는다.
+        _uiState.update { it.copy(locked = !it.locked, controlsVisible = it.locked) }
+    }
+
+    /** 맞춤 → 채움 → 늘이기 순환 */
+    fun cycleResizeMode() {
+        _uiState.update { it.copy(resizeMode = (it.resizeMode + 1) % RESIZE_MODE_LABELS.size) }
+    }
+
+    private val speedPresets = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+
+    fun cycleSpeed() {
+        val next = speedPresets[(speedPresets.indexOf(_uiState.value.speed).let {
+            if (it < 0) speedPresets.indexOf(1.0f) else it
+        } + 1) % speedPresets.size]
+        setSpeed(next)
+    }
+
+    companion object {
+        val RESIZE_MODE_LABELS = listOf("맞춤", "채움", "늘이기")
     }
 
     private fun savePosition() {
