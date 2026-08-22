@@ -1,0 +1,32 @@
+package com.pikaworks.pikaplayer.data.media
+
+import android.net.Uri
+
+/** 라이브러리 한 줄에 필요한 값만 담는다. 재생 위치는 별도 DB에서 합친다. */
+data class VideoItem(
+    val id: Long,
+    val uri: Uri,
+    val displayName: String,
+    val durationMs: Long,
+    val sizeBytes: Long,
+    val width: Int,
+    val height: Int,
+    val dateModifiedSec: Long,
+    val folderName: String?,
+) {
+    val resolutionLabel: String?
+        get() = if (width > 0 && height > 0) "${width}×${height}" else null
+}
+
+/** 목록 행에 필요한 표시 상태를 한 덩어리로 묶은 것 */
+data class LibraryRow(
+    val video: VideoItem,
+    val positionMs: Long,
+    val subtitleFormat: String?,
+) {
+    /** 0f..1f. 재생 이력이 없으면 null */
+    val progress: Float?
+        get() = if (positionMs > 0 && video.durationMs > 0) {
+            (positionMs.toFloat() / video.durationMs).coerceIn(0f, 1f)
+        } else null
+}

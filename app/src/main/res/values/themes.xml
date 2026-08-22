@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose가 색을 그리므로 시스템 테마는 최소한만. 배경은 다크 토큰과 동일하게. -->
+    <style name="Theme.PikaPlayer" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0C0C0E</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

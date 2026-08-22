@@ -1,0 +1,56 @@
+# 개발 노트 (Phase 1)
+
+## 확인되지 않은 것 — 먼저 읽어주세요
+
+이 골격은 **Android SDK가 없고 Google Maven에 접근할 수 없는 환경에서 작성**됐습니다. 따라서:
+
+- **빌드해 본 적이 없습니다.** 컴파일 오류가 남아 있을 수 있습니다.
+- **`gradle/libs.versions.toml`의 버전은 검증되지 않았습니다.** Kotlin 버전만 Maven Central에서 확인했고, AGP·Compose·Media3·Room 버전은 추정값입니다. Android Studio에서 열면 동기화 단계에서 바로 걸러집니다.
+
+첫 작업은 Android Studio로 열어 **동기화 → 버전 갱신 → 빌드**입니다.
+
+## 구조
+
+```
+app/src/main/java/com/pikaworks/pikaplayer/
+  PikaApp.kt            의존성 조립 (DI 프레임워크 없이 손으로)
+  MainActivity.kt       진입점, 권한 요청
+  core/
+    FeatureGate.kt      Pro 게이팅 지점 — Phase 1은 항상 허용
+  data/
+    media/              MediaStore 조회, VideoItem 모델
+    db/                 Room — 재생 위치(이어보기)
+    prefs/              DataStore — 설정 화면 값
+  ui/
+    theme/              기획서 7.4 디자인 토큰
+    library/            라이브러리 화면(S1)
+    Format.kt           재생시간·용량·남은시간 표기
+```
+
+## 설계 메모
+
+**색 토큰은 `ui/theme/Color.kt`가 유일한 출처입니다.** 화면에서 색을 직접 쓰지 말고 `PikaTheme.colors.key` 처럼 참조하세요.
+
+`PikaColors.onMediaKey` / `onMediaText` / `onMediaTrack` 은 **테마와 무관하게 고정**입니다. 썸네일과 영상 위에 얹히는 요소는 항상 어두운 배경 위에 놓이므로, 라이트 테마 값을 쓰면 묻혀서 안 보입니다.
+
+**진행 바 높이는 모서리 반경과 같게 유지하세요.** 바가 반경보다 얇으면 클리핑 곡선이 바를 대각선으로 잘라내 끝이 쐐기 모양이 됩니다.
+
+**`FeatureGate`는 Phase 1에서 쓸 일이 없어 보여도 지금 있어야 합니다.** Phase 2에서 결제를 붙일 때 구현체만 갈아끼우면 되고, 없으면 여러 화면에 흩어진 분기를 일일이 찾아 심어야 합니다.
+
+## Phase 1 남은 작업
+
+우선순위 순:
+
+1. **`.smi` 지원 여부 확인** — Media3가 SAMI를 기본 지원하는지 실제 파일로 검증. 미지원이면 파서를 직접 만들어야 하고, 이건 Phase 1 일정에 영향을 줍니다
+2. **자막 인코딩 감지** — 외부 자막은 바이트를 먼저 읽어 UTF-8/CP949를 판별한 뒤 문자열로 변환해 넘기기. 파일 경로만 던지면 깨집니다
+3. 플레이어 화면(S3) — Media3 + 커스텀 컨트롤 오버레이
+4. 권한 온보딩(S5) — 현재는 진입 즉시 요청하는 임시 처리. **거부 시 SAF 우회로가 반드시 필요**
+5. 폴더 탐색(S2) — SAF 기반
+6. 설정 화면(S6) — `SettingsStore`는 이미 있음, 화면만 연결
+7. 저장소 사용량 표시 — `StatFs`
+8. 자막 파일 자동 매칭 — `LibraryRow.subtitleFormat` 채우기
+
+## 참고
+
+- 화면 시안: `design/` 디렉터리와 캔버스 아트보드
+- 기획서: `docs/mobile-video-player-spec.md`
