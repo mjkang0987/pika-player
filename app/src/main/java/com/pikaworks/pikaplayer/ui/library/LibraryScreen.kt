@@ -19,11 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,14 +28,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,9 +39,9 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.pikaworks.pikaplayer.data.media.LibraryRow
 import com.pikaworks.pikaplayer.data.media.StorageUsage
-import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.OptionSheet
 import com.pikaworks.pikaplayer.ui.SORT_OPTIONS
+import com.pikaworks.pikaplayer.ui.SearchHeader
 import com.pikaworks.pikaplayer.ui.VideoListRow
 import com.pikaworks.pikaplayer.ui.sortLabel
 import com.pikaworks.pikaplayer.ui.formatRemaining
@@ -71,6 +64,7 @@ fun LibraryScreen(
 ) {
     val colors = PikaTheme.colors
     var sortSheetVisible by remember { mutableStateOf(false) }
+    // LazyColumn 항목이 폐기돼도 검색 상태가 살아 있도록 여기서 들고 있는다.
     var searching by remember { mutableStateOf(false) }
 
     if (sortSheetVisible) {
@@ -86,14 +80,13 @@ fun LibraryScreen(
     LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
 
         item {
-            Header(
-                searching = searching,
+            SearchHeader(
+                title = "보관함",
                 query = state.query,
                 onQueryChange = onQueryChange,
-                onToggleSearch = {
-                    searching = !searching
-                    if (!searching) onQueryChange("")
-                },
+                searching = searching,
+                onSearchingChange = { searching = it },
+                placeholder = "영상 · 폴더 이름",
             )
         }
 
@@ -113,59 +106,6 @@ fun LibraryScreen(
                 subtitleFormat = row.subtitleFormat,
             )
         }
-    }
-}
-
-/**
- * 제목과 검색(S7).
- *
- * 검색을 켜면 제목 자리를 입력칸이 대신한다. 검색은 목록을 좁히는 동작이라
- * 별도 화면으로 넘기지 않는다 — 결과를 보면서 바로 지우고 다시 칠 수 있어야 한다.
- */
-@Composable
-private fun Header(
-    searching: Boolean,
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onToggleSearch: () -> Unit,
-) {
-    val colors = PikaTheme.colors
-    val focusRequester = remember { FocusRequester() }
-
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 60.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        if (searching) {
-            LaunchedEffect(Unit) { focusRequester.requestFocus() }
-            Box(modifier = Modifier.weight(1f)) {
-                if (query.isEmpty()) {
-                    Text("영상 · 폴더 이름", fontSize = 18.sp,
-                        fontWeight = FontWeight.Light, color = colors.textFaint)
-                }
-                BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    singleLine = true,
-                    textStyle = TextStyle(
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Light,
-                        color = colors.textPrimary,
-                    ),
-                    cursorBrush = SolidColor(colors.key),
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                )
-            }
-        } else {
-            Text("보관함", fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
-        }
-        Icon(
-            if (searching) AppIcons.Close else AppIcons.Search,
-            if (searching) "검색 닫기" else "검색",
-            tint = colors.textSecondary,
-            modifier = Modifier.padding(start = 12.dp).size(22.dp).clickable(onClick = onToggleSearch),
-        )
     }
 }
 

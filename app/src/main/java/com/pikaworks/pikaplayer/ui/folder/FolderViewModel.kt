@@ -11,17 +11,36 @@ import com.pikaworks.pikaplayer.data.media.sortedFor
 import com.pikaworks.pikaplayer.data.prefs.SortOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class FolderSummary(
     /** MediaStore 는 폴더 이름, SAF 는 document id. 내려갈 때 이 값을 쓴다. */
     val id: String,
     val name: String,
-    /** SAF 는 하위를 열기 전에는 알 수 없다. 그때는 null. */
+    /** SAF 는 하위를 세기 전까지 모른다. 그때는 null. */
     val videoCount: Int?,
     val totalBytes: Long?,
+    /** 정렬용. MediaStore 는 폴더 안 영상 중 가장 최근, SAF 는 폴더 자체의 수정 시각. */
+    val latestModifiedSec: Long?,
 )
+
+/**
+ * 폴더 목록 정렬.
+ *
+ * 재생시간처럼 폴더에 없는 기준은 이름순으로 둔다. 값이 없는 항목끼리는 정렬이
+ * 안정적이라 이름 순서가 그대로 유지된다 — 그래서 기준선을 이름순으로 잡는다.
+ */
+fun List<FolderSummary>.sortedFor(order: String): List<FolderSummary> {
+    val byName = sortedBy { it.name.lowercase() }
+    return when (order) {
+        SortOrder.SIZE_DESC -> byName.sortedByDescending { it.totalBytes ?: -1L }
+        SortOrder.DATE_DESC -> byName.sortedByDescending { it.latestModifiedSec ?: -1L }
+        else -> byName
+    }
+}
 
 /** 지금 어느 폴더 안에 있는지. 비어 있으면 최상단. */
 data class Crumb(val id: String, val name: String)
@@ -33,12 +52,7 @@ data class FolderUiState(
     val folders: List<FolderSummary> = emptyList(),
     val videos: List<VideoItem> = emptyList(),
     val sort: String = SortOrder.DATE_DESC,
-) {
-    val openedFolder: Crumb? get() = crumbs.lastOrNull()
-    val totalVideoCount: Int get() = folders.sumOf { it.videoCount ?: 0 }
-    /** SAF 는 폴더별 영상 수를 모른다. 합계를 보여주면 0 으로 보인다. */
-    val showsFolderCounts: Boolean get() = folders.all { it.videoCount != null }
-}
+)
 
 /**
  * 폴더 탐색(S2). 두 가지 출처를 같은 화면으로 보여준다.
@@ -60,6 +74,10 @@ class FolderViewModel(
     private var allVideos: List<VideoItem> = emptyList()
     private var mediaFolders: List<FolderSummary> = emptyList()
     private var sort: String = SortOrder.DATE_DESC
+    /** SAF 목록 조회. 폴더를 연달아 누르면 앞선 것을 버린다. */
+    private var listJob: Job? = null
+    /** SAF 하위 폴더의 영상 수를 뒤에서 세는 작업. 폴더를 옮기면 취소한다. */
+    private var countJob: Job? = null
     /** SAF 모드일 때만 값이 있다. */
     private var treeUri: Uri? = null
 
@@ -67,22 +85,38 @@ class FolderViewModel(
     fun setSort(order: String) {
         if (sort == order) return
         sort = order
-        _uiState.value = _uiState.value.copy(sort = order, videos = _uiState.value.videos.sortedFor(order))
+        _uiState.value = _uiState.value.copy(
+            sort = order,
+            folders = _uiState.value.folders.sortedFor(order),
+            videos = _uiState.value.videos.sortedFor(order),
+        )
     }
 
     /** 미디어 권한이 있을 때. 화면에 돌아올 때마다 호출한다. */
     fun refresh() {
         treeUri = null
+        // SAF 로 보던 중에 권한을 켰을 수 있다. 남은 조회가 결과를 덮어쓰지 않게 끊는다.
+        listJob?.cancel()
+        countJob?.cancel()
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(loading = true)
             allVideos = mediaStore.queryVideos()
             mediaFolders = allVideos
                 .groupBy { it.folderName ?: "기타" }
                 .map { (name, items) ->
-                    FolderSummary(name, name, items.size, items.sumOf { it.sizeBytes })
+                    FolderSummary(
+                        id = name,
+                        name = name,
+                        videoCount = items.size,
+                        totalBytes = items.sumOf { it.sizeBytes },
+                        latestModifiedSec = items.maxOf { it.dateModifiedSec },
+                    )
                 }
-                .sortedBy { it.name }
-            _uiState.value = FolderUiState(loading = false, folders = mediaFolders, sort = sort)
+            _uiState.value = FolderUiState(
+                loading = false,
+                folders = mediaFolders.sortedFor(sort),
+                sort = sort,
+            )
         }
     }
 
@@ -90,14 +124,20 @@ class FolderViewModel(
     fun loadTree(uri: Uri) {
         treeUri = uri
         allVideos = emptyList()
+        _uiState.value = FolderUiState(loading = true, sort = sort)
+        // 폴더 이름 조회는 목록보다 늦게 끝날 수 있다. 상태를 갈아끼우지 말고 이름만 덧붙인다.
         viewModelScope.launch {
-            _uiState.value = FolderUiState(
-                loading = true,
-                rootLabel = safFolders.treeName(uri) ?: "선택한 폴더",
-                sort = sort,
-            )
-            listSaf(parentDocumentId = null, crumbs = emptyList())
+            val name = safFolders.treeName(uri) ?: "선택한 폴더"
+            _uiState.update { it.copy(rootLabel = name) }
         }
+        openSaf(parentDocumentId = null, crumbs = emptyList())
+    }
+
+    /** 앞선 조회가 늦게 끝나 나중 화면을 덮어쓰지 않도록 하나만 돌린다. */
+    private fun openSaf(parentDocumentId: String?, crumbs: List<Crumb>) {
+        listJob?.cancel()
+        countJob?.cancel()
+        listJob = viewModelScope.launch { listSaf(parentDocumentId, crumbs) }
     }
 
     fun open(folder: FolderSummary) {
@@ -110,7 +150,7 @@ class FolderViewModel(
                 videos = allVideos.filter { it.folderName == folder.name }.sortedFor(sort),
             )
         } else {
-            viewModelScope.launch { listSaf(folder.id, _uiState.value.crumbs + crumb) }
+            openSaf(folder.id, _uiState.value.crumbs + crumb)
         }
     }
 
@@ -128,12 +168,12 @@ class FolderViewModel(
             val opened = crumbs.lastOrNull()
             _uiState.value = _uiState.value.copy(
                 crumbs = crumbs,
-                folders = if (opened == null) mediaFolders else emptyList(),
+                folders = if (opened == null) mediaFolders.sortedFor(sort) else emptyList(),
                 videos = if (opened == null) emptyList()
                 else allVideos.filter { it.folderName == opened.name }.sortedFor(sort),
             )
         } else {
-            viewModelScope.launch { listSaf(crumbs.lastOrNull()?.id, crumbs) }
+            openSaf(crumbs.lastOrNull()?.id, crumbs)
         }
     }
 
@@ -142,12 +182,53 @@ class FolderViewModel(
         _uiState.value = _uiState.value.copy(loading = true)
         val entries = safFolders.listChildren(tree, parentDocumentId)
         val (dirs, files) = entries.partition { it.isDirectory }
+        val folders = dirs.map {
+            FolderSummary(
+                id = it.documentId,
+                name = it.name,
+                videoCount = null,
+                totalBytes = null,
+                latestModifiedSec = it.lastModifiedMs / 1000,
+            )
+        }
         _uiState.value = _uiState.value.copy(
             loading = false,
             crumbs = crumbs,
-            folders = dirs.map { FolderSummary(it.documentId, it.name, videoCount = null, totalBytes = null) },
+            folders = folders.sortedFor(sort),
             videos = safFolders.readVideos(files).sortedFor(sort),
         )
+        countFolders(tree, folders)
+    }
+
+    /**
+     * SAF 하위 폴더의 영상 수와 용량을 뒤에서 채운다.
+     *
+     * 폴더 하나에 커서 한 번이고 크기는 그 커서에서 바로 나온다 — 코덱을 여는
+     * [SafFolderSource.readVideos] 와 달리 싸다. 그래도 목록을 띄우는 것보다는
+     * 느리므로 화면을 먼저 그리고 값은 뒤따라 붙인다.
+     *
+     * 세는 것은 바로 아래 단계뿐이다. MediaStore 쪽 폴더도 같은 기준이라 맞춘다.
+     */
+    private fun countFolders(tree: Uri, folders: List<FolderSummary>) {
+        if (folders.isEmpty()) return
+        countJob = viewModelScope.launch {
+            folders.forEach { folder ->
+                val files = safFolders.listChildren(tree, folder.id).filter { !it.isDirectory }
+                _uiState.update { state ->
+                    // 세는 사이에 다른 폴더로 옮겼으면 버린다.
+                    if (state.folders.none { it.id == folder.id }) return@update state
+                    state.copy(
+                        folders = state.folders.map {
+                            if (it.id == folder.id) {
+                                it.copy(videoCount = files.size, totalBytes = files.sumOf { f -> f.sizeBytes })
+                            } else it
+                        }
+                    )
+                }
+            }
+            // 채우는 도중에 순서를 흔들면 읽기 어렵다. 다 찬 뒤 한 번만 다시 정렬한다.
+            _uiState.update { it.copy(folders = it.folders.sortedFor(sort)) }
+        }
     }
 
     class Factory(

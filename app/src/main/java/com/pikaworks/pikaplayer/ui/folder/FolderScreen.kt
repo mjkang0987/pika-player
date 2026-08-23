@@ -33,7 +33,9 @@ import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.OptionSheet
 import com.pikaworks.pikaplayer.ui.SORT_OPTIONS
+import com.pikaworks.pikaplayer.ui.SearchHeader
 import com.pikaworks.pikaplayer.ui.VideoListRow
+import com.pikaworks.pikaplayer.ui.matchesQuery
 import com.pikaworks.pikaplayer.ui.sortLabel
 import com.pikaworks.pikaplayer.ui.formatSize
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
@@ -51,6 +53,8 @@ fun FolderScreen(
 ) {
     val colors = PikaTheme.colors
     var sortSheetVisible by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    var searching by remember { mutableStateOf(false) }
 
     if (sortSheetVisible) {
         OptionSheet(
@@ -64,14 +68,21 @@ fun FolderScreen(
 
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 60.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("폴더", fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
-        }
+        SearchHeader(
+            title = "폴더",
+            query = query,
+            onQueryChange = { query = it },
+            searching = searching,
+            onSearchingChange = { searching = it },
+            placeholder = "폴더 · 영상 이름",
+        )
 
         Breadcrumb(rootLabel = state.rootLabel, crumbs = state.crumbs, onNavigateTo = onNavigateTo)
+
+        // 검색은 지금 보고 있는 단계 안에서만 찾는다. 하위 폴더까지 뒤지면
+        // 한 단계씩 이동한다는 이 화면의 규칙과 어긋난다.
+        val visibleFolders = state.folders.filter { matchesQuery(query, it.name) }
+        val visibleVideos = state.videos.filter { matchesQuery(query, it.displayName) }
 
         Row(
             modifier = Modifier
@@ -90,7 +101,7 @@ fun FolderScreen(
                 Text("▾", fontSize = 11.sp, color = colors.textFaint)
             }
             Text(
-                summaryLabel(state),
+                summaryLabel(visibleFolders, visibleVideos.size),
                 fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
             )
         }
@@ -98,21 +109,22 @@ fun FolderScreen(
         // SAF 로 연 폴더에는 하위 폴더와 영상이 같은 자리에 함께 있다.
         // MediaStore 는 둘 중 한쪽만 채워지므로 같은 코드로 처리된다.
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(state.folders, key = { "d:" + it.id }) { folder ->
+            items(visibleFolders, key = { "d:" + it.id }) { folder ->
                 FolderRow(folder = folder, onClick = { onOpenFolder(folder) })
             }
-            items(state.videos, key = { "f:" + it.uri }) { video ->
+            items(visibleVideos, key = { "f:" + it.uri }) { video ->
                 VideoListRow(video = video, onClick = { onVideoClick(video) })
             }
         }
     }
 }
 
-/** SAF 는 폴더별 영상 수를 세지 않는다. 합계를 보여주면 0 으로 읽힌다. */
-private fun summaryLabel(state: FolderUiState): String = when {
-    state.crumbs.isNotEmpty() -> "영상 ${state.videos.size}"
-    state.showsFolderCounts -> "폴더 ${state.folders.size} · 영상 ${state.totalVideoCount}"
-    else -> "폴더 ${state.folders.size}"
+/** SAF 는 폴더별 영상 수를 뒤에서 채운다. 다 차기 전에는 합계를 내지 않는다. */
+private fun summaryLabel(folders: List<FolderSummary>, videoCount: Int): String {
+    if (folders.isEmpty()) return "영상 $videoCount"
+    if (folders.any { it.videoCount == null }) return "폴더 ${folders.size}"
+    val total = folders.sumOf { it.videoCount ?: 0 } + videoCount
+    return "폴더 ${folders.size} · 영상 $total"
 }
 
 /**

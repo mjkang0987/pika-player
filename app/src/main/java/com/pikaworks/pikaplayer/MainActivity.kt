@@ -120,6 +120,10 @@ class MainActivity : ComponentActivity() {
                 val libraryState by libraryVm.uiState.collectAsStateWithLifecycle()
                 val folderState by folderVm.uiState.collectAsStateWithLifecycle()
 
+                // 보관함 검색어만 ViewModel 에 있다(거르기 탭의 개수를 같이 세야 해서).
+                // 탭을 옮기면 지운다 — 보이지 않는 검색어가 목록을 계속 좁히면 안 된다.
+                LaunchedEffect(tab) { if (tab != Tab.LIBRARY) libraryVm.setQuery("") }
+
                 val pickFolder = rememberLauncherForActivityResult(
                     ActivityResultContracts.OpenDocumentTree()
                 ) { treeUri ->
