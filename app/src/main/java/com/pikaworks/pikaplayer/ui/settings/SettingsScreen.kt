@@ -56,6 +56,7 @@ fun SettingsScreen(
     onSubtitleScaleChange: (Float) -> Unit,
     onSubtitlePositionChange: (String) -> Unit,
     onThemeChange: (String) -> Unit,
+    onOpenLicenses: () -> Unit,
     onBack: () -> Unit,
     versionName: String,
     modifier: Modifier = Modifier,
@@ -137,7 +138,7 @@ fun SettingsScreen(
 
         item { SectionHeader("정보") }
         item { InfoRow("버전", versionName) }
-        item { ValueRow("오픈소스 라이선스", "") { /* TODO */ } }
+        item { ValueRow("오픈소스 라이선스", "", onOpenLicenses) }
         item { Spacer(Modifier.height(32.dp)) }
     }
 }

@@ -40,6 +40,7 @@ import com.pikaworks.pikaplayer.ui.player.PlayerScreen
 import com.pikaworks.pikaplayer.ui.player.PlayerViewModel
 import com.pikaworks.pikaplayer.ui.player.SystemControls
 import com.pikaworks.pikaplayer.ui.recent.RecentScreen
+import com.pikaworks.pikaplayer.ui.settings.LicenseScreen
 import com.pikaworks.pikaplayer.ui.settings.SettingsScreen
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlinx.coroutines.launch
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
 
                 var denied by remember { mutableStateOf(false) }
                 var tab by remember { mutableStateOf(Tab.LIBRARY) }
+                var showLicenses by remember { mutableStateOf(false) }
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
@@ -106,6 +108,7 @@ class MainActivity : ComponentActivity() {
                         safFolders = app.safFolders,
                         positionDao = app.database.playbackPositionDao(),
                         subtitleMatcher = app.subtitleMatcher,
+                        deviceStorage = app.deviceStorage,
                     )
                 )
                 val folderVm: FolderViewModel = viewModel(
@@ -196,7 +199,13 @@ class MainActivity : ComponentActivity() {
                                 onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
                             )
 
-                            Tab.SETTINGS -> settings?.let { s ->
+                            Tab.SETTINGS -> if (showLicenses) {
+                                BackHandler { showLicenses = false }
+                                LicenseScreen(
+                                    modifier = Modifier.weight(1f),
+                                    onBack = { showLicenses = false },
+                                )
+                            } else settings?.let { s ->
                                 SettingsScreen(
                                     modifier = Modifier.weight(1f),
                                     settings = s,
@@ -210,6 +219,7 @@ class MainActivity : ComponentActivity() {
                                     onSubtitleScaleChange = { scope.launch { app.settings.setSubtitleScale(it) } },
                                     onSubtitlePositionChange = { scope.launch { app.settings.setSubtitlePosition(it) } },
                                     onThemeChange = { scope.launch { app.settings.setTheme(it) } },
+                                    onOpenLicenses = { showLicenses = true },
                                     onBack = { tab = Tab.LIBRARY },
                                     versionName = BuildConfig.VERSION_NAME,
                                 )

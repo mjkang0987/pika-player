@@ -28,8 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.pikaworks.pikaplayer.data.media.LibraryRow
+import com.pikaworks.pikaplayer.data.media.StorageUsage
 import com.pikaworks.pikaplayer.ui.VideoListRow
 import com.pikaworks.pikaplayer.ui.formatRemaining
+import com.pikaworks.pikaplayer.ui.formatSize
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /**
@@ -55,7 +57,7 @@ fun LibraryScreen(
         }
 
         item { LibraryTabs(videoCount = state.videoCount) }
-        item { SortBar() }
+        item { SortBar(storage = state.storage) }
 
         items(state.rows, key = { it.video.id }) { row ->
             VideoListRow(
@@ -166,7 +168,7 @@ private fun LibraryTabs(videoCount: Int) {
 }
 
 @Composable
-private fun SortBar() {
+private fun SortBar(storage: StorageUsage?) {
     val colors = PikaTheme.colors
     Row(
         modifier = Modifier
@@ -176,9 +178,34 @@ private fun SortBar() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
+        // TODO: 정렬 기준 선택 연결
         Text("최근 수정순", fontSize = 12.sp, color = colors.textPrimary)
-        // TODO: 저장소 사용량은 StatFs 로 읽어 채운다
-        Text("내부 저장소", fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // 아직 못 읽었으면 막대만 비워 둔다. 자리가 흔들리지 않는다.
+            Box(
+                modifier = Modifier
+                    .width(38.dp).height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.divider),
+            ) {
+                if (storage != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(storage.usedRatio)
+                            .height(4.dp)
+                            .background(colors.key),
+                    )
+                }
+            }
+            Text(
+                if (storage == null) "내부 저장소"
+                else "내부 저장소 ${formatSize(storage.freeBytes)} 남음",
+                fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
+            )
+        }
     }
 }
 

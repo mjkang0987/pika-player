@@ -17,8 +17,34 @@ ROOT = 'app/src/main/java/com/pikaworks/pikaplayer'
 
 
 def strip_comments(s):
-    s = re.sub(r'/\*.*?\*/', '', s, flags=re.S)
-    return re.sub(r'//[^\n]*', '', s)
+    """주석과 문자열 내용을 지운다.
+
+    한 번에 훑어야 한다. 주석 안에 따옴표가, 문자열 안에 `//`(URL) 가 들어 있어서
+    둘 중 하나를 먼저 통째로 지우면 나머지가 어긋난다.
+    """
+    out, i, n = [], 0, len(s)
+    while i < n:
+        two, three = s[i:i + 2], s[i:i + 3]
+        if three == '"""':
+            end = s.find('"""', i + 3)
+            i = n if end < 0 else end + 3
+            out.append('""')
+        elif two == '/*':
+            end = s.find('*/', i + 2)
+            i = n if end < 0 else end + 2
+        elif two == '//':
+            end = s.find('\n', i)
+            i = n if end < 0 else end
+        elif s[i] == '"':
+            j = i + 1
+            while j < n and s[j] != '"':
+                j += 2 if s[j] == '\\' else 1
+            i = j + 1
+            out.append('""')
+        else:
+            out.append(s[i])
+            i += 1
+    return ''.join(out)
 
 
 files = {p: strip_comments(open(p, encoding='utf-8').read())

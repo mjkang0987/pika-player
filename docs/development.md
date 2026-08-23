@@ -34,8 +34,8 @@ app/src/main/java/com/pikaworks/pikaplayer/
   core/
     FeatureGate.kt      Pro 게이팅 지점 — Phase 1은 항상 허용
   data/
-    media/              MediaStore 조회, SAF 폴더 조회, VideoItem 모델
-    db/                 Room — 재생 위치(이어보기)
+    media/              MediaStore 조회, SAF 폴더 조회, 저장소 잔량, VideoItem 모델
+    db/                 Room — 재생 위치(이어보기), SAF 메타데이터 캐시
     prefs/              DataStore — 설정 화면 값
   data/subtitle/        영상 옆 자막 파일 찾기 + 읽기 (Android 쪽)
   ui/
@@ -44,7 +44,7 @@ app/src/main/java/com/pikaworks/pikaplayer/
     folder/             폴더 탐색(S2)
     permission/         권한 온보딩(S5)
     recent/             최근 탭
-    settings/           설정 화면(S6)
+    settings/           설정 화면(S6) · 오픈소스 라이선스
     player/             플레이어 화면(S3)
       PlayerGestures.kt   스와이프 탐색 / 밝기 · 볼륨 / 더블탭
       SubtitleSheet.kt    자막 트랙 · 인코딩 · 싱크 (S4)
@@ -100,6 +100,8 @@ tools/
 | `SubtitleText` 를 호출만 하고 선언하지 않음 | 자막이 아예 컴파일되지 않음. 눈으로는 놓쳤고 `tools/check_refs.py` 가 잡았다 |
 | 테마 설정을 `PikaTheme` 안에서 읽음 | 테마의 입력을 테마 내부에서 만들 수 없다 → `setContent` 최상단으로 끌어올림 |
 | `PlayerViewModel.open()` 이 상태를 통째로 초기화 | 영상을 열 때마다 설정의 기본 재생속도·인코딩이 무시됨 → `open()` 인자로 받게 함 |
+| 폴더 화면이 MediaStore 만 앎 | 권한을 거부하고 SAF 로 폴더를 고른 사용자에게 폴더 탭이 늘 비어 있었다 |
+| MediaStore 모드에서 폴더를 열어도 `folders` 를 비우지 않음 | 폴더 목록과 영상 목록이 한 화면에 같이 나옴 |
 
 ## 자막 처리 — 왜 직접 만들었나
 
@@ -113,15 +115,18 @@ tools/
 
 ## Phase 1 남은 작업
 
-우선순위 순:
+1. **정렬 기준 선택** — 보관함·폴더 화면의 "최근 수정순" / "이름순" 은 아직 고정 문구다
+2. **보관함 상단 탭** — 영상 / 폴더 / 최근 / 자막. 시안에는 있지만 하단 네비게이션과
+   겹치는 부분이 있어 무엇을 남길지 정리가 필요하다
+3. **검색(S7)** — P2
 
-1. **다음 영상 목록** — 플레이어 하단, 같은 폴더
-2. **라이브러리 목록의 자막 배지** — `SubtitleMatcher` 를 목록에도 연결해 `LibraryRow.subtitleFormat` 채우기
-3. **SAF 폴더 탐색** — 폴더 화면은 MediaStore 기준으로만 동작한다. SAF 로 고른 폴더를 쓰는 사용자는 폴더 탭이 비어 보인다
-4. **SAF 메타데이터 캐시** — 폴더를 열 때마다 파일마다 `MediaMetadataRetriever` 를 돌린다. Room 에 캐시할 것
-5. **저장소 사용량 표시** — `StatFs`
-6. **오픈소스 라이선스 화면** — 설정 화면에 남은 마지막 TODO
-7. **검색(S7)** — P2
+## 출시 전에 반드시 할 것
+
+- **Room 마이그레이션** — 지금은 `fallbackToDestructiveMigration()` 이다. 출시 후에도
+  이대로 두면 스키마를 바꿀 때마다 사용자의 이어보기 기록이 지워진다
+- **`gradle/libs.versions.toml` 버전 확인** — 검증되지 않은 추정값이다
+- **오픈소스 라이선스 목록** — `ui/settings/LicenseScreen.kt` 의 목록은 손으로 관리한다.
+  의존성을 추가하면 여기에도 한 줄 추가해야 한다
 
 ## 참고
 
