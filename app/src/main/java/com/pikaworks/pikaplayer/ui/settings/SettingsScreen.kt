@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.data.prefs.Settings
-import com.pikaworks.pikaplayer.ui.player.PlayerIcons
+import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /**
@@ -58,7 +58,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Icon(PlayerIcons.Back, "뒤로", tint = colors.textPrimary,
+                Icon(AppIcons.Back, "뒤로", tint = colors.textPrimary,
                     modifier = Modifier.size(23.dp).clickable(onClick = onBack))
                 Text("설정", fontSize = 20.sp, color = colors.textPrimary)
             }

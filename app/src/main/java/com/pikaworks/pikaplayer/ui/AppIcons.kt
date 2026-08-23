@@ -1,4 +1,4 @@
-package com.pikaworks.pikaplayer.ui.player
+package com.pikaworks.pikaplayer.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -9,12 +9,12 @@ import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 
 /**
- * 플레이어 아이콘. 시안의 SVG 패스를 그대로 옮겼다.
+ * 앱 아이콘. 시안의 SVG 패스를 그대로 옮겼다.
  *
  * 색은 여기서 흰색으로 두고 실제 색은 `Icon(tint = ...)` 로 입힌다.
  * 아이콘마다 색을 박아두면 테마 전환에서 어긋난다.
  */
-object PlayerIcons {
+object AppIcons {
 
     val Back = stroke("M15 5 8 12l7 7")
 
@@ -65,6 +65,12 @@ object PlayerIcons {
         "M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9",
         "M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15",
         "M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15",
+    )
+
+    /** 권한 온보딩의 대표 아이콘 */
+    val VideoLibrary = stroke(
+        "M2.5 8a2.5 2.5 0 0 1 2.5-2.5h14A2.5 2.5 0 0 1 21.5 8v8a2.5 2.5 0 0 1-2.5 2.5H5A2.5 2.5 0 0 1 2.5 16z",
+        "M10 9.8v4.4l4.2-2.2z",
     )
 
     val Brightness = stroke(

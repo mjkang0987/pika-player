@@ -41,6 +41,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlin.math.abs
@@ -108,7 +109,7 @@ fun PlayerScreen(
                         .clickable(onClick = onToggleLock),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(PlayerIcons.Lock, "잠금 해제", tint = Color.White, modifier = Modifier.size(20.dp))
+                    Icon(AppIcons.Lock, "잠금 해제", tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             } else if (state.controlsVisible) {
                 // 밝은 장면에서 흰 아이콘이 묻히지 않도록 스크림을 깐다.
@@ -166,9 +167,10 @@ fun PlayerScreen(
 
         if (!isFullscreen) {
             Spacer(Modifier.height(20.dp))
-            SeekBar(state = state, onSeek = onSeek)
+            SeekBar(state = state, onSeek = onSeek, modifier = Modifier.padding(horizontal = 24.dp))
             Spacer(Modifier.height(20.dp))
             SecondaryControls(
+                modifier = Modifier.padding(horizontal = 24.dp),
                 state = state,
                 onToggleSubtitle = onToggleSubtitle,
                 onCycleResize = onCycleResize,
@@ -187,7 +189,7 @@ private fun FullscreenTopBar(title: String, onBack: () -> Unit, modifier: Modifi
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Icon(PlayerIcons.Back, "뒤로", tint = Color.White,
+        Icon(AppIcons.Back, "뒤로", tint = Color.White,
             modifier = Modifier.size(24.dp).clickable(onClick = onBack))
         Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White, maxLines = 1)
     }
@@ -238,7 +240,7 @@ private fun TopBar(title: String, onBack: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Icon(
-            imageVector = PlayerIcons.Back,
+            imageVector = AppIcons.Back,
             contentDescription = "뒤로",
             tint = colors.textPrimary,
             modifier = Modifier.size(24.dp).clickable(onClick = onBack),
@@ -266,7 +268,7 @@ private fun TransportControls(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SkipButton(PlayerIcons.Replay10, "10초 뒤로") { onSkip(-10_000) }
+        SkipButton(AppIcons.Replay10, "10초 뒤로") { onSkip(-10_000) }
 
         Box(
             modifier = Modifier
@@ -278,14 +280,14 @@ private fun TransportControls(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = if (isPlaying) PlayerIcons.Pause else PlayerIcons.Play,
+                imageVector = if (isPlaying) AppIcons.Pause else AppIcons.Play,
                 contentDescription = if (isPlaying) "일시정지" else "재생",
                 tint = Color.White,
                 modifier = Modifier.size(34.dp),
             )
         }
 
-        SkipButton(PlayerIcons.Forward10, "10초 앞으로") { onSkip(10_000) }
+        SkipButton(AppIcons.Forward10, "10초 앞으로") { onSkip(10_000) }
     }
 }
 
@@ -303,10 +305,10 @@ private fun SkipButton(icon: ImageVector, label: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit) {
+private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit, modifier: Modifier = Modifier) {
     val colors = PikaTheme.colors
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -351,6 +353,7 @@ private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit) {
 
 @Composable
 private fun SecondaryControls(
+    modifier: Modifier = Modifier,
     state: PlayerUiState,
     onToggleSubtitle: () -> Unit,
     onCycleResize: () -> Unit,
@@ -359,19 +362,19 @@ private fun SecondaryControls(
     onToggleLock: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         SpeedItem(state.speed, onCycleSpeed)
-        IconItem(PlayerIcons.Subtitle, "자막", active = state.subtitleEnabled, onClick = onToggleSubtitle)
+        IconItem(AppIcons.Subtitle, "자막", active = state.subtitleEnabled, onClick = onToggleSubtitle)
         IconItem(
-            PlayerIcons.AspectRatio,
+            AppIcons.AspectRatio,
             PlayerViewModel.RESIZE_MODE_LABELS[state.resizeMode.coerceIn(PlayerViewModel.RESIZE_MODE_LABELS.indices)],
             active = state.resizeMode != 0,
             onClick = onCycleResize,
         )
-        IconItem(PlayerIcons.Fullscreen, "전체화면", active = false, onClick = onToggleFullscreen)
-        IconItem(PlayerIcons.Lock, "잠금", active = state.locked, onClick = onToggleLock)
+        IconItem(AppIcons.Fullscreen, "전체화면", active = false, onClick = onToggleFullscreen)
+        IconItem(AppIcons.Lock, "잠금", active = state.locked, onClick = onToggleLock)
     }
 }
 
@@ -421,8 +424,8 @@ private fun GestureIndicator(feedback: GestureFeedback, positionMs: Long, modifi
                     fontSize = 15.sp, color = Color.White,
                 )
             }
-            is GestureFeedback.Brightness -> Bar(PlayerIcons.Brightness, "밝기", feedback.value, colors.key)
-            is GestureFeedback.Volume -> Bar(PlayerIcons.Volume, "볼륨", feedback.value, colors.key)
+            is GestureFeedback.Brightness -> Bar(AppIcons.Brightness, "밝기", feedback.value, colors.key)
+            is GestureFeedback.Volume -> Bar(AppIcons.Volume, "볼륨", feedback.value, colors.key)
         }
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,6 +47,17 @@ class MainActivity : ComponentActivity() {
         }
 
     private var onPermissionResult: ((Boolean) -> Unit)? = null
+
+    /**
+     * 화면으로 돌아올 때마다 다시 확인한다. 사용자가 시스템 설정에서
+     * 권한을 켜고 돌아오는 경로가 있는데, 한 번만 읽으면 계속 막힌 채로 남는다.
+     */
+    private val permissionGranted = mutableStateOf(false)
+
+    override fun onResume() {
+        super.onResume()
+        permissionGranted.value = hasMediaPermission()
+    }
 
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -76,7 +88,7 @@ class MainActivity : ComponentActivity() {
                 val settings by app.settings.settings
                     .collectAsStateWithLifecycle(initialValue = null)
 
-                var granted by remember { mutableStateOf(hasMediaPermission()) }
+                val granted by permissionGranted
                 var denied by remember { mutableStateOf(false) }
                 var showSettings by remember { mutableStateOf(false) }
                 val scope = rememberCoroutineScope()
@@ -106,7 +118,7 @@ class MainActivity : ComponentActivity() {
                         denied = denied,
                         onAllow = {
                             onPermissionResult = { ok ->
-                                granted = ok
+                                permissionGranted.value = ok
                                 denied = !ok
                             }
                             requestPermission.launch(mediaPermission)
@@ -133,8 +145,9 @@ class MainActivity : ComponentActivity() {
                         onSettingsClick = { showSettings = true },
                     )
                 } else {
+                    // key 를 주면 영상마다 ViewModel 이 새로 만들어지고 이전 것이
+                    // 해제되지 않는다. 하나만 두고 open() 으로 갈아끼운다.
                     val playerVm: PlayerViewModel = viewModel(
-                        key = video.uri.toString(),
                         factory = PlayerViewModel.Factory(
                             context = applicationContext,
                             positionDao = app.database.playbackPositionDao(),

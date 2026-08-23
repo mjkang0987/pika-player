@@ -1,6 +1,9 @@
 package com.pikaworks.pikaplayer
 
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.VideoFrameDecoder
 import androidx.room.Room
 import com.pikaworks.pikaplayer.core.AlwaysAllow
 import com.pikaworks.pikaplayer.core.FeatureGate
@@ -14,7 +17,7 @@ import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
  * 의존성을 손으로 엮는다. 1인 개발 규모에서 DI 프레임워크는 아직 값을 하지 않는다.
  * 그래프가 복잡해지면 그때 도입한다.
  */
-class PikaApp : Application() {
+class PikaApp : Application(), ImageLoaderFactory {
 
     lateinit var database: PikaDatabase
         private set
@@ -29,6 +32,16 @@ class PikaApp : Application() {
 
     /** Phase 1 은 모두 허용. Phase 2 에서 결제 상태를 읽는 구현으로 교체한다. */
     val featureGate: FeatureGate = AlwaysAllow
+
+    /**
+     * Coil 기본 ImageLoader 는 이미지 파일만 다룬다.
+     * 동영상 첫 프레임을 썸네일로 쓰려면 VideoFrameDecoder 를 붙여야 한다.
+     */
+    override fun newImageLoader(): ImageLoader =
+        ImageLoader.Builder(this)
+            .components { add(VideoFrameDecoder.Factory()) }
+            .crossfade(true)
+            .build()
 
     override fun onCreate() {
         super.onCreate()

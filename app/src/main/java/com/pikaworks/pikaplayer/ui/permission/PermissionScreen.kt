@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pikaworks.pikaplayer.ui.player.PlayerIcons
+import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /**
@@ -60,7 +60,7 @@ fun PermissionScreen(
                     .border(1.dp, colors.divider, RoundedCornerShape(30.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(PlayerIcons.Subtitle, null, tint = colors.key, modifier = Modifier.size(46.dp))
+                Icon(AppIcons.VideoLibrary, null, tint = colors.key, modifier = Modifier.size(46.dp))
             }
 
             Spacer(Modifier.height(30.dp))

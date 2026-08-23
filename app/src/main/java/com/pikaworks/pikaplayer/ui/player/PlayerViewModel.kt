@@ -77,9 +77,22 @@ class PlayerViewModel(
         startPositionTicker()
     }
 
+    /**
+     * 다른 영상으로 갈아탄다.
+     *
+     * 영상마다 ViewModel 을 새로 만들면 ExoPlayer 인스턴스가 쌓인다. 코덱은
+     * 기기당 개수가 제한돼 있어 몇 개만 새면 재생이 실패한다. ViewModel 은
+     * 하나만 두고 여기서 갈아끼운다.
+     */
     fun open(video: VideoItem, resume: Boolean) {
+        if (currentVideo?.uri == video.uri) return
+
+        savePosition() // 이전 영상의 위치를 먼저 남긴다
+        track = SubtitleTrack.EMPTY
+        subtitleOffsetMs = 0L
         currentVideo = video
-        _uiState.update { it.copy(title = video.baseName, durationMs = video.durationMs) }
+        // 이전 영상의 자막·화면비·잠금 상태가 넘어오지 않도록 초기화한다.
+        _uiState.value = PlayerUiState(title = video.baseName, durationMs = video.durationMs)
 
         player.setMediaItem(MediaItem.fromUri(video.uri))
         player.prepare()
