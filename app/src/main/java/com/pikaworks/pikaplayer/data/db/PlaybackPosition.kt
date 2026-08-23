@@ -47,7 +47,12 @@ interface PlaybackPositionDao {
     fun observeAll(): Flow<List<PlaybackPosition>>
 }
 
-@Database(entities = [PlaybackPosition::class], version = 1, exportSchema = false)
+@Database(
+    entities = [PlaybackPosition::class, SafMetadata::class],
+    version = 2,
+    exportSchema = false,
+)
 abstract class PikaDatabase : RoomDatabase() {
     abstract fun playbackPositionDao(): PlaybackPositionDao
+    abstract fun safMetadataDao(): SafMetadataDao
 }

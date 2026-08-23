@@ -45,10 +45,15 @@ class PikaApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
-        database = Room.databaseBuilder(this, PikaDatabase::class.java, "pika.db").build()
+        database = Room.databaseBuilder(this, PikaDatabase::class.java, "pika.db")
+            // 아직 출시 전이라 기기에 남은 DB 는 개발용뿐이다. 스키마가 계속 바뀌는
+            // 동안 마이그레이션을 손으로 쓰는 것보다 다시 만드는 편이 안전하다.
+            // 출시 시점에는 반드시 실제 마이그레이션으로 바꿔야 한다.
+            .fallbackToDestructiveMigration()
+            .build()
         mediaStore = MediaStoreSource(this)
         settings = SettingsStore(this)
         subtitleMatcher = SubtitleMatcher(this)
-        safFolders = SafFolderSource(this)
+        safFolders = SafFolderSource(this, database.safMetadataDao())
     }
 }

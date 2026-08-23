@@ -109,7 +109,10 @@ class MainActivity : ComponentActivity() {
                     )
                 )
                 val folderVm: FolderViewModel = viewModel(
-                    factory = FolderViewModel.Factory(mediaStore = app.mediaStore)
+                    factory = FolderViewModel.Factory(
+                        mediaStore = app.mediaStore,
+                        safFolders = app.safFolders,
+                    )
                 )
                 val libraryState by libraryVm.uiState.collectAsStateWithLifecycle()
                 val folderState by folderVm.uiState.collectAsStateWithLifecycle()
@@ -121,6 +124,7 @@ class MainActivity : ComponentActivity() {
                         app.safFolders.persistPermission(treeUri)
                         scope.launch { app.settings.setFolderTreeUri(treeUri.toString()) }
                         libraryVm.loadFolder(treeUri)
+                        folderVm.loadTree(treeUri)
                     }
                 }
 
@@ -131,7 +135,12 @@ class MainActivity : ComponentActivity() {
                             libraryVm.refresh()
                             folderVm.refresh()
                         }
-                        folderUri != null -> libraryVm.loadFolder(Uri.parse(folderUri))
+                        folderUri != null -> {
+                            val tree = Uri.parse(folderUri)
+                            libraryVm.loadFolder(tree)
+                            // 폴더 탭도 같은 트리를 쓴다. 없으면 이 사용자에게는 늘 빈 탭이다.
+                            folderVm.loadTree(tree)
+                        }
                     }
                 }
 
@@ -170,12 +179,12 @@ class MainActivity : ComponentActivity() {
                             )
 
                             Tab.FOLDER -> {
-                                BackHandler(enabled = folderState.openedFolder != null) { folderVm.goUp() }
+                                BackHandler(enabled = folderState.crumbs.isNotEmpty()) { folderVm.goUp() }
                                 FolderScreen(
                                     modifier = Modifier.weight(1f),
                                     state = folderState,
                                     onOpenFolder = folderVm::open,
-                                    onUp = { folderVm.goUp() },
+                                    onNavigateTo = folderVm::navigateTo,
                                     onVideoClick = { play(it, folderState.videos) },
                                 )
                             }
