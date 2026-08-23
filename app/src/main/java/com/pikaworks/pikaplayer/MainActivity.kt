@@ -93,12 +93,19 @@ class MainActivity : ComponentActivity() {
                 var denied by remember { mutableStateOf(false) }
                 var tab by remember { mutableStateOf(Tab.LIBRARY) }
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
+                // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
+                var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
+                val play = { video: VideoItem, from: List<VideoItem> ->
+                    queue = from
+                    playing = video
+                }
 
                 val libraryVm: LibraryViewModel = viewModel(
                     factory = LibraryViewModel.Factory(
                         mediaStore = app.mediaStore,
                         safFolders = app.safFolders,
                         positionDao = app.database.playbackPositionDao(),
+                        subtitleMatcher = app.subtitleMatcher,
                     )
                 )
                 val folderVm: FolderViewModel = viewModel(
@@ -145,6 +152,8 @@ class MainActivity : ComponentActivity() {
                         video = video,
                         settingsGesturesEnabled = settings?.gesturesEnabled ?: true,
                         followAutoRotate = settings?.followAutoRotate ?: true,
+                        queue = queue,
+                        autoPlayNext = settings?.autoPlayNext ?: true,
                         defaultSpeed = settings?.playbackSpeed ?: 1f,
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
                         subtitleScale = settings?.subtitleScale ?: 1f,
@@ -157,7 +166,7 @@ class MainActivity : ComponentActivity() {
                             Tab.LIBRARY -> LibraryScreen(
                                 modifier = Modifier.weight(1f),
                                 state = libraryState,
-                                onVideoClick = { row -> playing = row.video },
+                                onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
                             )
 
                             Tab.FOLDER -> {
@@ -167,14 +176,15 @@ class MainActivity : ComponentActivity() {
                                     state = folderState,
                                     onOpenFolder = folderVm::open,
                                     onUp = { folderVm.goUp() },
-                                    onVideoClick = { playing = it },
+                                    onVideoClick = { play(it, folderState.videos) },
                                 )
                             }
 
                             Tab.RECENT -> RecentScreen(
                                 modifier = Modifier.weight(1f),
                                 rows = libraryState.recent,
-                                onVideoClick = { row -> playing = row.video },
+                                // 목록은 최근 순이지만 '다음 영상'은 폴더 안 순서를 따른다.
+                                onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
                             )
 
                             Tab.SETTINGS -> settings?.let { s ->
@@ -213,6 +223,8 @@ class MainActivity : ComponentActivity() {
         video: VideoItem,
         settingsGesturesEnabled: Boolean,
         followAutoRotate: Boolean,
+        queue: List<VideoItem>,
+        autoPlayNext: Boolean,
         defaultSpeed: Float,
         defaultCharset: String,
         subtitleScale: Float,
@@ -234,8 +246,15 @@ class MainActivity : ComponentActivity() {
         var forcedLandscape by remember { mutableStateOf<Boolean?>(null) }
 
         LaunchedEffect(video.uri) {
-            playerVm.open(video, resume = true, speed = defaultSpeed, charset = defaultCharset)
+            playerVm.open(
+                video = video,
+                resume = true,
+                speed = defaultSpeed,
+                charset = defaultCharset,
+                queue = queue,
+            )
         }
+        LaunchedEffect(autoPlayNext) { playerVm.setAutoPlayNext(autoPlayNext) }
 
         LaunchedEffect(playerState.locked, followAutoRotate, forcedLandscape) {
             PlayerOrientation.apply(
@@ -277,6 +296,7 @@ class MainActivity : ComponentActivity() {
             onToggleFullscreen = { forcedLandscape = !isLandscape },
             onBrightnessDelta = systemControls::adjustBrightness,
             onVolumeDelta = systemControls::adjustVolume,
+            onPlayVideo = playerVm::playNext,
             onBack = onExit,
             isFullscreen = isLandscape,
             gesturesEnabled = settingsGesturesEnabled,

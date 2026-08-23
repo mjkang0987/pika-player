@@ -10,6 +10,8 @@ import android.net.Uri
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.media.VideoItem
+import com.pikaworks.pikaplayer.data.subtitle.SubtitleIndex
+import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,9 +42,11 @@ class LibraryViewModel(
     private val mediaStore: MediaStoreSource,
     private val safFolders: SafFolderSource,
     private val positionDao: PlaybackPositionDao,
+    private val subtitleMatcher: SubtitleMatcher,
 ) : ViewModel() {
 
     private val videos = MutableStateFlow<List<VideoItem>>(emptyList())
+    private val subtitles = MutableStateFlow(SubtitleIndex.EMPTY)
     private val loading = MutableStateFlow(true)
 
     private val _uiState = MutableStateFlow(LibraryUiState())
@@ -50,15 +54,14 @@ class LibraryViewModel(
 
     init {
         viewModelScope.launch {
-            combine(videos, positionDao.observeAll(), loading) { list, positions, isLoading ->
+            combine(videos, positionDao.observeAll(), subtitles, loading) { list, positions, subs, isLoading ->
                 val byUri: Map<String, PlaybackPosition> = positions.associateBy { it.uri }
 
                 val rows = list.map { video ->
                     LibraryRow(
                         video = video,
                         positionMs = byUri[video.uri.toString()]?.positionMs ?: 0L,
-                        // TODO: 같은 이름의 자막 파일을 찾아 형식을 채운다 (SubtitleMatcher)
-                        subtitleFormat = null,
+                        subtitleFormat = subs.formatOf(video),
                     )
                 }
 
@@ -90,6 +93,8 @@ class LibraryViewModel(
             videos.value = mediaStore.queryVideos()
             loading.value = false
         }
+        // 목록을 막지 않는다. 배지는 색인이 준비되는 대로 나중에 붙어도 된다.
+        viewModelScope.launch { subtitles.value = subtitleMatcher.indexAll() }
     }
 
     /**
@@ -111,9 +116,10 @@ class LibraryViewModel(
         private val mediaStore: MediaStoreSource,
         private val safFolders: SafFolderSource,
         private val positionDao: PlaybackPositionDao,
+        private val subtitleMatcher: SubtitleMatcher,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            LibraryViewModel(mediaStore, safFolders, positionDao) as T
+            LibraryViewModel(mediaStore, safFolders, positionDao, subtitleMatcher) as T
     }
 }

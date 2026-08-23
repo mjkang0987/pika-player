@@ -21,6 +21,15 @@ data class VideoItem(
     /** 확장자를 뗀 이름. 자막 파일 자동 매칭의 기준. */
     val baseName: String get() = displayName.substringBeforeLast('.')
 
+    /**
+     * 같은 폴더인지 비교하는 키.
+     *
+     * API 29+ 는 RELATIVE_PATH, 그 이하는 전체 경로의 부모다. MediaStore 가
+     * 버전마다 다른 열을 주기 때문에 자막 파일 쪽도 같은 규칙으로 만들어야 한다.
+     */
+    val folderKey: String?
+        get() = relativePath ?: filePath?.substringBeforeLast('/', "")?.takeIf { it.isNotEmpty() }
+
     val resolutionLabel: String?
         get() = if (width > 0 && height > 0) "${width}×${height}" else null
 }

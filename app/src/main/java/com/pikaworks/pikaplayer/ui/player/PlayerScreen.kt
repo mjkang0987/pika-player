@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -32,8 +34,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -41,6 +45,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import coil.compose.AsyncImage
+import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.formatDuration
@@ -74,6 +80,7 @@ fun PlayerScreen(
     onToggleFullscreen: () -> Unit,
     onBrightnessDelta: (Float) -> Float,
     onVolumeDelta: (Float) -> Float,
+    onPlayVideo: (VideoItem) -> Unit,
     onBack: () -> Unit,
     isFullscreen: Boolean = false,
     gesturesEnabled: Boolean = true,
@@ -212,7 +219,80 @@ fun PlayerScreen(
                 onToggleFullscreen = onToggleFullscreen,
                 onToggleLock = onToggleLock,
             )
+            // 남는 세로 공간만 쓴다. 좁은 화면에서는 높이가 0이 되어 조용히 사라진다.
+            UpNext(
+                videos = state.upNext,
+                onClick = onPlayVideo,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            )
         }
+    }
+}
+
+/**
+ * 플레이어 하단의 다음 영상 목록.
+ *
+ * 플레이어는 라이트 테마에서도 검은 배경이라 목록 행을 그대로 쓸 수 없다.
+ * 여기서는 영상 위에 얹는 색(onMedia*)만 쓴다.
+ */
+@Composable
+private fun UpNext(videos: List<VideoItem>, onClick: (VideoItem) -> Unit, modifier: Modifier = Modifier) {
+    if (videos.isEmpty()) return
+    val colors = PikaTheme.colors
+    Column(modifier = modifier) {
+        Text(
+            "다음 영상",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.8.sp,
+            color = colors.onMediaKey,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 18.dp, bottom = 6.dp),
+        )
+        LazyColumn {
+            items(videos, key = { it.uri.toString() }) { video ->
+                UpNextRow(video = video, onClick = { onClick(video) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpNextRow(video: VideoItem, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(11.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .width(68.dp).height(38.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color.White.copy(alpha = 0.10f)),
+        ) {
+            AsyncImage(
+                model = video.uri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        Text(
+            video.displayName,
+            fontSize = 12.sp,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            formatDuration(video.durationMs),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Light,
+            color = Color.White.copy(alpha = 0.55f),
+        )
     }
 }
 

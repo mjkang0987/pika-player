@@ -66,6 +66,48 @@ class SubtitleMatcher(private val context: Context) {
     }
 
     /**
+     * 기기 안의 자막 파일을 한 번에 훑어 (폴더, 기본 이름) → 형식 색인을 만든다.
+     *
+     * 목록에 배지를 붙이려고 영상마다 [findFor] 를 돌리면 영상 수만큼 쿼리가 나간다.
+     * 영상이 수백 개인 기기에서는 목록이 눈에 띄게 늦는다. 자막 파일은 그보다 훨씬
+     * 적으므로 한 번에 읽어 메모리에서 맞추는 편이 싸다.
+     */
+    suspend fun indexAll(): SubtitleIndex = withContext(Dispatchers.IO) {
+        val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        val useRelativePath = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        val pathColumn = if (useRelativePath) {
+            MediaStore.Files.FileColumns.RELATIVE_PATH
+        } else {
+            @Suppress("DEPRECATION")
+            MediaStore.Files.FileColumns.DATA
+        }
+        val projection = arrayOf(MediaStore.Files.FileColumns.DISPLAY_NAME, pathColumn)
+
+        val extensions = SubtitleFormat.entries.flatMap { it.extensions }
+        val selection = extensions.joinToString(" OR ") {
+            "${MediaStore.Files.FileColumns.DISPLAY_NAME} LIKE ?"
+        }
+        val args = extensions.map { "%.$it" }.toTypedArray()
+
+        val byKey = mutableMapOf<String, String>()
+        runCatching {
+            context.contentResolver.query(collection, projection, selection, args, null)
+        }.getOrNull()?.use { c ->
+            while (c.moveToNext()) {
+                val name = c.getString(0) ?: continue
+                val path = c.getString(1) ?: continue
+                val format = SubtitleFormat.fromFileName(name) ?: continue
+                val folder = if (useRelativePath) path else path.substringBeforeLast('/', "")
+                if (folder.isEmpty()) continue
+                // 같은 영상에 .srt 와 .smi 가 둘 다 있으면 먼저 만난 것을 쓴다.
+                // 배지는 "자막이 있다"는 신호라 어느 쪽인지까지는 중요하지 않다.
+                byKey.putIfAbsent(indexKey(folder, name.substringBeforeLast('.')), format.label)
+            }
+        }
+        SubtitleIndex(byKey)
+    }
+
+    /**
      * 자막 파일을 읽어 트랙으로 만든다.
      *
      * 인코딩 판별은 [SubtitleLoader] 가 한다 — 경로만 넘기면 CP949 파일이 깨진다.
@@ -84,4 +126,21 @@ class SubtitleMatcher(private val context: Context) {
                 ?: return@withContext null
             SubtitleTrack(loaded.cues)
         }
+
+    companion object {
+        internal fun indexKey(folder: String, baseName: String) = "$folder\u0000$baseName"
+    }
+}
+
+/** [SubtitleMatcher.indexAll] 의 결과. 목록 한 줄마다 배지 문자열을 준다. */
+class SubtitleIndex(private val byKey: Map<String, String>) {
+
+    fun formatOf(video: VideoItem): String? {
+        val folder = video.folderKey ?: return null
+        return byKey[SubtitleMatcher.indexKey(folder, video.baseName)]
+    }
+
+    companion object {
+        val EMPTY = SubtitleIndex(emptyMap())
+    }
 }

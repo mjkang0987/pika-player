@@ -45,6 +45,8 @@ data class PlayerUiState(
     val locked: Boolean = false,
     /** AspectRatioFrameLayout 의 resize mode. 화면비 버튼이 순환시킨다. */
     val resizeMode: Int = 0,
+    /** 같은 폴더에서 이 영상 뒤에 오는 것들. 하단 목록과 자동 재생이 함께 쓴다. */
+    val upNext: List<VideoItem> = emptyList(),
 ) {
     val progress: Float
         get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -71,6 +73,8 @@ class PlayerViewModel(
     private var subtitleOffsetMs: Long = 0L
     private var currentVideo: VideoItem? = null
     private var matches: List<SubtitleMatcher.Match> = emptyList()
+    private var queue: List<VideoItem> = emptyList()
+    private var autoPlayNext: Boolean = true
 
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -81,6 +85,10 @@ class PlayerViewModel(
         override fun onPlaybackStateChanged(state: Int) {
             if (state == Player.STATE_READY) {
                 _uiState.update { it.copy(durationMs = player.duration.coerceAtLeast(0L)) }
+            }
+            if (state == Player.STATE_ENDED) {
+                savePosition() // 끝까지 본 위치를 남겨야 '최근'에 뜬다
+                if (autoPlayNext) _uiState.value.upNext.firstOrNull()?.let(::playNext)
             }
         }
     }
@@ -107,8 +115,11 @@ class PlayerViewModel(
         resume: Boolean,
         speed: Float = 1.0f,
         charset: String = SubtitleEncoding.AUTO,
+        queue: List<VideoItem> = emptyList(),
     ) {
         if (currentVideo?.uri == video.uri) return
+
+        this.queue = queue
 
         savePosition() // 이전 영상의 위치를 먼저 남긴다
         track = SubtitleTrack.EMPTY
@@ -121,6 +132,7 @@ class PlayerViewModel(
             durationMs = video.durationMs,
             speed = speed,
             subtitleCharset = charset,
+            upNext = upNextOf(video),
         )
 
         player.setPlaybackSpeed(speed)
@@ -137,6 +149,35 @@ class PlayerViewModel(
         }
 
         loadSubtitle(video)
+    }
+
+    /**
+     * 같은 폴더에서 이 영상 다음에 오는 것들.
+     *
+     * 보관함은 여러 폴더의 영상을 한 줄로 섞어 보여준다. 거기서 그대로 "다음"을
+     * 집으면 관계없는 폴더로 건너뛴다 — 기획서 7.2 는 같은 폴더로 못박았다.
+     * SAF 로 연 파일은 folderName 이 없는데, 그때는 고른 폴더 하나뿐이라 맞다.
+     */
+    private fun upNextOf(video: VideoItem): List<VideoItem> {
+        val sameFolder = queue.filter { it.folderName == video.folderName }
+        val index = sameFolder.indexOfFirst { it.uri == video.uri }
+        return if (index < 0) emptyList() else sameFolder.drop(index + 1).take(UP_NEXT_LIMIT)
+    }
+
+    /** 목록에서 고르거나 자동 재생으로 넘어갈 때. 재생속도·인코딩은 이어받는다. */
+    fun playNext(video: VideoItem) {
+        val current = _uiState.value
+        open(
+            video = video,
+            resume = true,
+            speed = current.speed,
+            charset = current.subtitleCharset,
+            queue = queue,
+        )
+    }
+
+    fun setAutoPlayNext(enabled: Boolean) {
+        autoPlayNext = enabled
     }
 
     private fun loadSubtitle(video: VideoItem) {
@@ -267,6 +308,9 @@ class PlayerViewModel(
 
     companion object {
         val RESIZE_MODE_LABELS = listOf("맞춤", "채움", "늘이기")
+
+        /** 하단 목록에 쓰는 개수. 화면에 다 보이지도 않는 분량을 들고 있을 이유가 없다. */
+        private const val UP_NEXT_LIMIT = 20
     }
 
     private fun savePosition() {
