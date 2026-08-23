@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.pikaworks.pikaplayer.data.db.PlaybackPosition
 import com.pikaworks.pikaplayer.data.db.PlaybackPositionDao
 import com.pikaworks.pikaplayer.data.media.LibraryRow
+import android.net.Uri
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
+import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,7 @@ data class LibraryUiState(
 
 class LibraryViewModel(
     private val mediaStore: MediaStoreSource,
+    private val safFolders: SafFolderSource,
     private val positionDao: PlaybackPositionDao,
 ) : ViewModel() {
 
@@ -78,12 +81,28 @@ class LibraryViewModel(
         }
     }
 
+    /**
+     * 권한 대신 사용자가 고른 폴더에서 읽는다.
+     *
+     * SAF 는 재생시간·해상도를 주지 않아 파일마다 직접 읽어야 하므로
+     * MediaStore 경로보다 느리다. 폴더 하나 분량이라 감수한다.
+     */
+    fun loadFolder(treeUri: Uri) {
+        viewModelScope.launch {
+            loading.value = true
+            val entries = safFolders.listChildren(treeUri)
+            videos.value = safFolders.readVideos(entries)
+            loading.value = false
+        }
+    }
+
     class Factory(
         private val mediaStore: MediaStoreSource,
+        private val safFolders: SafFolderSource,
         private val positionDao: PlaybackPositionDao,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            LibraryViewModel(mediaStore, positionDao) as T
+            LibraryViewModel(mediaStore, safFolders, positionDao) as T
     }
 }

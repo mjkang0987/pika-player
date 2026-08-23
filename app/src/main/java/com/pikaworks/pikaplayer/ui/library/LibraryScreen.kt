@@ -44,13 +44,14 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 fun LibraryScreen(
     state: LibraryUiState,
     onVideoClick: (LibraryRow) -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
 
     LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
 
-        item { Header() }
+        item { Header(onSettingsClick = onSettingsClick) }
 
         if (state.continueWatching.isNotEmpty()) {
             item { SectionTitle("이어보기", state.continueWatching.size) }
@@ -67,7 +68,7 @@ fun LibraryScreen(
 }
 
 @Composable
-private fun Header() {
+private fun Header(onSettingsClick: () -> Unit) {
     val colors = PikaTheme.colors
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 60.dp),
@@ -75,6 +76,13 @@ private fun Header() {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text("보관함", fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
+        // TODO: 하단 네비게이션(보관함/폴더/최근/설정)이 들어오면 그쪽으로 옮긴다.
+        Text(
+            "설정",
+            fontSize = 13.sp,
+            color = colors.textSecondary,
+            modifier = Modifier.clickable(onClick = onSettingsClick).padding(12.dp),
+        )
     }
 }
 

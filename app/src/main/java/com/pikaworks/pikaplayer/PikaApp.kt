@@ -6,6 +6,7 @@ import com.pikaworks.pikaplayer.core.AlwaysAllow
 import com.pikaworks.pikaplayer.core.FeatureGate
 import com.pikaworks.pikaplayer.data.db.PikaDatabase
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
+import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.prefs.SettingsStore
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
 
@@ -23,6 +24,8 @@ class PikaApp : Application() {
         private set
     lateinit var subtitleMatcher: SubtitleMatcher
         private set
+    lateinit var safFolders: SafFolderSource
+        private set
 
     /** Phase 1 은 모두 허용. Phase 2 에서 결제 상태를 읽는 구현으로 교체한다. */
     val featureGate: FeatureGate = AlwaysAllow
@@ -33,5 +36,6 @@ class PikaApp : Application() {
         mediaStore = MediaStoreSource(this)
         settings = SettingsStore(this)
         subtitleMatcher = SubtitleMatcher(this)
+        safFolders = SafFolderSource(this)
     }
 }

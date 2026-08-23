@@ -8,6 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.res.Configuration
 import androidx.compose.runtime.DisposableEffect
@@ -18,12 +20,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.ui.library.LibraryScreen
 import com.pikaworks.pikaplayer.ui.library.LibraryViewModel
+import com.pikaworks.pikaplayer.ui.permission.PermissionScreen
+import com.pikaworks.pikaplayer.ui.settings.SettingsScreen
 import com.pikaworks.pikaplayer.ui.player.PlayerScreen
 import com.pikaworks.pikaplayer.ui.player.PlayerViewModel
 import com.pikaworks.pikaplayer.ui.player.PlayerOrientation
@@ -62,27 +67,70 @@ class MainActivity : ComponentActivity() {
                 val libraryVm: LibraryViewModel = viewModel(
                     factory = LibraryViewModel.Factory(
                         mediaStore = app.mediaStore,
+                        safFolders = app.safFolders,
                         positionDao = app.database.playbackPositionDao(),
                     )
                 )
                 val libraryState by libraryVm.uiState.collectAsStateWithLifecycle()
 
-                LaunchedEffect(Unit) {
-                    // TODO: 권한 온보딩 화면(S5)으로 교체.
-                    //  기획서 7.2 — 거부 시 SAF 로 폴더를 직접 고르는 경로가 반드시 필요하다.
-                    if (hasMediaPermission()) {
-                        libraryVm.refresh()
-                    } else {
-                        onPermissionResult = { granted -> if (granted) libraryVm.refresh() }
-                        requestPermission.launch(mediaPermission)
+                val settings by app.settings.settings
+                    .collectAsStateWithLifecycle(initialValue = null)
+
+                var granted by remember { mutableStateOf(hasMediaPermission()) }
+                var denied by remember { mutableStateOf(false) }
+                var showSettings by remember { mutableStateOf(false) }
+                val scope = rememberCoroutineScope()
+
+                val pickFolder = rememberLauncherForActivityResult(
+                    ActivityResultContracts.OpenDocumentTree()
+                ) { treeUri ->
+                    if (treeUri != null) {
+                        app.safFolders.persistPermission(treeUri)
+                        scope.launch { app.settings.setFolderTreeUri(treeUri.toString()) }
+                        libraryVm.loadFolder(treeUri)
+                    }
+                }
+
+                val folderUri = settings?.folderTreeUri
+                LaunchedEffect(granted, folderUri) {
+                    when {
+                        granted -> libraryVm.refresh()
+                        folderUri != null -> libraryVm.loadFolder(Uri.parse(folderUri))
                     }
                 }
 
                 val video = playing
-                if (video == null) {
+                if (!granted && folderUri == null) {
+                    // 권한도 없고 고른 폴더도 없으면 아무것도 보여줄 수 없다.
+                    PermissionScreen(
+                        denied = denied,
+                        onAllow = {
+                            onPermissionResult = { ok ->
+                                granted = ok
+                                denied = !ok
+                            }
+                            requestPermission.launch(mediaPermission)
+                        },
+                        onPickFolder = { pickFolder.launch(null) },
+                    )
+                } else if (showSettings) {
+                    settings?.let { s ->
+                        SettingsScreen(
+                            settings = s,
+                            onResumeChange = { scope.launch { app.settings.setResumePlayback(it) } },
+                            onAutoPlayNextChange = { scope.launch { app.settings.setAutoPlayNext(it) } },
+                            onGesturesChange = { scope.launch { app.settings.setGesturesEnabled(it) } },
+                            onDoubleTapSeekChange = { scope.launch { app.settings.setDoubleTapSeekEnabled(it) } },
+                            onFollowAutoRotateChange = { scope.launch { app.settings.setFollowAutoRotate(it) } },
+                            onBack = { showSettings = false },
+                            versionName = BuildConfig.VERSION_NAME,
+                        )
+                    }
+                } else if (video == null) {
                     LibraryScreen(
                         state = libraryState,
                         onVideoClick = { row -> playing = row.video },
+                        onSettingsClick = { showSettings = true },
                     )
                 } else {
                     val playerVm: PlayerViewModel = viewModel(
@@ -103,8 +151,7 @@ class MainActivity : ComponentActivity() {
                     // 버튼을 눌렀을 때가 어긋난다.
                     var forcedLandscape by remember { mutableStateOf<Boolean?>(null) }
 
-                    val followAutoRotate by remember { app.settings.settings.map { it.followAutoRotate } }
-                        .collectAsStateWithLifecycle(initialValue = true)
+                    val followAutoRotate = settings?.followAutoRotate ?: true
 
                     LaunchedEffect(playerState.locked, followAutoRotate, forcedLandscape) {
                         PlayerOrientation.apply(
@@ -150,6 +197,7 @@ class MainActivity : ComponentActivity() {
                         onVolumeDelta = systemControls::adjustVolume,
                         onBack = { playing = null },
                         isFullscreen = isLandscape,
+                        gesturesEnabled = settings?.gesturesEnabled ?: true,
                     )
                 }
             }

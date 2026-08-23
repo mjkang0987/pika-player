@@ -22,6 +22,8 @@ class SettingsStore(private val context: Context) {
         val GESTURES = booleanPreferencesKey("brightness_volume_gestures")
         val DOUBLE_TAP_SEEK = booleanPreferencesKey("double_tap_seek")
         val FOLLOW_AUTO_ROTATE = booleanPreferencesKey("follow_auto_rotate")
+        /** 사용자가 SAF 로 고른 폴더. 권한을 거부했을 때의 경로. */
+        val FOLDER_TREE_URI = stringPreferencesKey("folder_tree_uri")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -33,6 +35,7 @@ class SettingsStore(private val context: Context) {
             gesturesEnabled = p[Keys.GESTURES] ?: true,
             doubleTapSeekEnabled = p[Keys.DOUBLE_TAP_SEEK] ?: true,
             followAutoRotate = p[Keys.FOLLOW_AUTO_ROTATE] ?: true,
+            folderTreeUri = p[Keys.FOLDER_TREE_URI],
         )
     }
 
@@ -53,6 +56,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setSubtitleEncoding(value: String) =
         context.dataStore.edit { it[Keys.SUBTITLE_ENCODING] = value }
+
+    suspend fun setFolderTreeUri(value: String) =
+        context.dataStore.edit { it[Keys.FOLDER_TREE_URI] = value }
 }
 
 object SubtitleEncoding {
@@ -71,4 +77,5 @@ data class Settings(
     val gesturesEnabled: Boolean,
     val doubleTapSeekEnabled: Boolean,
     val followAutoRotate: Boolean,
+    val folderTreeUri: String? = null,
 )
