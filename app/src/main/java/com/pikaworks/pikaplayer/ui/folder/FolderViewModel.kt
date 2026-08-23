@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.media.VideoItem
+import com.pikaworks.pikaplayer.data.media.sortedFor
+import com.pikaworks.pikaplayer.data.prefs.SortOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +32,7 @@ data class FolderUiState(
     val crumbs: List<Crumb> = emptyList(),
     val folders: List<FolderSummary> = emptyList(),
     val videos: List<VideoItem> = emptyList(),
+    val sort: String = SortOrder.DATE_DESC,
 ) {
     val openedFolder: Crumb? get() = crumbs.lastOrNull()
     val totalVideoCount: Int get() = folders.sumOf { it.videoCount ?: 0 }
@@ -56,8 +59,16 @@ class FolderViewModel(
 
     private var allVideos: List<VideoItem> = emptyList()
     private var mediaFolders: List<FolderSummary> = emptyList()
+    private var sort: String = SortOrder.DATE_DESC
     /** SAF 모드일 때만 값이 있다. */
     private var treeUri: Uri? = null
+
+    /** 보관함과 같은 정렬 기준을 쓴다. 화면마다 순서가 다르면 혼란스럽다. */
+    fun setSort(order: String) {
+        if (sort == order) return
+        sort = order
+        _uiState.value = _uiState.value.copy(sort = order, videos = _uiState.value.videos.sortedFor(order))
+    }
 
     /** 미디어 권한이 있을 때. 화면에 돌아올 때마다 호출한다. */
     fun refresh() {
@@ -71,7 +82,7 @@ class FolderViewModel(
                     FolderSummary(name, name, items.size, items.sumOf { it.sizeBytes })
                 }
                 .sortedBy { it.name }
-            _uiState.value = FolderUiState(loading = false, folders = mediaFolders)
+            _uiState.value = FolderUiState(loading = false, folders = mediaFolders, sort = sort)
         }
     }
 
@@ -80,7 +91,11 @@ class FolderViewModel(
         treeUri = uri
         allVideos = emptyList()
         viewModelScope.launch {
-            _uiState.value = FolderUiState(loading = true, rootLabel = safFolders.treeName(uri) ?: "선택한 폴더")
+            _uiState.value = FolderUiState(
+                loading = true,
+                rootLabel = safFolders.treeName(uri) ?: "선택한 폴더",
+                sort = sort,
+            )
             listSaf(parentDocumentId = null, crumbs = emptyList())
         }
     }
@@ -92,7 +107,7 @@ class FolderViewModel(
             _uiState.value = _uiState.value.copy(
                 crumbs = listOf(crumb),
                 folders = emptyList(),
-                videos = allVideos.filter { it.folderName == folder.name },
+                videos = allVideos.filter { it.folderName == folder.name }.sortedFor(sort),
             )
         } else {
             viewModelScope.launch { listSaf(folder.id, _uiState.value.crumbs + crumb) }
@@ -114,7 +129,8 @@ class FolderViewModel(
             _uiState.value = _uiState.value.copy(
                 crumbs = crumbs,
                 folders = if (opened == null) mediaFolders else emptyList(),
-                videos = if (opened == null) emptyList() else allVideos.filter { it.folderName == opened.name },
+                videos = if (opened == null) emptyList()
+                else allVideos.filter { it.folderName == opened.name }.sortedFor(sort),
             )
         } else {
             viewModelScope.launch { listSaf(crumbs.lastOrNull()?.id, crumbs) }
@@ -130,7 +146,7 @@ class FolderViewModel(
             loading = false,
             crumbs = crumbs,
             folders = dirs.map { FolderSummary(it.documentId, it.name, videoCount = null, totalBytes = null) },
-            videos = safFolders.readVideos(files),
+            videos = safFolders.readVideos(files).sortedFor(sort),
         )
     }
 

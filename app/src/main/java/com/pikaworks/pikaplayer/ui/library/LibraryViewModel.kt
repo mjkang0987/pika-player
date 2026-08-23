@@ -11,6 +11,8 @@ import com.pikaworks.pikaplayer.data.media.DeviceStorage
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.media.StorageUsage
+import com.pikaworks.pikaplayer.data.media.sortedFor
+import com.pikaworks.pikaplayer.data.prefs.SortOrder
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleIndex
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
@@ -30,6 +32,37 @@ data class ContinueItem(
         } else 0f
 }
 
+/**
+ * 보관함 상단 띠의 역할.
+ *
+ * 시안에는 여기에 영상 / 폴더 / 최근 / 자막 이 있었는데, 폴더와 최근은 하단
+ * 네비게이션과 정확히 같은 곳으로 간다. 같은 화면에 두 개의 길을 두면 어느
+ * 쪽이 지금 위치인지 흐려진다. 그래서 이 띠는 이동이 아니라 **목록 거르기**로
+ * 정리했다. 자막은 시안에 있었고 다른 데서 갈 수 없는 유일한 항목이라 남겼다.
+ */
+object LibraryFilter {
+    const val ALL = "all"
+    const val SUBTITLE = "subtitle"
+    const val WATCHING = "watching"
+    const val UNWATCHED = "unwatched"
+
+    val ORDER = listOf(ALL, SUBTITLE, WATCHING, UNWATCHED)
+
+    fun label(filter: String): String = when (filter) {
+        SUBTITLE -> "자막"
+        WATCHING -> "보던 중"
+        UNWATCHED -> "안 봄"
+        else -> "영상"
+    }
+
+    fun matches(filter: String, row: LibraryRow): Boolean = when (filter) {
+        SUBTITLE -> row.subtitleFormat != null
+        WATCHING -> row.progress != null
+        UNWATCHED -> row.positionMs == 0L
+        else -> true
+    }
+}
+
 data class LibraryUiState(
     val loading: Boolean = true,
     val continueWatching: List<ContinueItem> = emptyList(),
@@ -38,8 +71,22 @@ data class LibraryUiState(
     val recent: List<LibraryRow> = emptyList(),
     /** 아직 못 읽었으면 null */
     val storage: StorageUsage? = null,
+    val sort: String = SortOrder.DATE_DESC,
+    val filter: String = LibraryFilter.ALL,
+    /** 검색어(S7). 비어 있으면 검색하지 않는다. */
+    val query: String = "",
 ) {
-    val videoCount: Int get() = rows.size
+    /** 검색어에 걸린 것들. 거르기 탭의 개수도 이 범위에서 센다. */
+    private val searched: List<LibraryRow>
+        get() = if (query.isBlank()) rows else rows.filter { row ->
+            row.video.displayName.contains(query, ignoreCase = true) ||
+                row.video.folderName?.contains(query, ignoreCase = true) == true
+        }
+
+    /** 실제로 목록에 그릴 것들. 재생 대기열도 여기서 나온다. */
+    val visibleRows: List<LibraryRow> get() = searched.filter { LibraryFilter.matches(filter, it) }
+
+    fun countOf(filter: String): Int = searched.count { LibraryFilter.matches(filter, it) }
 }
 
 class LibraryViewModel(
@@ -53,21 +100,26 @@ class LibraryViewModel(
     private val videos = MutableStateFlow<List<VideoItem>>(emptyList())
     private val subtitles = MutableStateFlow(SubtitleIndex.EMPTY)
     private val storage = MutableStateFlow<StorageUsage?>(null)
+    private val sort = MutableStateFlow(SortOrder.DATE_DESC)
     private val loading = MutableStateFlow(true)
 
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
     init {
+        // combine 은 한 번에 다섯 개까지다. 목록과 직접 관계없는 값들을 먼저 묶는다.
+        val extras = combine(subtitles, storage, sort) { subs, space, order ->
+            Extras(subs, space, order)
+        }
         viewModelScope.launch {
-            combine(videos, positionDao.observeAll(), subtitles, storage, loading) { list, positions, subs, space, isLoading ->
+            combine(videos, positionDao.observeAll(), extras, loading) { list, positions, extra, isLoading ->
                 val byUri: Map<String, PlaybackPosition> = positions.associateBy { it.uri }
 
-                val rows = list.map { video ->
+                val rows = list.sortedFor(extra.sort).map { video ->
                     LibraryRow(
                         video = video,
                         positionMs = byUri[video.uri.toString()]?.positionMs ?: 0L,
-                        subtitleFormat = subs.formatOf(video),
+                        subtitleFormat = extra.subtitles.formatOf(video),
                     )
                 }
 
@@ -87,10 +139,29 @@ class LibraryViewModel(
                     continueWatching = continueItems,
                     rows = rows,
                     recent = recent,
-                    storage = space,
+                    storage = extra.storage,
+                    sort = extra.sort,
                 )
-            }.collect { _uiState.value = it }
+            }.collect { next ->
+                // 위 combine 은 상태를 통째로 새로 만든다. 거르기와 검색어는 화면에서
+                // 온 값이라, 여기서 넘겨받지 않으면 목록이 갱신될 때마다 초기화된다.
+                val current = _uiState.value
+                _uiState.value = next.copy(filter = current.filter, query = current.query)
+            }
         }
+    }
+
+    fun setSort(order: String) {
+        sort.value = order
+    }
+
+    /** 거르기와 검색어는 화면을 벗어나면 잊는다. 설정처럼 오래 남을 값이 아니다. */
+    fun setFilter(value: String) {
+        _uiState.value = _uiState.value.copy(filter = value)
+    }
+
+    fun setQuery(value: String) {
+        _uiState.value = _uiState.value.copy(query = value)
     }
 
     /** 권한을 받은 뒤, 그리고 화면에 돌아올 때마다 호출한다. */
@@ -120,6 +191,13 @@ class LibraryViewModel(
             loading.value = false
         }
     }
+
+    /** combine 인자 수를 줄이려고 묶은 값. 화면에는 풀어서 내보낸다. */
+    private data class Extras(
+        val subtitles: SubtitleIndex,
+        val storage: StorageUsage?,
+        val sort: String,
+    )
 
     class Factory(
         private val mediaStore: MediaStoreSource,

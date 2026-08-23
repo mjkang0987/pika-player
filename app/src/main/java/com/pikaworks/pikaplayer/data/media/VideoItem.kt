@@ -1,6 +1,7 @@
 package com.pikaworks.pikaplayer.data.media
 
 import android.net.Uri
+import com.pikaworks.pikaplayer.data.prefs.SortOrder
 
 /** 라이브러리 한 줄에 필요한 값만 담는다. 재생 위치는 별도 DB에서 합친다. */
 data class VideoItem(
@@ -45,4 +46,17 @@ data class LibraryRow(
         get() = if (positionMs > 0 && video.durationMs > 0) {
             (positionMs.toFloat() / video.durationMs).coerceIn(0f, 1f)
         } else null
+}
+
+/**
+ * [SortOrder] 값에 따라 정렬한다.
+ *
+ * 이름 정렬은 대소문자를 무시한다. 파일 이름은 사람이 붙인 것이라
+ * `Movie.mp4` 와 `movie.mp4` 가 목록의 반대쪽 끝에 놓이면 실수로 읽힌다.
+ */
+fun List<VideoItem>.sortedFor(order: String): List<VideoItem> = when (order) {
+    SortOrder.NAME -> sortedBy { it.displayName.lowercase() }
+    SortOrder.SIZE_DESC -> sortedByDescending { it.sizeBytes }
+    SortOrder.DURATION_DESC -> sortedByDescending { it.durationMs }
+    else -> sortedByDescending { it.dateModifiedSec }
 }

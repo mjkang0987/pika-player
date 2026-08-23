@@ -131,6 +131,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // 정렬은 설정에 저장한다. 두 화면이 같은 값을 본다.
+                val librarySort = settings?.librarySort
+                LaunchedEffect(librarySort) {
+                    librarySort?.let {
+                        libraryVm.setSort(it)
+                        folderVm.setSort(it)
+                    }
+                }
+
                 val folderUri = settings?.folderTreeUri
                 LaunchedEffect(granted, folderUri) {
                     when {
@@ -178,7 +187,12 @@ class MainActivity : ComponentActivity() {
                             Tab.LIBRARY -> LibraryScreen(
                                 modifier = Modifier.weight(1f),
                                 state = libraryState,
-                                onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
+                                onVideoClick = { row ->
+                                    play(row.video, libraryState.visibleRows.map { it.video })
+                                },
+                                onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
+                                onFilterChange = libraryVm::setFilter,
+                                onQueryChange = libraryVm::setQuery,
                             )
 
                             Tab.FOLDER -> {
@@ -189,6 +203,7 @@ class MainActivity : ComponentActivity() {
                                     onOpenFolder = folderVm::open,
                                     onNavigateTo = folderVm::navigateTo,
                                     onVideoClick = { play(it, folderState.videos) },
+                                    onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 )
                             }
 

@@ -27,6 +27,7 @@ class SettingsStore(private val context: Context) {
         val SUBTITLE_SCALE = floatPreferencesKey("subtitle_scale")
         val SUBTITLE_POSITION = stringPreferencesKey("subtitle_position")
         val THEME = stringPreferencesKey("theme")
+        val LIBRARY_SORT = stringPreferencesKey("library_sort")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -42,6 +43,7 @@ class SettingsStore(private val context: Context) {
             subtitleScale = p[Keys.SUBTITLE_SCALE] ?: SubtitleScale.NORMAL,
             subtitlePosition = p[Keys.SUBTITLE_POSITION] ?: SubtitlePosition.IN_VIDEO,
             theme = p[Keys.THEME] ?: ThemeMode.SYSTEM,
+            librarySort = p[Keys.LIBRARY_SORT] ?: SortOrder.DATE_DESC,
         )
     }
 
@@ -77,6 +79,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setTheme(value: String) =
         context.dataStore.edit { it[Keys.THEME] = value }
+
+    suspend fun setLibrarySort(value: String) =
+        context.dataStore.edit { it[Keys.LIBRARY_SORT] = value }
 }
 
 object SubtitleScale {
@@ -92,6 +97,18 @@ object SubtitleScale {
 object SubtitlePosition {
     const val IN_VIDEO = "in_video"
     const val LETTERBOX = "letterbox"
+}
+
+/**
+ * 목록 정렬 기준. 보관함과 폴더 안 영상 목록이 같은 값을 쓴다.
+ *
+ * 두 화면에서 정렬이 따로 놀면 "왜 여기만 순서가 다르지"가 된다.
+ */
+object SortOrder {
+    const val DATE_DESC = "date_desc"
+    const val NAME = "name"
+    const val SIZE_DESC = "size_desc"
+    const val DURATION_DESC = "duration_desc"
 }
 
 object ThemeMode {
@@ -120,4 +137,5 @@ data class Settings(
     val subtitleScale: Float = SubtitleScale.NORMAL,
     val subtitlePosition: String = SubtitlePosition.IN_VIDEO,
     val theme: String = ThemeMode.SYSTEM,
+    val librarySort: String = SortOrder.DATE_DESC,
 )

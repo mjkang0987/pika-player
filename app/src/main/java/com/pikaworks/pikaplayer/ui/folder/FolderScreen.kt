@@ -19,6 +19,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -27,7 +31,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.OptionSheet
+import com.pikaworks.pikaplayer.ui.SORT_OPTIONS
 import com.pikaworks.pikaplayer.ui.VideoListRow
+import com.pikaworks.pikaplayer.ui.sortLabel
 import com.pikaworks.pikaplayer.ui.formatSize
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
@@ -39,9 +46,21 @@ fun FolderScreen(
     /** 0 이면 최상단, n 이면 앞의 n 단계까지 남긴다. */
     onNavigateTo: (Int) -> Unit,
     onVideoClick: (VideoItem) -> Unit,
+    onSortChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
+    var sortSheetVisible by remember { mutableStateOf(false) }
+
+    if (sortSheetVisible) {
+        OptionSheet(
+            title = "정렬",
+            options = SORT_OPTIONS,
+            selected = state.sort,
+            onSelect = onSortChange,
+            onDismiss = { sortSheetVisible = false },
+        )
+    }
 
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
 
@@ -59,9 +78,17 @@ fun FolderScreen(
                 .fillMaxWidth()
                 .background(colors.surface)
                 .padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("이름순", fontSize = 12.sp, color = colors.textPrimary)
+            Row(
+                modifier = Modifier.clickable { sortSheetVisible = true },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(sortLabel(state.sort), fontSize = 12.sp, color = colors.textPrimary)
+                Text("▾", fontSize = 11.sp, color = colors.textFaint)
+            }
             Text(
                 summaryLabel(state),
                 fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,

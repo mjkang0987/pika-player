@@ -1,6 +1,9 @@
 package com.pikaworks.pikaplayer.ui.library
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,12 +19,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,7 +46,11 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.pikaworks.pikaplayer.data.media.LibraryRow
 import com.pikaworks.pikaplayer.data.media.StorageUsage
+import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.OptionSheet
+import com.pikaworks.pikaplayer.ui.SORT_OPTIONS
 import com.pikaworks.pikaplayer.ui.VideoListRow
+import com.pikaworks.pikaplayer.ui.sortLabel
 import com.pikaworks.pikaplayer.ui.formatRemaining
 import com.pikaworks.pikaplayer.ui.formatSize
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
@@ -43,23 +64,48 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 fun LibraryScreen(
     state: LibraryUiState,
     onVideoClick: (LibraryRow) -> Unit,
+    onSortChange: (String) -> Unit,
+    onFilterChange: (String) -> Unit,
+    onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
+    var sortSheetVisible by remember { mutableStateOf(false) }
+    var searching by remember { mutableStateOf(false) }
+
+    if (sortSheetVisible) {
+        OptionSheet(
+            title = "정렬",
+            options = SORT_OPTIONS,
+            selected = state.sort,
+            onSelect = onSortChange,
+            onDismiss = { sortSheetVisible = false },
+        )
+    }
 
     LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
 
-        item { Header() }
+        item {
+            Header(
+                searching = searching,
+                query = state.query,
+                onQueryChange = onQueryChange,
+                onToggleSearch = {
+                    searching = !searching
+                    if (!searching) onQueryChange("")
+                },
+            )
+        }
 
         if (state.continueWatching.isNotEmpty()) {
             item { SectionTitle("이어보기", state.continueWatching.size) }
             item { ContinueRow(state.continueWatching) }
         }
 
-        item { LibraryTabs(videoCount = state.videoCount) }
-        item { SortBar(storage = state.storage) }
+        item { LibraryTabs(state = state, onSelect = onFilterChange) }
+        item { SortBar(sort = state.sort, storage = state.storage, onSortClick = { sortSheetVisible = true }) }
 
-        items(state.rows, key = { it.video.id }) { row ->
+        items(state.visibleRows, key = { it.video.id }) { row ->
             VideoListRow(
                 video = row.video,
                 onClick = { onVideoClick(row) },
@@ -70,15 +116,56 @@ fun LibraryScreen(
     }
 }
 
+/**
+ * 제목과 검색(S7).
+ *
+ * 검색을 켜면 제목 자리를 입력칸이 대신한다. 검색은 목록을 좁히는 동작이라
+ * 별도 화면으로 넘기지 않는다 — 결과를 보면서 바로 지우고 다시 칠 수 있어야 한다.
+ */
 @Composable
-private fun Header() {
+private fun Header(
+    searching: Boolean,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onToggleSearch: () -> Unit,
+) {
     val colors = PikaTheme.colors
+    val focusRequester = remember { FocusRequester() }
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 60.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text("보관함", fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
+        if (searching) {
+            LaunchedEffect(Unit) { focusRequester.requestFocus() }
+            Box(modifier = Modifier.weight(1f)) {
+                if (query.isEmpty()) {
+                    Text("영상 · 폴더 이름", fontSize = 18.sp,
+                        fontWeight = FontWeight.Light, color = colors.textFaint)
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Light,
+                        color = colors.textPrimary,
+                    ),
+                    cursorBrush = SolidColor(colors.key),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                )
+            }
+        } else {
+            Text("보관함", fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
+        }
+        Icon(
+            if (searching) AppIcons.Close else AppIcons.Search,
+            if (searching) "검색 닫기" else "검색",
+            tint = colors.textSecondary,
+            modifier = Modifier.padding(start = 12.dp).size(22.dp).clickable(onClick = onToggleSearch),
+        )
     }
 }
 
@@ -146,29 +233,47 @@ private fun ContinueRow(items: List<ContinueItem>) {
     }
 }
 
+/** 목록 거르기. 이동이 아니라 지금 목록을 좁히는 띠다 — [LibraryFilter] 참고. */
 @Composable
-private fun LibraryTabs(videoCount: Int) {
+private fun LibraryTabs(state: LibraryUiState, onSelect: (String) -> Unit) {
     val colors = PikaTheme.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(22.dp),
     ) {
-        // TODO: 폴더 / 최근 / 자막 탭 연결
-        Column {
-            Text("영상 $videoCount", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = colors.key)
-            Spacer(Modifier.height(10.dp))
-            Box(Modifier.width(56.dp).height(2.dp).background(colors.key))
+        LibraryFilter.ORDER.forEach { filter ->
+            val selected = filter == state.filter
+            // 밑줄은 글자 너비만큼만 긋는다. 가로 스크롤 안에서는 폭 제약이 없어
+            // fillMaxWidth 가 먹지 않으므로 글자 뒤에 직접 그린다.
+            val underline = colors.key
+            Text(
+                "${LibraryFilter.label(filter)} ${state.countOf(filter)}",
+                fontSize = 13.sp,
+                fontWeight = if (selected) FontWeight.Medium else FontWeight.Light,
+                color = if (selected) colors.key else colors.textSecondary,
+                modifier = Modifier
+                    .clickable { onSelect(filter) }
+                    .drawBehind {
+                        if (!selected) return@drawBehind
+                        val thickness = 2.dp.toPx()
+                        drawRect(
+                            color = underline,
+                            topLeft = Offset(0f, size.height - thickness),
+                            size = Size(size.width, thickness),
+                        )
+                    }
+                    // 고르지 않았을 때도 밑줄 자리를 비워 둔다. 줄 높이가 흔들리지 않는다.
+                    .padding(bottom = 12.dp),
+            )
         }
-        Text("폴더", fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textSecondary)
-        Text("최근", fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textSecondary)
-        Text("자막", fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textSecondary)
     }
 }
 
 @Composable
-private fun SortBar(storage: StorageUsage?) {
+private fun SortBar(sort: String, storage: StorageUsage?, onSortClick: () -> Unit) {
     val colors = PikaTheme.colors
     Row(
         modifier = Modifier
@@ -178,8 +283,14 @@ private fun SortBar(storage: StorageUsage?) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        // TODO: 정렬 기준 선택 연결
-        Text("최근 수정순", fontSize = 12.sp, color = colors.textPrimary)
+        Row(
+            modifier = Modifier.clickable(onClick = onSortClick),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(sortLabel(sort), fontSize = 12.sp, color = colors.textPrimary)
+            Text("▾", fontSize = 11.sp, color = colors.textFaint)
+        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
