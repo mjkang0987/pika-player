@@ -61,7 +61,10 @@ fun PlayerScreen(
     onSkip: (Long) -> Unit,
     onSeek: (Long) -> Unit,
     onToggleControls: () -> Unit,
-    onToggleSubtitle: () -> Unit,
+    onSelectSubtitle: (Int) -> Unit,
+    onSelectCharset: (String) -> Unit,
+    onAdjustSubtitleOffset: (Long) -> Unit,
+    onResetSubtitleOffset: () -> Unit,
     onToggleLock: () -> Unit,
     onCycleResize: () -> Unit,
     onCycleSpeed: () -> Unit,
@@ -75,6 +78,18 @@ fun PlayerScreen(
 ) {
     val colors = PikaTheme.colors
     var feedback by remember { mutableStateOf<GestureFeedback?>(null) }
+    var subtitleSheetVisible by remember { mutableStateOf(false) }
+
+    if (subtitleSheetVisible) {
+        SubtitleSheet(
+            state = state,
+            onSelectSubtitle = onSelectSubtitle,
+            onSelectCharset = onSelectCharset,
+            onAdjustOffset = onAdjustSubtitleOffset,
+            onResetOffset = onResetSubtitleOffset,
+            onDismiss = { subtitleSheetVisible = false },
+        )
+    }
 
     Column(modifier = modifier.fillMaxSize().background(Color.Black)) {
 
@@ -137,7 +152,7 @@ fun PlayerScreen(
                         Spacer(Modifier.height(10.dp))
                         SecondaryControls(
                             state = state,
-                            onToggleSubtitle = onToggleSubtitle,
+                            onOpenSubtitleSheet = { subtitleSheetVisible = true },
                             onCycleResize = onCycleResize,
                             onCycleSpeed = onCycleSpeed,
                             onToggleFullscreen = onToggleFullscreen,
@@ -172,7 +187,7 @@ fun PlayerScreen(
             SecondaryControls(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 state = state,
-                onToggleSubtitle = onToggleSubtitle,
+                onOpenSubtitleSheet = { subtitleSheetVisible = true },
                 onCycleResize = onCycleResize,
                 onCycleSpeed = onCycleSpeed,
                 onToggleFullscreen = onToggleFullscreen,
@@ -355,7 +370,7 @@ private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit, modifier: Modi
 private fun SecondaryControls(
     modifier: Modifier = Modifier,
     state: PlayerUiState,
-    onToggleSubtitle: () -> Unit,
+    onOpenSubtitleSheet: () -> Unit,
     onCycleResize: () -> Unit,
     onCycleSpeed: () -> Unit,
     onToggleFullscreen: () -> Unit,
@@ -366,7 +381,7 @@ private fun SecondaryControls(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         SpeedItem(state.speed, onCycleSpeed)
-        IconItem(AppIcons.Subtitle, "자막", active = state.subtitleEnabled, onClick = onToggleSubtitle)
+        IconItem(AppIcons.Subtitle, "자막", active = state.subtitleEnabled, onClick = onOpenSubtitleSheet)
         IconItem(
             AppIcons.AspectRatio,
             PlayerViewModel.RESIZE_MODE_LABELS[state.resizeMode.coerceIn(PlayerViewModel.RESIZE_MODE_LABELS.indices)],

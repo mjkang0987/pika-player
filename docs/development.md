@@ -40,6 +40,7 @@ app/src/main/java/com/pikaworks/pikaplayer/
     player/             플레이어 화면(S3)
       PlayerIcons.kt      시안 SVG 패스를 옮긴 벡터 아이콘
       PlayerGestures.kt   스와이프 탐색 / 밝기 · 볼륨 / 더블탭
+      SubtitleSheet.kt    자막 트랙 · 인코딩 · 싱크 (S4)
       SystemControls.kt   밝기 · 볼륨 · 화면 켜둠
       PlayerOrientation.kt 방향 정책 · 몰입 모드
     Format.kt           재생시간·용량·남은시간 표기
@@ -55,6 +56,8 @@ app/src/main/java/com/pikaworks/pikaplayer/
 `PikaColors.onMediaKey` / `onMediaText` / `onMediaTrack` 은 **테마와 무관하게 고정**입니다. 썸네일과 영상 위에 얹히는 요소는 항상 어두운 배경 위에 놓이므로, 라이트 테마 값을 쓰면 묻혀서 안 보입니다.
 
 **진행 바 높이는 모서리 반경과 같게 유지하세요.** 바가 반경보다 얇으면 클리핑 곡선이 바를 대각선으로 잘라내 끝이 쐐기 모양이 됩니다.
+
+**인코딩은 사람이 되돌릴 수 있어야 합니다.** 자동 판별은 틀릴 수 있고, 틀렸을 때 손쓸 방법이 없으면 사용자는 "자막이 깨져서 못 본다"로 받아들입니다. 그래서 자막 시트에서 인코딩 칩을 위쪽에 뒀고, 고르면 같은 파일을 새 인코딩으로 다시 읽습니다.
 
 **권한을 거부해도 앱을 쓸 수 있어야 합니다.** 저장소 권한은 거절률이 높아서, 거부 = 막다른 길이면 그 자리에서 이탈합니다. SAF 로 폴더를 직접 고르는 경로(`SafFolderSource`)가 그래서 있습니다.
 
@@ -100,8 +103,7 @@ app/src/main/java/com/pikaworks/pikaplayer/
 
 1. **다음 영상 목록** — 플레이어 하단, 같은 폴더
 2. **라이브러리 목록의 자막 배지** — `SubtitleMatcher` 를 목록에도 연결해 `LibraryRow.subtitleFormat` 채우기
-3. **자막 설정 시트(S4)** — 인코딩 강제 지정을 화면에 연결. `SubtitleMatcher.load(forcedCharsetName)` 은 이미 받는다
-4. **설정 화면의 미완 항목** — 재생속도 · 인코딩 · 글자 크기 · 표시 위치 · 테마 선택 시트
+3. **설정 화면의 미완 항목** — 재생속도 · 인코딩 · 글자 크기 · 표시 위치 · 테마 선택 시트
 5. **SAF 폴더 탐색** — 폴더 화면은 MediaStore 기준으로만 동작한다. SAF 로 고른 폴더를 쓰는 사용자는 폴더 탭이 비어 보인다
 6. **SAF 메타데이터 캐시** — 폴더를 열 때마다 파일마다 `MediaMetadataRetriever` 를 돌린다. Room 에 캐시할 것
 7. **검색(S7)** — P2 — 현재는 진입 즉시 요청하는 임시 처리. **거부 시 SAF 우회로가 반드시 필요**

@@ -81,6 +81,7 @@ object AppIcons {
         "M14.5 14.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4z",
     )
     val ChevronRight = stroke("M9.5 6 15.5 12l-6 6")
+    val Check = stroke("M5 12.5 10 17.5 19 7", width = 2.2f)
 
     /** 권한 온보딩의 대표 아이콘 */
     val VideoLibrary = stroke(

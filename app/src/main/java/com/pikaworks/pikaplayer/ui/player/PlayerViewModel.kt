@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.pikaworks.pikaplayer.data.db.PlaybackPosition
 import com.pikaworks.pikaplayer.data.db.PlaybackPositionDao
 import com.pikaworks.pikaplayer.data.media.VideoItem
+import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
 import com.pikaworks.pikaplayer.subtitle.SubtitleCue
 import com.pikaworks.pikaplayer.subtitle.SubtitleTrack
@@ -33,6 +34,13 @@ data class PlayerUiState(
     /** 자막 상태 표기 — 기획서 7.2 규칙. 외부 파일은 언어를 알 수 없어 형식명을 쓴다. */
     val subtitleLabel: String = "자막 없음",
     val subtitleEnabled: Boolean = false,
+    /** 영상 옆에서 찾은 자막 파일들 */
+    val subtitleOptions: List<SubtitleOption> = emptyList(),
+    /** 선택된 자막. -1 이면 끔 */
+    val selectedSubtitle: Int = -1,
+    /** 사용자가 지정한 인코딩. "auto" 면 자동 판별 */
+    val subtitleCharset: String = SubtitleEncoding.AUTO,
+    val subtitleOffsetMs: Long = 0L,
     val controlsVisible: Boolean = true,
     val locked: Boolean = false,
     /** AspectRatioFrameLayout 의 resize mode. 화면비 버튼이 순환시킨다. */
@@ -41,6 +49,11 @@ data class PlayerUiState(
     val progress: Float
         get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
 }
+
+data class SubtitleOption(
+    val name: String,
+    val formatLabel: String,
+)
 
 @OptIn(UnstableApi::class)
 class PlayerViewModel(
@@ -57,6 +70,7 @@ class PlayerViewModel(
     private var track: SubtitleTrack = SubtitleTrack.EMPTY
     private var subtitleOffsetMs: Long = 0L
     private var currentVideo: VideoItem? = null
+    private var matches: List<SubtitleMatcher.Match> = emptyList()
 
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -89,6 +103,7 @@ class PlayerViewModel(
         savePosition() // 이전 영상의 위치를 먼저 남긴다
         track = SubtitleTrack.EMPTY
         subtitleOffsetMs = 0L
+        matches = emptyList()
         currentVideo = video
         // 이전 영상의 자막·화면비·잠금 상태가 넘어오지 않도록 초기화한다.
         _uiState.value = PlayerUiState(title = video.baseName, durationMs = video.durationMs)
@@ -110,21 +125,70 @@ class PlayerViewModel(
 
     private fun loadSubtitle(video: VideoItem) {
         viewModelScope.launch {
-            val match = subtitleMatcher.findFor(video).firstOrNull()
-            if (match == null) {
+            matches = subtitleMatcher.findFor(video)
+            if (matches.isEmpty()) {
                 track = SubtitleTrack.EMPTY
-                _uiState.update { it.copy(subtitleLabel = "자막 없음", subtitleEnabled = false) }
+                _uiState.update {
+                    it.copy(
+                        subtitleLabel = "자막 없음",
+                        subtitleEnabled = false,
+                        subtitleOptions = emptyList(),
+                        selectedSubtitle = -1,
+                    )
+                }
                 return@launch
             }
-            track = subtitleMatcher.load(match) ?: SubtitleTrack.EMPTY
+            _uiState.update {
+                it.copy(subtitleOptions = matches.map { m -> SubtitleOption(m.displayName, m.format.label) })
+            }
+            selectSubtitle(0)
+        }
+    }
+
+    /** [index] 가 -1 이면 자막을 끈다. */
+    fun selectSubtitle(index: Int) {
+        if (index < 0 || index >= matches.size) {
+            track = SubtitleTrack.EMPTY
+            _uiState.update {
+                it.copy(selectedSubtitle = -1, subtitleEnabled = false, subtitleLabel = "자막 끔", cue = null)
+            }
+            return
+        }
+        val match = matches[index]
+        viewModelScope.launch {
+            val charsetName = _uiState.value.subtitleCharset.takeIf { it != SubtitleEncoding.AUTO }
+            track = subtitleMatcher.load(match, charsetName) ?: SubtitleTrack.EMPTY
             _uiState.update {
                 it.copy(
+                    selectedSubtitle = index,
+                    subtitleEnabled = !track.isEmpty(),
                     // 외부 자막 파일에는 언어 정보가 없다. 형식명으로 표기한다.
                     subtitleLabel = "자막 · ${match.format.label}",
-                    subtitleEnabled = !track.isEmpty(),
                 )
             }
         }
+    }
+
+    /**
+     * 인코딩을 사람이 직접 지정한다.
+     *
+     * 자동 판별이 틀리는 경우가 있고, 그때 되돌릴 방법이 없으면 사용자는
+     * "자막이 깨져서 못 본다"로 받아들인다 — 기획서 7.2.
+     */
+    fun setSubtitleCharset(name: String) {
+        _uiState.update { it.copy(subtitleCharset = name) }
+        val selected = _uiState.value.selectedSubtitle
+        if (selected >= 0) selectSubtitle(selected) // 같은 파일을 새 인코딩으로 다시 읽는다
+    }
+
+    fun adjustSubtitleOffset(deltaMs: Long) {
+        subtitleOffsetMs += deltaMs
+        _uiState.update { it.copy(subtitleOffsetMs = subtitleOffsetMs) }
+    }
+
+    fun resetSubtitleOffset() {
+        subtitleOffsetMs = 0L
+        _uiState.update { it.copy(subtitleOffsetMs = 0L) }
     }
 
     /**
@@ -160,14 +224,6 @@ class PlayerViewModel(
     fun setSpeed(speed: Float) {
         player.setPlaybackSpeed(speed)
         _uiState.update { it.copy(speed = speed) }
-    }
-
-    fun setSubtitleOffset(offsetMs: Long) {
-        subtitleOffsetMs = offsetMs
-    }
-
-    fun toggleSubtitle() {
-        _uiState.update { it.copy(subtitleEnabled = !it.subtitleEnabled && !track.isEmpty()) }
     }
 
     fun toggleControls() {
