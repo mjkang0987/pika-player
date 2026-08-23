@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 
 private val LocalPikaColors = staticCompositionLocalOf { PikaDarkColors }
 
@@ -19,9 +20,15 @@ object PikaTheme {
 
 @Composable
 fun PikaTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    /** ThemeMode 값. 시스템 설정을 따르면 기기 설정을 읽는다. */
+    themeMode: String = ThemeMode.SYSTEM,
     content: @Composable () -> Unit,
 ) {
+    val darkTheme = when (themeMode) {
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        else -> isSystemInDarkTheme()
+    }
     val colors = if (darkTheme) PikaDarkColors else PikaLightColors
 
     // Material3 는 타이포그래피와 리플 기본값 때문에 쓴다.

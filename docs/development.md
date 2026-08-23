@@ -5,10 +5,18 @@
 이 골격은 **Android SDK가 없고 Google Maven에 접근할 수 없는 환경에서 작성**됐습니다. 따라서:
 
 - **`:app` 모듈은 빌드해 본 적이 없습니다.** 컴파일 오류가 남아 있을 수 있습니다.
-- 반면 **`:subtitle` 모듈은 실제로 컴파일하고 테스트를 돌려 16개 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
+- 반면 **`:subtitle` 모듈은 실제로 컴파일하고 테스트를 돌려 23개 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
 - **`gradle/libs.versions.toml`의 버전은 검증되지 않았습니다.** Kotlin 버전만 Maven Central에서 확인했고, AGP·Compose·Media3·Room 버전은 추정값입니다. Android Studio에서 열면 동기화 단계에서 바로 걸러집니다.
 
 첫 작업은 Android Studio로 열어 **동기화 → 버전 갱신 → 빌드**입니다.
+
+빌드가 안 되는 동안의 그물로 `tools/check_refs.py` 를 둡니다. 컴파일러가 잡아줬을 실수 중
+실제로 났던 세 가지 — 없는 ViewModel 메서드 참조, 인자 이름 불일치·누락, 선언 없는 컴포저블
+호출 — 을 문자열 수준에서 확인합니다. 타입은 못 보므로 컴파일 대체재가 아닙니다.
+
+```
+python3 tools/check_refs.py
+```
 
 ## 구조
 
@@ -38,7 +46,6 @@ app/src/main/java/com/pikaworks/pikaplayer/
     recent/             최근 탭
     settings/           설정 화면(S6)
     player/             플레이어 화면(S3)
-      PlayerIcons.kt      시안 SVG 패스를 옮긴 벡터 아이콘
       PlayerGestures.kt   스와이프 탐색 / 밝기 · 볼륨 / 더블탭
       SubtitleSheet.kt    자막 트랙 · 인코딩 · 싱크 (S4)
       SystemControls.kt   밝기 · 볼륨 · 화면 켜둠
@@ -46,7 +53,11 @@ app/src/main/java/com/pikaworks/pikaplayer/
     Format.kt           재생시간·용량·남은시간 표기
     VideoListRow.kt     목록 한 줄 (보관함·폴더·최근 공용)
     BottomNav.kt        하단 네비게이션
+    OptionSheet.kt      값 하나를 고르는 시트 (설정의 선택형 항목 공용)
     AppIcons.kt         시안 SVG 패스를 옮긴 벡터 아이콘
+
+tools/
+  check_refs.py         빌드 없이 도는 참조 점검 (아래 참조)
 ```
 
 ## 설계 메모
@@ -86,6 +97,9 @@ app/src/main/java/com/pikaworks/pikaplayer/
 | 권한 화면 대표 아이콘이 자막 아이콘 | 화면 의미와 다른 그림 |
 | 전체화면 시크바 이중 패딩 | 가로에서 좌우 여백이 44dp 로 벌어짐 |
 | 보관함·폴더 화면이 목록 행을 각자 구현 | 같은 모양을 두 번 유지해야 함 → `ui/VideoListRow` 로 통합 |
+| `SubtitleText` 를 호출만 하고 선언하지 않음 | 자막이 아예 컴파일되지 않음. 눈으로는 놓쳤고 `tools/check_refs.py` 가 잡았다 |
+| 테마 설정을 `PikaTheme` 안에서 읽음 | 테마의 입력을 테마 내부에서 만들 수 없다 → `setContent` 최상단으로 끌어올림 |
+| `PlayerViewModel.open()` 이 상태를 통째로 초기화 | 영상을 열 때마다 설정의 기본 재생속도·인코딩이 무시됨 → `open()` 인자로 받게 함 |
 
 ## 자막 처리 — 왜 직접 만들었나
 
@@ -103,14 +117,11 @@ app/src/main/java/com/pikaworks/pikaplayer/
 
 1. **다음 영상 목록** — 플레이어 하단, 같은 폴더
 2. **라이브러리 목록의 자막 배지** — `SubtitleMatcher` 를 목록에도 연결해 `LibraryRow.subtitleFormat` 채우기
-3. **설정 화면의 미완 항목** — 재생속도 · 인코딩 · 글자 크기 · 표시 위치 · 테마 선택 시트
-5. **SAF 폴더 탐색** — 폴더 화면은 MediaStore 기준으로만 동작한다. SAF 로 고른 폴더를 쓰는 사용자는 폴더 탭이 비어 보인다
-6. **SAF 메타데이터 캐시** — 폴더를 열 때마다 파일마다 `MediaMetadataRetriever` 를 돌린다. Room 에 캐시할 것
-7. **검색(S7)** — P2 — 현재는 진입 즉시 요청하는 임시 처리. **거부 시 SAF 우회로가 반드시 필요**
-5. 폴더 탐색(S2) — SAF 기반
-6. 설정 화면(S6) — `SettingsStore`는 이미 있음, 화면만 연결
-7. 저장소 사용량 표시 — `StatFs`
-8. 자막 파일 자동 매칭 — `LibraryRow.subtitleFormat` 채우기
+3. **SAF 폴더 탐색** — 폴더 화면은 MediaStore 기준으로만 동작한다. SAF 로 고른 폴더를 쓰는 사용자는 폴더 탭이 비어 보인다
+4. **SAF 메타데이터 캐시** — 폴더를 열 때마다 파일마다 `MediaMetadataRetriever` 를 돌린다. Room 에 캐시할 것
+5. **저장소 사용량 표시** — `StatFs`
+6. **오픈소스 라이선스 화면** — 설정 화면에 남은 마지막 TODO
+7. **검색(S7)** — P2
 
 ## 참고
 

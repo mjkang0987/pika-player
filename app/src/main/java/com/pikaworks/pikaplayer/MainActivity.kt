@@ -25,6 +25,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pikaworks.pikaplayer.data.media.VideoItem
+import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
+import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
+import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import com.pikaworks.pikaplayer.ui.BottomNav
 import com.pikaworks.pikaplayer.ui.Tab
 import com.pikaworks.pikaplayer.ui.folder.FolderScreen
@@ -80,9 +83,11 @@ class MainActivity : ComponentActivity() {
         val app = application as PikaApp
 
         setContent {
-            PikaTheme {
+            // 테마 설정이 PikaTheme 의 입력이므로 테마 바깥에서 읽어야 한다.
+            val settings by app.settings.settings.collectAsStateWithLifecycle(initialValue = null)
+
+            PikaTheme(themeMode = settings?.theme ?: ThemeMode.SYSTEM) {
                 val scope = rememberCoroutineScope()
-                val settings by app.settings.settings.collectAsStateWithLifecycle(initialValue = null)
                 val granted by permissionGranted
 
                 var denied by remember { mutableStateOf(false) }
@@ -140,6 +145,10 @@ class MainActivity : ComponentActivity() {
                         video = video,
                         settingsGesturesEnabled = settings?.gesturesEnabled ?: true,
                         followAutoRotate = settings?.followAutoRotate ?: true,
+                        defaultSpeed = settings?.playbackSpeed ?: 1f,
+                        defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
+                        subtitleScale = settings?.subtitleScale ?: 1f,
+                        subtitlePosition = settings?.subtitlePosition ?: SubtitlePosition.IN_VIDEO,
                         onExit = { playing = null },
                     )
 
@@ -177,6 +186,11 @@ class MainActivity : ComponentActivity() {
                                     onGesturesChange = { scope.launch { app.settings.setGesturesEnabled(it) } },
                                     onDoubleTapSeekChange = { scope.launch { app.settings.setDoubleTapSeekEnabled(it) } },
                                     onFollowAutoRotateChange = { scope.launch { app.settings.setFollowAutoRotate(it) } },
+                                    onPlaybackSpeedChange = { scope.launch { app.settings.setPlaybackSpeed(it) } },
+                                    onSubtitleEncodingChange = { scope.launch { app.settings.setSubtitleEncoding(it) } },
+                                    onSubtitleScaleChange = { scope.launch { app.settings.setSubtitleScale(it) } },
+                                    onSubtitlePositionChange = { scope.launch { app.settings.setSubtitlePosition(it) } },
+                                    onThemeChange = { scope.launch { app.settings.setTheme(it) } },
                                     onBack = { tab = Tab.LIBRARY },
                                     versionName = BuildConfig.VERSION_NAME,
                                 )
@@ -199,6 +213,10 @@ class MainActivity : ComponentActivity() {
         video: VideoItem,
         settingsGesturesEnabled: Boolean,
         followAutoRotate: Boolean,
+        defaultSpeed: Float,
+        defaultCharset: String,
+        subtitleScale: Float,
+        subtitlePosition: String,
         onExit: () -> Unit,
     ) {
         val playerVm: PlayerViewModel = viewModel(
@@ -215,7 +233,9 @@ class MainActivity : ComponentActivity() {
             LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
         var forcedLandscape by remember { mutableStateOf<Boolean?>(null) }
 
-        LaunchedEffect(video.uri) { playerVm.open(video, resume = true) }
+        LaunchedEffect(video.uri) {
+            playerVm.open(video, resume = true, speed = defaultSpeed, charset = defaultCharset)
+        }
 
         LaunchedEffect(playerState.locked, followAutoRotate, forcedLandscape) {
             PlayerOrientation.apply(
@@ -260,6 +280,8 @@ class MainActivity : ComponentActivity() {
             onBack = onExit,
             isFullscreen = isLandscape,
             gesturesEnabled = settingsGesturesEnabled,
+            subtitleScale = subtitleScale,
+            subtitlePosition = subtitlePosition,
         )
     }
 

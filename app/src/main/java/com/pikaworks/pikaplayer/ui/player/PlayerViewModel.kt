@@ -97,7 +97,17 @@ class PlayerViewModel(
      * 기기당 개수가 제한돼 있어 몇 개만 새면 재생이 실패한다. ViewModel 은
      * 하나만 두고 여기서 갈아끼운다.
      */
-    fun open(video: VideoItem, resume: Boolean) {
+    /**
+     * [speed] 와 [charset] 은 설정 화면의 기본값이다. 아래에서 상태를 통째로
+     * 새로 만들기 때문에, 기본값을 여기서 같이 받지 않으면 영상을 열 때마다
+     * 사용자가 정한 값이 무시된다.
+     */
+    fun open(
+        video: VideoItem,
+        resume: Boolean,
+        speed: Float = 1.0f,
+        charset: String = SubtitleEncoding.AUTO,
+    ) {
         if (currentVideo?.uri == video.uri) return
 
         savePosition() // 이전 영상의 위치를 먼저 남긴다
@@ -106,8 +116,14 @@ class PlayerViewModel(
         matches = emptyList()
         currentVideo = video
         // 이전 영상의 자막·화면비·잠금 상태가 넘어오지 않도록 초기화한다.
-        _uiState.value = PlayerUiState(title = video.baseName, durationMs = video.durationMs)
+        _uiState.value = PlayerUiState(
+            title = video.baseName,
+            durationMs = video.durationMs,
+            speed = speed,
+            subtitleCharset = charset,
+        )
 
+        player.setPlaybackSpeed(speed)
         player.setMediaItem(MediaItem.fromUri(video.uri))
         player.prepare()
 

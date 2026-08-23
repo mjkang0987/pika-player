@@ -24,7 +24,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.pikaworks.pikaplayer.data.prefs.Settings
+import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
+import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
+import com.pikaworks.pikaplayer.data.prefs.SubtitleScale
+import com.pikaworks.pikaplayer.data.prefs.ThemeMode
+import com.pikaworks.pikaplayer.ui.OptionSheet
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
@@ -42,11 +51,56 @@ fun SettingsScreen(
     onGesturesChange: (Boolean) -> Unit,
     onDoubleTapSeekChange: (Boolean) -> Unit,
     onFollowAutoRotateChange: (Boolean) -> Unit,
+    onPlaybackSpeedChange: (Float) -> Unit,
+    onSubtitleEncodingChange: (String) -> Unit,
+    onSubtitleScaleChange: (Float) -> Unit,
+    onSubtitlePositionChange: (String) -> Unit,
+    onThemeChange: (String) -> Unit,
     onBack: () -> Unit,
     versionName: String,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
+    var openPicker by remember { mutableStateOf<Picker?>(null) }
+
+    when (openPicker) {
+        Picker.SPEED -> OptionSheet(
+            title = "기본 재생속도",
+            options = SPEEDS,
+            selected = settings.playbackSpeed,
+            onSelect = onPlaybackSpeedChange,
+            onDismiss = { openPicker = null },
+        )
+        Picker.ENCODING -> OptionSheet(
+            title = "기본 인코딩",
+            options = ENCODINGS,
+            selected = settings.subtitleEncoding,
+            onSelect = onSubtitleEncodingChange,
+            onDismiss = { openPicker = null },
+        )
+        Picker.SUBTITLE_SCALE -> OptionSheet(
+            title = "자막 글자 크기",
+            options = SCALES,
+            selected = settings.subtitleScale,
+            onSelect = onSubtitleScaleChange,
+            onDismiss = { openPicker = null },
+        )
+        Picker.SUBTITLE_POSITION -> OptionSheet(
+            title = "자막 표시 위치",
+            options = POSITIONS,
+            selected = settings.subtitlePosition,
+            onSelect = onSubtitlePositionChange,
+            onDismiss = { openPicker = null },
+        )
+        Picker.THEME -> OptionSheet(
+            title = "테마",
+            options = THEMES,
+            selected = settings.theme,
+            onSelect = onThemeChange,
+            onDismiss = { openPicker = null },
+        )
+        null -> Unit
+    }
 
     LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
         item {
@@ -64,21 +118,21 @@ fun SettingsScreen(
         }
 
         item { SectionHeader("재생") }
-        item { ValueRow("기본 재생속도", "${settings.playbackSpeed}×") { /* TODO: 선택 시트 */ } }
+        item { ValueRow("기본 재생속도", label(SPEEDS, settings.playbackSpeed)) { openPicker = Picker.SPEED } }
         item { SwitchRow("이어보기", settings.resumePlayback, onResumeChange) }
         item { SwitchRow("다음 영상 자동 재생", settings.autoPlayNext, onAutoPlayNextChange) }
 
         item { SectionHeader("자막") }
-        item { ValueRow("기본 인코딩", encodingLabel(settings.subtitleEncoding)) { /* TODO */ } }
-        item { ValueRow("글자 크기", "보통") { /* TODO */ } }
-        item { ValueRow("표시 위치", "영상 하단") { /* TODO */ } }
+        item { ValueRow("기본 인코딩", label(ENCODINGS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
+        item { ValueRow("글자 크기", label(SCALES, settings.subtitleScale)) { openPicker = Picker.SUBTITLE_SCALE } }
+        item { ValueRow("표시 위치", label(POSITIONS, settings.subtitlePosition)) { openPicker = Picker.SUBTITLE_POSITION } }
 
         item { SectionHeader("제스처") }
         item { SwitchRow("밝기 · 볼륨 스와이프", settings.gesturesEnabled, onGesturesChange) }
         item { SwitchRow("더블탭 10초 이동", settings.doubleTapSeekEnabled, onDoubleTapSeekChange) }
 
         item { SectionHeader("화면") }
-        item { ValueRow("테마", "시스템 설정") { /* TODO */ } }
+        item { ValueRow("테마", label(THEMES, settings.theme)) { openPicker = Picker.THEME } }
         item { SwitchRow("자동회전 연동", settings.followAutoRotate, onFollowAutoRotateChange) }
 
         item { SectionHeader("정보") }
@@ -88,7 +142,31 @@ fun SettingsScreen(
     }
 }
 
-private fun encodingLabel(value: String): String = if (value == "auto") "자동 감지" else value
+private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, SUBTITLE_POSITION, THEME }
+
+private val SPEEDS = listOf(
+    0.5f to "0.5×", 0.75f to "0.75×", 1.0f to "1.0×",
+    1.25f to "1.25×", 1.5f to "1.5×", 2.0f to "2.0×",
+)
+private val ENCODINGS = listOf(
+    SubtitleEncoding.AUTO to "자동 감지",
+    SubtitleEncoding.UTF_8 to "UTF-8",
+    SubtitleEncoding.CP949 to "CP949",
+    SubtitleEncoding.EUC_KR to "EUC-KR",
+    SubtitleEncoding.SHIFT_JIS to "Shift-JIS",
+)
+private val SCALES = listOf(
+    SubtitleScale.SMALL to "작게", SubtitleScale.NORMAL to "보통", SubtitleScale.LARGE to "크게",
+)
+private val POSITIONS = listOf(
+    SubtitlePosition.IN_VIDEO to "영상 하단", SubtitlePosition.LETTERBOX to "레터박스",
+)
+private val THEMES = listOf(
+    ThemeMode.SYSTEM to "시스템 설정", ThemeMode.DARK to "다크", ThemeMode.LIGHT to "라이트",
+)
+
+private fun <T> label(options: List<Pair<T, String>>, value: T): String =
+    options.firstOrNull { it.first == value }?.second ?: value.toString()
 
 @Composable
 private fun SectionHeader(title: String) {

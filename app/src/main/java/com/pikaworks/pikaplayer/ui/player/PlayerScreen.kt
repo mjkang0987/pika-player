@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +41,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
@@ -74,6 +77,9 @@ fun PlayerScreen(
     onBack: () -> Unit,
     isFullscreen: Boolean = false,
     gesturesEnabled: Boolean = true,
+    subtitleScale: Float = 1f,
+    /** SubtitlePosition 값. 레터박스면 영상 프레임 아래 검은 띠에 그린다. */
+    subtitlePosition: String = SubtitlePosition.IN_VIDEO,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
@@ -162,22 +168,35 @@ fun PlayerScreen(
                 }
             }
 
-            state.cue?.let { cue ->
-                // 자막은 영상 프레임 안쪽 하단에 고정한다.
-                Text(
-                    text = cue.text,
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(horizontal = 26.dp, bottom = 10.dp),
-                )
+            // 전체화면에는 레터박스 영역이 없으므로 항상 영상 안에 그린다.
+            val insideVideo = isFullscreen || subtitlePosition == SubtitlePosition.IN_VIDEO
+            if (insideVideo) {
+                state.cue?.let { cue ->
+                    SubtitleText(
+                        text = cue.text,
+                        scale = subtitleScale,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(horizontal = 26.dp, bottom = 10.dp),
+                    )
+                }
             }
 
             feedback?.let { GestureIndicator(it, state.positionMs, Modifier.align(Alignment.Center)) }
+        }
+
+        if (!isFullscreen && subtitlePosition == SubtitlePosition.LETTERBOX) {
+            // 영상 아래 띠에 그린다. 자막이 영상을 가리지 않는다.
+            Box(modifier = Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+                state.cue?.let { cue ->
+                    SubtitleText(
+                        text = cue.text,
+                        scale = subtitleScale,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 26.dp),
+                    )
+                }
+            }
         }
 
         if (!isFullscreen) {
@@ -195,6 +214,29 @@ fun PlayerScreen(
             )
         }
     }
+}
+
+/**
+ * 자막 한 줄.
+ *
+ * 크기는 15sp 를 기준으로 배율만 곱한다. 설정에서 고른 값이 두 위치(영상 안·레터박스)에
+ * 똑같이 적용되어야 해서 한 곳에 모았다. 그림자를 넣는 이유는 밝은 장면 위에서
+ * 흰 글자가 사라지기 때문이다.
+ */
+@Composable
+private fun SubtitleText(text: String, scale: Float, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        color = Color.White,
+        fontSize = (15 * scale).sp,
+        lineHeight = (21 * scale).sp,
+        fontWeight = FontWeight.Medium,
+        textAlign = TextAlign.Center,
+        style = LocalTextStyle.current.copy(
+            shadow = Shadow(color = Color.Black.copy(alpha = 0.75f), blurRadius = 6f),
+        ),
+        modifier = modifier,
+    )
 }
 
 @Composable
