@@ -30,6 +30,8 @@ data class LibraryUiState(
     val loading: Boolean = true,
     val continueWatching: List<ContinueItem> = emptyList(),
     val rows: List<LibraryRow> = emptyList(),
+    /** 최근 탭. 재생 이력이 있는 것만 최근 순으로. */
+    val recent: List<LibraryRow> = emptyList(),
 ) {
     val videoCount: Int get() = rows.size
 }
@@ -67,7 +69,16 @@ class LibraryViewModel(
                     .take(10)
                     .map { ContinueItem(it.video, it.positionMs) }
 
-                LibraryUiState(loading = isLoading, continueWatching = continueItems, rows = rows)
+                val recent = rows
+                    .filter { byUri.containsKey(it.video.uri.toString()) }
+                    .sortedByDescending { byUri[it.video.uri.toString()]?.updatedAtMs ?: 0L }
+
+                LibraryUiState(
+                    loading = isLoading,
+                    continueWatching = continueItems,
+                    rows = rows,
+                    recent = recent,
+                )
             }.collect { _uiState.value = it }
         }
     }

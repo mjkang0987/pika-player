@@ -14,7 +14,6 @@ import com.pikaworks.pikaplayer.data.db.PlaybackPositionDao
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
 import com.pikaworks.pikaplayer.subtitle.SubtitleCue
-import com.pikaworks.pikaplayer.subtitle.SubtitleFormat
 import com.pikaworks.pikaplayer.subtitle.SubtitleTrack
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

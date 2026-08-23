@@ -33,7 +33,9 @@ app/src/main/java/com/pikaworks/pikaplayer/
   ui/
     theme/              기획서 7.4 디자인 토큰
     library/            라이브러리 화면(S1)
+    folder/             폴더 탐색(S2)
     permission/         권한 온보딩(S5)
+    recent/             최근 탭
     settings/           설정 화면(S6)
     player/             플레이어 화면(S3)
       PlayerIcons.kt      시안 SVG 패스를 옮긴 벡터 아이콘
@@ -41,6 +43,9 @@ app/src/main/java/com/pikaworks/pikaplayer/
       SystemControls.kt   밝기 · 볼륨 · 화면 켜둠
       PlayerOrientation.kt 방향 정책 · 몰입 모드
     Format.kt           재생시간·용량·남은시간 표기
+    VideoListRow.kt     목록 한 줄 (보관함·폴더·최근 공용)
+    BottomNav.kt        하단 네비게이션
+    AppIcons.kt         시안 SVG 패스를 옮긴 벡터 아이콘
 ```
 
 ## 설계 메모
@@ -77,6 +82,7 @@ app/src/main/java/com/pikaworks/pikaplayer/
 | `PlayerIcons` 를 설정·권한 화면이 참조 | 화면 계층이 player 패키지에 의존. `ui/AppIcons` 로 이동 |
 | 권한 화면 대표 아이콘이 자막 아이콘 | 화면 의미와 다른 그림 |
 | 전체화면 시크바 이중 패딩 | 가로에서 좌우 여백이 44dp 로 벌어짐 |
+| 보관함·폴더 화면이 목록 행을 각자 구현 | 같은 모양을 두 번 유지해야 함 → `ui/VideoListRow` 로 통합 |
 
 ## 자막 처리 — 왜 직접 만들었나
 
@@ -92,12 +98,13 @@ app/src/main/java/com/pikaworks/pikaplayer/
 
 우선순위 순:
 
-1. **폴더 탐색(S2)** — `SafFolderSource.listChildren` 은 이미 있고, 화면과 하단 네비게이션이 남았다
-2. **다음 영상 목록** — 플레이어 하단, 같은 폴더
-3. **라이브러리 목록의 자막 배지** — `SubtitleMatcher` 를 목록에도 연결해 `LibraryRow.subtitleFormat` 채우기
-4. **자막 설정 시트(S4)** — 인코딩 강제 지정을 화면에 연결. `SubtitleMatcher.load(forcedCharsetName)` 은 이미 받는다
-5. **설정 화면의 미완 항목** — 재생속도 · 인코딩 · 글자 크기 · 표시 위치 · 테마 선택 시트
-6. **SAF 메타데이터 캐시** — 폴더를 열 때마다 파일마다 `MediaMetadataRetriever` 를 돌린다. Room 에 캐시할 것 — 현재는 진입 즉시 요청하는 임시 처리. **거부 시 SAF 우회로가 반드시 필요**
+1. **다음 영상 목록** — 플레이어 하단, 같은 폴더
+2. **라이브러리 목록의 자막 배지** — `SubtitleMatcher` 를 목록에도 연결해 `LibraryRow.subtitleFormat` 채우기
+3. **자막 설정 시트(S4)** — 인코딩 강제 지정을 화면에 연결. `SubtitleMatcher.load(forcedCharsetName)` 은 이미 받는다
+4. **설정 화면의 미완 항목** — 재생속도 · 인코딩 · 글자 크기 · 표시 위치 · 테마 선택 시트
+5. **SAF 폴더 탐색** — 폴더 화면은 MediaStore 기준으로만 동작한다. SAF 로 고른 폴더를 쓰는 사용자는 폴더 탭이 비어 보인다
+6. **SAF 메타데이터 캐시** — 폴더를 열 때마다 파일마다 `MediaMetadataRetriever` 를 돌린다. Room 에 캐시할 것
+7. **검색(S7)** — P2 — 현재는 진입 즉시 요청하는 임시 처리. **거부 시 SAF 우회로가 반드시 필요**
 5. 폴더 탐색(S2) — SAF 기반
 6. 설정 화면(S6) — `SettingsStore`는 이미 있음, 화면만 연결
 7. 저장소 사용량 표시 — `StatFs`

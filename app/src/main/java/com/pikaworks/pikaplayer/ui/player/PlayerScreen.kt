@@ -22,10 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +43,8 @@ import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlin.math.abs
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 /**
  * 플레이어(S3, 세로).
