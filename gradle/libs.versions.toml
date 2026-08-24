@@ -5,13 +5,13 @@
 # 버전을 다시 확인하려면: bash tools/check_versions.sh
 # (alpha/beta/rc 는 걸러서 안정 버전만 고를 것)
 #
-# AGP 9 로 올리면서 따라온 것:
-#   - Gradle wrapper 8.14.3 → 9.7.1 (AGP 9 는 Gradle 9 를 요구한다)
-#   - app/build.gradle.kts 의 kotlinOptions → kotlin { compilerOptions } 로 교체
-#     (Kotlin 2.x 에서 kotlinOptions 는 없어졌다)
+# AGP 는 최신(9.3.2)을 쓰지 않는다. KSP 가 AGP 9 를 아직 지원하지 않아
+# addKspConfigurations 에서 동기화가 깨진다 — KSP 최신은 2.3.11(2026-08-03)이고
+# 그 뒤로 릴리스가 없다. Room 이 KSP 를 쓰므로 AGP 8.x 계열에 머문다.
+# KSP 가 AGP 9 를 지원하면 그때 함께 올릴 것.
 
 [versions]
-agp = "9.3.2"               # 확인함. 8.x → 9.x 메이저 점프다 (아래 주석)
+agp = "8.13.2"              # 확인함. 8.x 계열 최신 (9.x 를 못 쓰는 이유는 아래)
 kotlin = "2.4.10"
 coreKtx = "1.19.0"          # 확인함
 lifecycle = "2.11.0"        # 확인함

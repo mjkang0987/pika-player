@@ -8,7 +8,8 @@
 - 반면 **`:subtitle`(23개) · `:entitlement`(12개) · `:vault`(16개) 모듈은 실제로 컴파일하고 테스트를 돌려 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
 - **Play 결제(`data/billing/BillingRepository.kt`)는 이 저장소에서 가장 위험한 코드입니다.** Google Maven에 접근할 수 없어 SDK API를 한 줄도 확인하지 못했습니다. Billing 7.1.1 기준으로 썼고, 버전이 다르면 이 파일부터 봐야 합니다.
 - **`gradle/libs.versions.toml`의 모든 버전을 실제 저장소에서 확인했습니다.** `bash tools/check_versions.sh`로 다시 확인할 수 있습니다 — alpha/beta/rc는 걸러서 보여줍니다.
-- **AGP 8.7.3 → 9.3.2는 메이저 점프입니다.** Gradle wrapper를 9.7.1로 올렸고(AGP 9는 Gradle 9를 요구), `android { kotlinOptions }`를 `kotlin { compilerOptions }`로 바꿨습니다(Kotlin 2.x에서 없어진 DSL). AGP 9의 다른 DSL 변경에 걸릴 수 있는데, 그건 동기화가 정확한 위치를 알려줍니다. Android Studio는 2026.1 이상이어야 합니다.
+- **AGP는 최신(9.3.2)을 쓰지 않습니다.** KSP가 AGP 9를 아직 지원하지 않아 `addKspConfigurations`에서 동기화가 깨집니다 — KSP 최신은 2.3.11(2026-08-03)이고 그 뒤로 릴리스가 없습니다. Room이 KSP를 쓰므로 **AGP 8.x 계열(8.13.2)에 머뭅니다.** KSP가 AGP 9를 지원하면 그때 함께 올리세요. **최신 버전이 곧 정답이 아닌 대표적인 경우입니다.**
+- **`android { kotlinOptions }`는 `kotlin { compilerOptions }`로 바꿨습니다.** Kotlin 2.x에서 없어진 DSL이라 AGP 버전과 무관하게 필요한 변경입니다. 덕분에 `:app`도 순수 모듈들과 같은 방식이 됐습니다.
 - **Billing은 일부러 7.1.1에 두었습니다.** 최신은 9.1.0인데, Billing 8.0에서 `queryProductDetailsAsync`의 콜백 형태가 바뀌었습니다. `BillingRepository`는 7.x API로 쓰였고 이 환경에서는 어느 쪽도 컴파일해 볼 수 없어, **빌드가 한 번 통과한 뒤에 올리는 편이 안전합니다** — 그때는 컴파일러가 고칠 곳을 정확히 알려줍니다. 출시 전에는 반드시 올려야 합니다.
 
 첫 작업은 Android Studio로 열어 **동기화 → 버전 갱신 → 빌드**입니다.
