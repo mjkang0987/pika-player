@@ -13,6 +13,9 @@ media3 = "1.5.1"
 room = "2.6.1"
 datastore = "1.1.1"
 coil = "2.7.0"
+# 결제. 이 저장소를 만든 환경에서 Google Maven 에 접근할 수 없어 검증하지 못했다.
+# BillingRepository 는 이 버전의 API 를 전제로 쓰였다 — 버전을 올리면 그 파일만 확인하면 된다.
+billing = "7.1.1"
 ksp = "2.4.10-1.0.29"
 
 [libraries]
@@ -41,6 +44,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-video = { group = "io.coil-kt", name = "coil-video", version.ref = "coil" }
+billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

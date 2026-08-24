@@ -8,8 +8,10 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
 import androidx.room.Room
-import com.pikaworks.pikaplayer.core.AlwaysAllow
-import com.pikaworks.pikaplayer.core.FeatureGate
+import com.pikaworks.pikaplayer.data.billing.BillingRepository
+import com.pikaworks.pikaplayer.data.billing.EntitlementStore
+import com.pikaworks.pikaplayer.entitlement.FeatureGate
+import com.pikaworks.pikaplayer.entitlement.TierGate
 import com.pikaworks.pikaplayer.data.db.PikaDatabase
 import com.pikaworks.pikaplayer.data.media.DeviceStorage
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
@@ -45,8 +47,14 @@ class PikaApp : Application(), ImageLoaderFactory {
      */
     val persistScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    /** Phase 1 은 모두 허용. Phase 2 에서 결제 상태를 읽는 구현으로 교체한다. */
-    val featureGate: FeatureGate = AlwaysAllow
+    lateinit var billing: BillingRepository
+        private set
+
+    /**
+     * "이 기능을 쓸 수 있는가" 를 묻는 자리는 앱 전체에서 여기 하나다.
+     * 판단 규칙은 `:entitlement` 모듈에 있고 테스트로 못박혀 있다.
+     */
+    val featureGate: FeatureGate = TierGate { billing.tier.value }
 
     /**
      * Coil 기본 ImageLoader 는 이미지 파일만 다룬다.
@@ -71,5 +79,7 @@ class PikaApp : Application(), ImageLoaderFactory {
         subtitleMatcher = SubtitleMatcher(this)
         safFolders = SafFolderSource(this, database.safMetadataDao())
         deviceStorage = DeviceStorage(this)
+        billing = BillingRepository(this, persistScope, EntitlementStore(this))
+        billing.start()
     }
 }

@@ -81,6 +81,8 @@ fun PlayerScreen(
     onBrightnessDelta: (Float) -> Float,
     onVolumeDelta: (Float) -> Float,
     onPlayVideo: (VideoItem) -> Unit,
+    /** null 이면 PiP 버튼을 아예 그리지 않는다 — 기기가 지원하지 않는 경우. */
+    onEnterPip: (() -> Unit)?,
     onBack: () -> Unit,
     isFullscreen: Boolean = false,
     /** 설정 '밝기 · 볼륨 스와이프' */
@@ -90,8 +92,19 @@ fun PlayerScreen(
     subtitleScale: Float = 1f,
     /** SubtitlePosition 값. 레터박스면 영상 프레임 아래 검은 띠에 그린다. */
     subtitlePosition: String = SubtitlePosition.IN_VIDEO,
+    /** PiP 창 안에서는 영상만 그린다. 좁은 창에 컨트롤을 얹으면 영상이 안 보인다. */
+    pipMode: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    if (pipMode) {
+        VideoSurface(
+            player = player,
+            resizeMode = state.resizeMode,
+            modifier = modifier.fillMaxSize().background(Color.Black),
+        )
+        return
+    }
+
     val colors = PikaTheme.colors
     var feedback by remember { mutableStateOf<GestureFeedback?>(null) }
     var subtitleSheetVisible by remember { mutableStateOf(false) }
@@ -175,6 +188,7 @@ fun PlayerScreen(
                             onCycleSpeed = onCycleSpeed,
                             onToggleFullscreen = onToggleFullscreen,
                             onToggleLock = onToggleLock,
+                            onEnterPip = onEnterPip,
                         )
                     }
                 }
@@ -223,6 +237,7 @@ fun PlayerScreen(
                 onCycleSpeed = onCycleSpeed,
                 onToggleFullscreen = onToggleFullscreen,
                 onToggleLock = onToggleLock,
+                onEnterPip = onEnterPip,
             )
             // 남는 세로 공간만 쓴다. 좁은 화면에서는 높이가 0이 되어 조용히 사라진다.
             UpNext(
@@ -502,6 +517,7 @@ private fun SecondaryControls(
     onCycleSpeed: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onToggleLock: () -> Unit,
+    onEnterPip: (() -> Unit)?,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -516,6 +532,9 @@ private fun SecondaryControls(
             onClick = onCycleResize,
         )
         IconItem(AppIcons.Fullscreen, "전체화면", active = false, onClick = onToggleFullscreen)
+        // 지원하지 않는 기기에서는 자리를 만들지 않는다. 눌러도 아무 일이 없는
+        // 버튼을 두면 고장으로 읽힌다.
+        onEnterPip?.let { IconItem(AppIcons.Pip, "작은 창", active = false, onClick = it) }
         IconItem(AppIcons.Lock, "잠금", active = state.locked, onClick = onToggleLock)
     }
 }

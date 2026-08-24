@@ -57,6 +57,9 @@ fun SettingsScreen(
     onSubtitlePositionChange: (String) -> Unit,
     onThemeChange: (String) -> Unit,
     onOpenLicenses: () -> Unit,
+    /** Tier 이름. 설정 첫 줄에 지금 등급을 보여준다. */
+    proTier: String,
+    onOpenPro: () -> Unit,
     onBack: () -> Unit,
     versionName: String,
     modifier: Modifier = Modifier,
@@ -116,6 +119,19 @@ fun SettingsScreen(
                     modifier = Modifier.size(23.dp).clickable(onClick = onBack))
                 Text("설정", fontSize = 20.sp, color = colors.textPrimary)
             }
+        }
+
+        item { SectionHeader("Pika Pro") }
+        item {
+            ValueRow(
+                if (proTier == "FREE") "Pro 알아보기" else "구매 내역",
+                when (proTier) {
+                    "PRO" -> "Pro"
+                    "PRO_PLUS" -> "Pro+"
+                    else -> "Free"
+                },
+                onOpenPro,
+            )
         }
 
         item { SectionHeader("재생") }

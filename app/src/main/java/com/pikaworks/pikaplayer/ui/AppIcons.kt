@@ -82,6 +82,12 @@ object AppIcons {
     )
     val ChevronRight = stroke("M9.5 6 15.5 12l-6 6")
     val Search = stroke("M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z", "M16.2 16.2 21 21")
+
+    /** 큰 화면 안에 작은 화면. 오른쪽 아래로 접히는 모습을 그린다. */
+    val Pip = stroke(
+        "M3 6.5a1.5 1.5 0 0 1 1.5-1.5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z",
+        "M12 12h6.5v4.5H12z",
+    )
     val Close = stroke("M6 6l12 12", "M18 6 6 18")
     val Check = stroke("M5 12.5 10 17.5 19 7", width = 2.2f)
 

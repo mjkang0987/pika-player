@@ -30,6 +30,7 @@ import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
+import com.pikaworks.pikaplayer.entitlement.Feature
 import com.pikaworks.pikaplayer.ui.BottomNav
 import com.pikaworks.pikaplayer.ui.Tab
 import com.pikaworks.pikaplayer.ui.folder.FolderScreen
@@ -37,6 +38,8 @@ import com.pikaworks.pikaplayer.ui.folder.FolderViewModel
 import com.pikaworks.pikaplayer.ui.library.LibraryScreen
 import com.pikaworks.pikaplayer.ui.library.LibraryViewModel
 import com.pikaworks.pikaplayer.ui.permission.PermissionScreen
+import com.pikaworks.pikaplayer.ui.pro.ProScreen
+import com.pikaworks.pikaplayer.ui.player.PipController
 import com.pikaworks.pikaplayer.ui.player.PlayerOrientation
 import com.pikaworks.pikaplayer.ui.player.PlayerScreen
 import com.pikaworks.pikaplayer.ui.player.PlayerViewModel
@@ -75,11 +78,22 @@ class MainActivity : ComponentActivity() {
      */
     private val resumeTick = mutableStateOf(0)
 
+    /** PiP 창 안인가. 여기 있는 동안에는 영상만 그린다. */
+    private val inPip = mutableStateOf(false)
+
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             permissionGranted.value = granted
             onPermissionResult?.invoke(granted)
         }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration,
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        inPip.value = isInPictureInPictureMode
+    }
 
     override fun onResume() {
         super.onResume()
@@ -106,8 +120,22 @@ class MainActivity : ComponentActivity() {
                 var denied by remember { mutableStateOf(false) }
                 var tab by remember { mutableStateOf(Tab.LIBRARY) }
                 var showLicenses by remember { mutableStateOf(false) }
+                var showPro by remember { mutableStateOf(false) }
+                val pip by inPip
                 // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
-                LaunchedEffect(tab) { if (tab != Tab.SETTINGS) showLicenses = false }
+                LaunchedEffect(tab) {
+                    if (tab != Tab.SETTINGS) {
+                        showLicenses = false
+                        showPro = false
+                    }
+                }
+
+                val proTier by app.billing.tier.collectAsStateWithLifecycle()
+                val proProducts by app.billing.products.collectAsStateWithLifecycle()
+                // 화면으로 돌아올 때마다 다시 확인한다. 환불·해지가 반영되는 지점이다.
+                LaunchedEffect(resumed) { app.billing.refresh() }
+                // 상품 이름·가격은 바뀌지 않는다. 한 번만 받아 둔다.
+                LaunchedEffect(Unit) { app.billing.loadProducts() }
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
@@ -203,12 +231,21 @@ class MainActivity : ComponentActivity() {
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
                         subtitleScale = settings?.subtitleScale ?: 1f,
                         subtitlePosition = settings?.subtitlePosition ?: SubtitlePosition.IN_VIDEO,
+                        pipAllowed = app.featureGate.isAllowed(Feature.PICTURE_IN_PICTURE),
+                        pipMode = pip,
+                        onLockedFeature = {
+                            playing = null
+                            tab = Tab.SETTINGS
+                            showPro = true
+                        },
                         onExit = { playing = null },
                     )
 
                     else -> Column(modifier = Modifier.fillMaxSize()) {
                         // 다른 탭에서 뒤로가기는 보관함으로. 바로 앱이 꺼지면 당황한다.
-                        BackHandler(enabled = tab != Tab.LIBRARY && !showLicenses) { tab = Tab.LIBRARY }
+                        BackHandler(enabled = tab != Tab.LIBRARY && !showLicenses && !showPro) {
+                            tab = Tab.LIBRARY
+                        }
                         when (tab) {
                             Tab.LIBRARY -> LibraryScreen(
                                 modifier = Modifier.weight(1f),
@@ -240,7 +277,17 @@ class MainActivity : ComponentActivity() {
                                 onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
                             )
 
-                            Tab.SETTINGS -> if (showLicenses) {
+                            Tab.SETTINGS -> if (showPro) {
+                                BackHandler { showPro = false }
+                                ProScreen(
+                                    modifier = Modifier.weight(1f),
+                                    tier = proTier,
+                                    products = proProducts,
+                                    onPurchase = { app.billing.purchase(this@MainActivity, it) },
+                                    onRestore = { app.billing.refresh() },
+                                    onBack = { showPro = false },
+                                )
+                            } else if (showLicenses) {
                                 BackHandler { showLicenses = false }
                                 LicenseScreen(
                                     modifier = Modifier.weight(1f),
@@ -261,6 +308,8 @@ class MainActivity : ComponentActivity() {
                                     onSubtitlePositionChange = { scope.launch { app.settings.setSubtitlePosition(it) } },
                                     onThemeChange = { scope.launch { app.settings.setTheme(it) } },
                                     onOpenLicenses = { showLicenses = true },
+                                    proTier = proTier.name,
+                                    onOpenPro = { showPro = true },
                                     onBack = { tab = Tab.LIBRARY },
                                     versionName = BuildConfig.VERSION_NAME,
                                 )
@@ -291,6 +340,9 @@ class MainActivity : ComponentActivity() {
         defaultCharset: String,
         subtitleScale: Float,
         subtitlePosition: String,
+        pipAllowed: Boolean,
+        pipMode: Boolean,
+        onLockedFeature: () -> Unit,
         onExit: () -> Unit,
     ) {
         val playerVm: PlayerViewModel = viewModel(
@@ -303,6 +355,7 @@ class MainActivity : ComponentActivity() {
         )
         val playerState by playerVm.uiState.collectAsStateWithLifecycle()
         val systemControls = remember { SystemControls(this) }
+        val pipController = remember { PipController(this) }
 
         val isLandscape =
             LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -344,7 +397,8 @@ class MainActivity : ComponentActivity() {
                 PlayerOrientation.apply(this@MainActivity, locked = false, followAutoRotate = true, forcedLandscape = null)
             }
         }
-        BackHandler(onBack = onExit)
+        // PiP 중에는 뒤로가기가 오지 않는다. 창을 닫는 것은 시스템이 처리한다.
+        BackHandler(enabled = !pipMode, onBack = onExit)
 
         PlayerScreen(
             player = playerVm.player,
@@ -364,12 +418,25 @@ class MainActivity : ComponentActivity() {
             onBrightnessDelta = systemControls::adjustBrightness,
             onVolumeDelta = systemControls::adjustVolume,
             onPlayVideo = playerVm::playNext,
+            // 지원하지 않는 기기에서는 버튼 자체를 만들지 않는다. Pro 가 아니면
+            // 버튼은 있고 누르면 안내 화면으로 보낸다 — 무엇을 사는지 보여야 한다.
+            onEnterPip = if (!pipController.isSupported) null else {
+                {
+                    if (pipAllowed) {
+                        val video = playerVm.player.videoSize
+                        pipController.enter(video.width, video.height)
+                    } else {
+                        onLockedFeature()
+                    }
+                }
+            },
             onBack = onExit,
             isFullscreen = isLandscape,
             brightnessVolumeGestures = brightnessVolumeGestures,
             doubleTapSeek = doubleTapSeek,
             subtitleScale = subtitleScale,
             subtitlePosition = subtitlePosition,
+            pipMode = pipMode,
         )
     }
 
