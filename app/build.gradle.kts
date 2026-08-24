@@ -9,9 +9,7 @@ plugins {
 
 android {
     namespace = "com.pikaworks.pikaplayer"
-    // Compose 1.12(BOM 2026.08)가 37 을 요구한다. AGP 8.13.2 가 공식으로 아는
-    // 최대치는 36 이라 gradle.properties 의 suppressUnsupportedCompileSdk 로 그
-    // 경고를 끈다. AGP 9 를 쓰면 깔끔하지만 KSP 가 아직 AGP 9 를 지원하지 않는다.
+    // Compose 1.12(BOM 2026.08)와 core-ktx 1.19 가 요구하는 값.
     compileSdk = 37
 
     defaultConfig {

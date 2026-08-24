@@ -5,13 +5,16 @@
 # 버전을 다시 확인하려면: bash tools/check_versions.sh
 # (alpha/beta/rc 는 걸러서 안정 버전만 고를 것)
 #
-# AGP 는 최신(9.3.2)을 쓰지 않는다. KSP 가 AGP 9 를 아직 지원하지 않아
-# addKspConfigurations 에서 동기화가 깨진다 — KSP 최신은 2.3.11(2026-08-03)이고
-# 그 뒤로 릴리스가 없다. Room 이 KSP 를 쓰므로 AGP 8.x 계열에 머문다.
-# KSP 가 AGP 9 를 지원하면 그때 함께 올릴 것.
+# AGP 는 9.1.0 에 고정한다. 위아래 양쪽에서 눌린 결과다.
+#   아래 한계 — Compose 1.12 와 core-ktx 1.19 가 "AGP 9.1.0 이상" 을 요구한다.
+#              AAR 메타데이터의 하드 조건이라 억제할 수 없다.
+#   위 한계  — AGP 9.3.2 에서는 KSP 가 addKspConfigurations 에서 깨진다.
+#              KSP 최신은 2.3.11(2026-08-03)이고 그 뒤로 릴리스가 없다.
+# 그 사이가 9.1.x 다. 여기서도 KSP 가 깨지면 Room 을 걷어내야 한다(KSP 를 쓰는
+# 유일한 곳이다) — 재생 위치와 SAF 캐시뿐이라 직접 SQLite 로 옮길 수 있다.
 
 [versions]
-agp = "8.13.2"              # 확인함. 8.x 계열 최신 (9.x 를 못 쓰는 이유는 아래)
+agp = "9.1.0"               # 아래 주석 참고. 9.3.2 는 KSP 가 못 따라온다
 kotlin = "2.4.10"
 coreKtx = "1.19.0"          # 확인함
 lifecycle = "2.11.0"        # 확인함
