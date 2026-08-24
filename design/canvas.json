@@ -144,6 +144,33 @@
       "y": 1010,
       "w": 390,
       "h": 844
+    },
+    {
+      "file": "SettingsFree.dc.html",
+      "title": "설정 — Free 사용자",
+      "page": "page-1",
+      "x": 0,
+      "y": 2020,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "SettingsPro.dc.html",
+      "title": "설정 — Pro 사용자",
+      "page": "page-1",
+      "x": 530,
+      "y": 2020,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ProPurchase.dc.html",
+      "title": "Pro 안내·구매",
+      "page": "page-1",
+      "x": 1060,
+      "y": 2020,
+      "w": 390,
+      "h": 844
     }
   ],
   "annotations": [
