@@ -172,6 +172,7 @@ class MainActivity : ComponentActivity() {
                         positionDao = app.database.playbackPositionDao(),
                         subtitleMatcher = app.subtitleMatcher,
                         deviceStorage = app.deviceStorage,
+                        rescanner = app.mediaRescanner,
                     )
                 )
                 val folderVm: FolderViewModel = viewModel(
@@ -313,6 +314,7 @@ class MainActivity : ComponentActivity() {
                                 onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 onFilterChange = libraryVm::setFilter,
                                 onQueryChange = libraryVm::setQuery,
+                                onRescan = libraryVm::rescan,
                             )
 
                             Tab.FOLDER -> {

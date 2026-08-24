@@ -33,6 +33,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +61,7 @@ fun LibraryScreen(
     onSortChange: (String) -> Unit,
     onFilterChange: (String) -> Unit,
     onQueryChange: (String) -> Unit,
+    onRescan: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
@@ -98,12 +100,71 @@ fun LibraryScreen(
         item { LibraryTabs(state = state, onSelect = onFilterChange) }
         item { SortBar(sort = state.sort, storage = state.storage, onSortClick = { sortSheetVisible = true }) }
 
+        if (state.visibleRows.isEmpty() && !state.loading) {
+            // 왜 비었는지에 따라 할 말이 다르다. 검색으로 걸러진 거라면 다시
+            // 훑어봐야 소용없고, 정말 아무것도 없을 때만 탈출구를 보여준다.
+            item {
+                EmptyLibrary(
+                    filtered = state.query.isNotBlank() || state.filter != LibraryFilter.ALL,
+                    scanning = state.scanning,
+                    onRescan = onRescan,
+                )
+            }
+        }
+
         items(state.visibleRows, key = { it.video.id }) { row ->
             VideoListRow(
                 video = row.video,
                 onClick = { onVideoClick(row) },
                 progress = row.progress,
                 subtitleFormat = row.subtitleFormat,
+            )
+        }
+    }
+}
+
+/**
+ * 목록이 비었을 때.
+ *
+ * 전에는 아무것도 안 그렸다. 사용자는 앱이 고장 난 건지 영상이 없는 건지
+ * 구분할 수 없었고, 앱 안에서 할 수 있는 일도 없었다.
+ */
+@Composable
+private fun EmptyLibrary(
+    filtered: Boolean,
+    scanning: Boolean,
+    onRescan: () -> Unit,
+) {
+    val colors = PikaTheme.colors
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 56.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            if (filtered) "조건에 맞는 영상이 없습니다" else "영상이 없습니다",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.textSecondary,
+        )
+        if (!filtered) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "기기에 영상은 있는데 여기 안 보인다면 다시 검색해 보세요.",
+                fontSize = 12.sp,
+                color = colors.textFaint,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp,
+            )
+            Spacer(Modifier.height(20.dp))
+            Text(
+                if (scanning) "검색 중…" else "다시 검색",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (scanning) colors.textFaint else colors.key,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable(enabled = !scanning, onClick = onRescan)
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
             )
         }
     }

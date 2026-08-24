@@ -9,6 +9,7 @@ import com.pikaworks.pikaplayer.data.media.FolderOption
 import com.pikaworks.pikaplayer.data.media.LibraryRow
 import android.net.Uri
 import com.pikaworks.pikaplayer.data.media.DeviceStorage
+import com.pikaworks.pikaplayer.data.media.MediaRescanner
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.media.StorageUsage
@@ -84,6 +85,8 @@ data class LibraryUiState(
      * 없으면 한 번 감춘 것을 영영 되돌리지 못한다.
      */
     val allFolders: List<FolderOption> = emptyList(),
+    /** 사용자가 부른 다시 검색이 도는 중. 빈 화면의 버튼을 잠근다. */
+    val scanning: Boolean = false,
 ) {
     /** 검색어에 걸린 것들. 거르기 탭의 개수도 이 범위에서 센다. */
     private val searched: List<LibraryRow>
@@ -104,6 +107,7 @@ class LibraryViewModel(
     private val positionDao: PlaybackPositionDao,
     private val subtitleMatcher: SubtitleMatcher,
     private val deviceStorage: DeviceStorage,
+    private val rescanner: MediaRescanner,
 ) : ViewModel() {
 
     private val videos = MutableStateFlow<List<VideoItem>>(emptyList())
@@ -113,6 +117,7 @@ class LibraryViewModel(
     /** 비공개 폴더로 감춘 folderKey. 잠금을 푼 동안에는 비어 있다. */
     private val hiddenFolders = MutableStateFlow<Set<String>>(emptySet())
     private val loading = MutableStateFlow(true)
+    private val scanning = MutableStateFlow(false)
 
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
@@ -125,8 +130,8 @@ class LibraryViewModel(
 
     init {
         // combine 은 한 번에 다섯 개까지다. 목록과 직접 관계없는 값들을 먼저 묶는다.
-        val extras = combine(subtitles, storage, sort, hiddenFolders) { subs, space, order, hidden ->
-            Extras(subs, space, order, hidden)
+        val extras = combine(subtitles, storage, sort, hiddenFolders, scanning) { subs, space, order, hidden, isScanning ->
+            Extras(subs, space, order, hidden, isScanning)
         }
         // 파일 하나가 들어와도 MediaStore 는 신호를 여러 번 보낸다. 잠깐 모아
         // 마지막 것만 처리한다. 화면에 없을 때도 도는 대신, 다시 들어왔을 때
@@ -182,6 +187,7 @@ class LibraryViewModel(
                     storage = extra.storage,
                     sort = extra.sort,
                     allFolders = allFolders,
+                    scanning = extra.scanning,
                 )
             }.collect { next ->
                 // 위 combine 은 상태를 통째로 새로 만든다. 거르기와 검색어는 화면에서
@@ -231,6 +237,23 @@ class LibraryViewModel(
     }
 
     /**
+     * 파일은 있는데 목록에 안 나올 때의 탈출구.
+     *
+     * MediaStore 를 다시 훑게 한 뒤 그 결과로 목록을 새로 만든다. 훑는 동안
+     * 변경 신호도 오지만 그건 마지막 것만 처리하므로, 끝난 뒤 한 번 더 읽어
+     * 결과가 확실히 반영되게 한다.
+     */
+    fun rescan() {
+        if (scanning.value) return
+        viewModelScope.launch {
+            scanning.value = true
+            runCatching { rescanner.rescan() }
+            scanning.value = false
+            if (watchingMediaStore) reload(showLoading = false)
+        }
+    }
+
+    /**
      * 권한 대신 사용자가 고른 폴더에서 읽는다.
      *
      * SAF 는 재생시간·해상도를 주지 않아 파일마다 직접 읽어야 하므로
@@ -253,6 +276,7 @@ class LibraryViewModel(
         val storage: StorageUsage?,
         val sort: String,
         val hiddenFolders: Set<String>,
+        val scanning: Boolean,
     )
 
     class Factory(
@@ -261,9 +285,10 @@ class LibraryViewModel(
         private val positionDao: PlaybackPositionDao,
         private val subtitleMatcher: SubtitleMatcher,
         private val deviceStorage: DeviceStorage,
+        private val rescanner: MediaRescanner,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            LibraryViewModel(mediaStore, safFolders, positionDao, subtitleMatcher, deviceStorage) as T
+            LibraryViewModel(mediaStore, safFolders, positionDao, subtitleMatcher, deviceStorage, rescanner) as T
     }
 }

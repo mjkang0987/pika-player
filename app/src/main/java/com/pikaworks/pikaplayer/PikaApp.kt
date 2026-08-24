@@ -12,6 +12,7 @@ import com.pikaworks.pikaplayer.data.billing.BillingRepository
 import com.pikaworks.pikaplayer.data.billing.EntitlementStore
 import com.pikaworks.pikaplayer.data.db.PikaDatabase
 import com.pikaworks.pikaplayer.data.media.DeviceStorage
+import com.pikaworks.pikaplayer.data.media.MediaRescanner
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.prefs.SettingsStore
@@ -35,6 +36,7 @@ class PikaApp : Application(), ImageLoaderFactory {
     lateinit var safFolders: SafFolderSource
         private set
     lateinit var deviceStorage: DeviceStorage
+    lateinit var mediaRescanner: MediaRescanner
         private set
 
     /**
@@ -78,6 +80,7 @@ class PikaApp : Application(), ImageLoaderFactory {
         subtitleMatcher = SubtitleMatcher(this)
         safFolders = SafFolderSource(this, database.safMetadataDao())
         deviceStorage = DeviceStorage(this)
+        mediaRescanner = MediaRescanner(this)
         vault = VaultStore(this)
         billing = BillingRepository(this, persistScope, EntitlementStore(this))
         billing.start()
