@@ -8,19 +8,9 @@ import kotlin.test.assertTrue
 class EntitlementTest {
 
     @Test
-    fun `Pro 플러스는 Pro 기능도 쓴다`() {
-        val gate = TierGate { Tier.PRO_PLUS }
-        assertTrue(gate.isAllowed(Feature.PICTURE_IN_PICTURE))
-        assertTrue(gate.isAllowed(Feature.NETWORK_SOURCE))
-        assertTrue(gate.isAllowed(Feature.AI_UPSCALING))
-    }
-
-    @Test
-    fun `Pro 는 구독 기능을 못 쓴다`() {
+    fun `Pro 는 Pro 기능을 전부 쓴다`() {
         val gate = TierGate { Tier.PRO }
-        assertTrue(gate.isAllowed(Feature.PICTURE_IN_PICTURE))
-        assertFalse(gate.isAllowed(Feature.AI_UPSCALING))
-        assertFalse(gate.isAllowed(Feature.AI_SUBTITLE))
+        Feature.entries.forEach { assertTrue(gate.isAllowed(it), "$it 을 Pro 가 못 쓴다") }
     }
 
     @Test

@@ -33,6 +33,8 @@ import kotlinx.coroutines.launch
  *
  * 등급 판단 규칙 자체는 순수 모듈([TierResolver])에 있고 테스트로 못박혀 있다.
  * 여기서는 스토어에 묻고 답을 그 규칙에 넘기는 일만 한다.
+ *
+ * 지금 파는 상품은 일회성 하나뿐이라 구독(SUBS) 은 조회하지 않는다.
  */
 class BillingRepository(
     context: Context,
@@ -71,57 +73,73 @@ class BillingRepository(
         )
         .build()
 
+    private var connecting = false
+    private val pending = mutableListOf<() -> Unit>()
+
     /** 앱 시작 시 한 번. 연결이 끊기면 다음 조회 때 다시 잇는다. */
     fun start() {
         connect { refresh() }
     }
 
+    /**
+      * 연결이 준비되면 [onReady] 를 실행한다.
+      *
+      * 앱을 켜면 보유 상품 조회와 상품 정보 조회가 거의 동시에 들어온다. 그때마다
+      * `startConnection` 을 부르면 연결이 하나인데 요청이 겹친다. 진행 중이면
+      * 줄을 세웠다가 한 번에 처리한다.
+      *
+      * 모든 호출과 콜백은 메인 스레드에서 온다. 그래서 [pending] 에 잠금이 없다.
+      */
     private fun connect(onReady: () -> Unit) {
         if (client.isReady) {
             onReady()
             return
         }
+        pending += onReady
+        if (connecting) return
+
+        connecting = true
         client.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
-                if (result.responseCode == BillingClient.BillingResponseCode.OK) onReady()
+                connecting = false
+                val waiting = pending.toList()
+                pending.clear()
                 // 실패는 Unknown 으로 남긴다 — 캐시 등급이 유지된다.
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    waiting.forEach { it() }
+                }
             }
 
             override fun onBillingServiceDisconnected() {
+                connecting = false
                 // 다시 잇는 것은 다음 호출에 맡긴다. 여기서 재시도 루프를 돌리면
                 // Play 가 없는 기기에서 끝없이 재시도한다.
             }
         })
     }
 
-    /** 보유 상품을 다시 확인한다. 화면으로 돌아올 때마다 부르면 환불·해지가 반영된다. */
+    /** 보유 상품을 다시 확인한다. 화면으로 돌아올 때마다 부르면 환불이 반영된다. */
     fun refresh() {
         connect {
-            val owned = mutableSetOf<String>()
-            var pending = 2
+            client.queryPurchasesAsync(
+                QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+            ) { result, purchases ->
+                // 조회에 실패했으면 아무것도 하지 않는다. 여기서 Free 로 내리면
+                // 통신이 잠깐 끊긴 것만으로 산 사람이 기능을 잃는다.
+                if (result.responseCode != BillingClient.BillingResponseCode.OK) return@queryPurchasesAsync
 
-            fun done() {
-                pending -= 1
-                if (pending == 0) {
-                    storeResult.value = StoreResult.Owned(
-                        TierResolver.tierOf(owned, ProductIds.PRO, ProductIds.PRO_PLUS)
-                    )
-                    scope.launch { cache.save(tier.value) }
-                }
-            }
+                val owned = purchases
+                    .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                    .flatMap { it.products }
+                acknowledgeIfNeeded(purchases)
 
-            listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS).forEach { type ->
-                client.queryPurchasesAsync(
-                    QueryPurchasesParams.newBuilder().setProductType(type).build()
-                ) { result, purchases ->
-                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                        owned += purchases
-                            .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
-                            .flatMap { it.products }
-                        acknowledgeIfNeeded(purchases)
-                    }
-                    done()
-                }
+                // 계산한 값을 그대로 저장한다. `tier.value` 를 읽으면 combine 이
+                // 아직 새 값을 반영하기 전이라 직전 등급이 저장될 수 있다.
+                val resolved = TierResolver.tierOf(owned, ProductIds.PRO)
+                storeResult.value = StoreResult.Owned(resolved)
+                scope.launch { cache.save(resolved) }
             }
         }
     }
@@ -135,10 +153,6 @@ class BillingRepository(
                         QueryProductDetailsParams.Product.newBuilder()
                             .setProductId(ProductIds.PRO)
                             .setProductType(BillingClient.ProductType.INAPP)
-                            .build(),
-                        QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId(ProductIds.PRO_PLUS)
-                            .setProductType(BillingClient.ProductType.SUBS)
                             .build(),
                     )
                 )
@@ -155,12 +169,10 @@ class BillingRepository(
     /** 구매 화면을 띄운다. 결과는 [purchasesListener] 로 돌아온다. */
     fun purchase(activity: Activity, productId: String) {
         val product = details[productId] ?: return
+        // 일회성 상품이라 요금제(offer) 지정이 없다. 구독을 다시 넣게 되면
+        // setOfferToken 이 필요해진다.
         val params = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(product)
-            .apply {
-                // 구독은 어느 요금제인지까지 지정해야 한다. 일회성 상품에는 없는 값이다.
-                product.subscriptionOfferDetails?.firstOrNull()?.let { setOfferToken(it.offerToken) }
-            }
             .build()
         client.launchBillingFlow(
             activity,
@@ -200,18 +212,8 @@ data class ProductInfo(
     val formattedPrice: String?,
 )
 
-/**
- * 가격이 붙어 있는 자리가 상품 종류마다 다르다. 일회성은 하나뿐이고,
- * 구독은 요금제(offer) 안의 단계(phase)에 들어 있다.
- */
 private fun ProductDetails.toInfo(): ProductInfo = ProductInfo(
     id = productId,
     title = name.ifBlank { title },
-    formattedPrice = oneTimePurchaseOfferDetails?.formattedPrice
-        ?: subscriptionOfferDetails
-            ?.firstOrNull()
-            ?.pricingPhases
-            ?.pricingPhaseList
-            ?.firstOrNull()
-            ?.formattedPrice,
+    formattedPrice = oneTimePurchaseOfferDetails?.formattedPrice,
 )

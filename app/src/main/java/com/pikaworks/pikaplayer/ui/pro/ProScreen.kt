@@ -69,29 +69,25 @@ fun ProScreen(
         item { CurrentTier(tier) }
 
         item { SectionHeader("무료로 쓰는 것") }
-        FREE_ITEMS.forEach { item { FeatureRow(it, unlocked = true) } }
+        ProFeatures.free.forEach { item { FeatureRow(it, unlocked = true) } }
 
         item { SectionHeader("Pro") }
-        PRO_ITEMS.forEach { item { FeatureRow(it, unlocked = tier.atLeast(Tier.PRO)) } }
+        ProFeatures.pro.forEach { item { FeatureRow(it, unlocked = tier.atLeast(Tier.PRO)) } }
         item {
+            // 가격을 못 받았으면 살 수도 없다. Play 에 연결되기 전이거나 상품이
+            // 아직 심사 중인 상태다. 버튼을 눌리게 두면 눌러도 아무 일이 없어
+            // 고장으로 읽힌다.
+            val price = products[ProductIds.PRO]?.formattedPrice
+            val owned = tier.atLeast(Tier.PRO)
             PurchaseButton(
-                label = if (tier.atLeast(Tier.PRO)) "구매함" else "Pro 구매",
-                price = products[ProductIds.PRO]?.formattedPrice,
+                label = when {
+                    owned -> "구매함"
+                    price == null -> "가격을 불러오는 중"
+                    else -> "Pro 구매 · $price"
+                },
                 note = "한 번만 결제합니다. 매달 내는 것이 아닙니다.",
-                enabled = !tier.atLeast(Tier.PRO),
+                enabled = !owned && price != null,
                 onClick = { onPurchase(ProductIds.PRO) },
-            )
-        }
-
-        item { SectionHeader("Pro+") }
-        PRO_PLUS_ITEMS.forEach { item { FeatureRow(it, unlocked = tier.atLeast(Tier.PRO_PLUS)) } }
-        item {
-            PurchaseButton(
-                label = if (tier.atLeast(Tier.PRO_PLUS)) "구독 중" else "Pro+ 구독",
-                price = products[ProductIds.PRO_PLUS]?.formattedPrice,
-                note = "서버에서 처리하는 기능이라 사용량만큼 비용이 듭니다. 그래서 이것만 구독입니다.",
-                enabled = !tier.atLeast(Tier.PRO_PLUS),
-                onClick = { onPurchase(ProductIds.PRO_PLUS) },
             )
         }
 
@@ -109,35 +105,12 @@ fun ProScreen(
     }
 }
 
-private val FREE_ITEMS = listOf(
-    "전 포맷 재생 · 하드웨어 가속",
-    "자막 표시 · 자동 매칭 · 인코딩 변경 · 싱크 조정",
-    "제스처 · 재생속도 · 화면비",
-    "이어보기 · 폴더 탐색 · 검색",
-    "광고 없음",
-)
-
-private val PRO_ITEMS = listOf(
-    "화면 속 화면(PiP)",
-    "네트워크 스트리밍 (SMB · NAS · DLNA)",
-    "비공개 폴더 · PIN 잠금",
-    "클라우드 연동 · Wi-Fi 파일 전송",
-    "Chromecast 송출 · 어린이 잠금",
-    "다중 재생목록",
-)
-
-private val PRO_PLUS_ITEMS = listOf(
-    "AI 화질 향상",
-    "자막 자동 생성 · 번역",
-)
-
 @Composable
 private fun CurrentTier(tier: Tier) {
     val colors = PikaTheme.colors
     val label = when (tier) {
         Tier.FREE -> "지금 등급 · Free"
         Tier.PRO -> "지금 등급 · Pro"
-        Tier.PRO_PLUS -> "지금 등급 · Pro+"
     }
     Text(
         label,
@@ -186,7 +159,6 @@ private fun FeatureRow(label: String, unlocked: Boolean) {
 @Composable
 private fun PurchaseButton(
     label: String,
-    price: String?,
     note: String,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -206,9 +178,7 @@ private fun PurchaseButton(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                // 가격을 못 받았으면 값을 지어내지 않는다. Play 에 연결되기 전이거나
-                // 상품이 아직 심사 중인 상태다.
-                if (price != null && enabled) "$label · $price" else label,
+                label,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = if (enabled) colors.background else colors.textMeta,

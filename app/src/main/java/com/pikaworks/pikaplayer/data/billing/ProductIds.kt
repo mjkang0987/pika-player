@@ -7,9 +7,6 @@ package com.pikaworks.pikaplayer.data.billing
  * 산 사람이 Free 로 보인다.
  */
 object ProductIds {
-    /** 일회성 인앱결제 — 온디바이스 Pro 기능 */
+    /** 일회성 인앱결제 — Pro 기능 전부. 지금 파는 상품은 이것 하나다. */
     const val PRO = "pika_pro"
-
-    /** 구독 — 서버 연산이 드는 Pro+ 기능 */
-    const val PRO_PLUS = "pika_pro_plus"
 }

@@ -28,6 +28,7 @@ class SettingsStore(private val context: Context) {
         val SUBTITLE_POSITION = stringPreferencesKey("subtitle_position")
         val THEME = stringPreferencesKey("theme")
         val LIBRARY_SORT = stringPreferencesKey("library_sort")
+        val AUTO_PIP = booleanPreferencesKey("auto_pip")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -44,6 +45,7 @@ class SettingsStore(private val context: Context) {
             subtitlePosition = p[Keys.SUBTITLE_POSITION] ?: SubtitlePosition.IN_VIDEO,
             theme = p[Keys.THEME] ?: ThemeMode.SYSTEM,
             librarySort = p[Keys.LIBRARY_SORT] ?: SortOrder.DATE_DESC,
+            autoPip = p[Keys.AUTO_PIP] ?: false,
         )
     }
 
@@ -82,6 +84,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setLibrarySort(value: String) =
         context.dataStore.edit { it[Keys.LIBRARY_SORT] = value }
+
+    suspend fun setAutoPip(value: Boolean) =
+        context.dataStore.edit { it[Keys.AUTO_PIP] = value }
 }
 
 object SubtitleScale {
@@ -138,4 +143,12 @@ data class Settings(
     val subtitlePosition: String = SubtitlePosition.IN_VIDEO,
     val theme: String = ThemeMode.SYSTEM,
     val librarySort: String = SortOrder.DATE_DESC,
+    /**
+     * 홈 버튼 등으로 앱을 벗어날 때 자동으로 작은 창(PiP)으로 넘어갈지.
+     *
+     * 기본값이 꺼짐인 이유: 켜져 있으면 영상을 보다 잠깐 다른 앱을 열 때마다
+     * 작은 창이 따라붙는다. 원하는 사람에게는 편하지만 원치 않는 사람에게는
+     * 매번 닫아야 하는 방해물이다.
+     */
+    val autoPip: Boolean = false,
 )

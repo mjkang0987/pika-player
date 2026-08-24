@@ -3,15 +3,18 @@ package com.pikaworks.pikaplayer.entitlement
 /**
  * 결제 등급.
  *
- * 기획서 3장: 온디바이스 기능은 일회성(Pro), 서버 연산이 드는 기능은 구독(Pro+).
- * 등급은 겹쳐 쌓인다 — Pro+ 를 구독한 사람은 Pro 기능도 전부 쓴다.
+ * 기획서 3장: Pro 기능은 전부 온디바이스라 서버 비용이 0 이다. 그래서 일회성
+ * 구매 하나로 간다. 서버 연산이 드는 기능(AI 업스케일링 등)을 위한 구독 등급은
+ * 그 기능을 실제로 만들 때 다시 넣는다 — 팔 것이 없는데 등급만 두면 화면에도
+ * 코드에도 빈칸이 남는다.
+ *
+ * 등급은 겹쳐 쌓이는 구조로 둔다. 나중에 등급이 늘어도 [atLeast] 는 그대로다.
  */
 enum class Tier {
     FREE,
-    PRO,
-    PRO_PLUS;
+    PRO;
 
-    /** [other] 이상인가. Pro+ 는 Pro 를 포함한다. */
+    /** [other] 이상인가. */
     fun atLeast(other: Tier): Boolean = ordinal >= other.ordinal
 }
 
@@ -40,10 +43,6 @@ enum class Feature(val required: Tier) {
     CHROMECAST(Tier.PRO),
     PARENTAL_LOCK(Tier.PRO),
     MULTI_PLAYLIST(Tier.PRO),
-
-    // Pro+ — 서버 연산이 드는 것만. 구독.
-    AI_UPSCALING(Tier.PRO_PLUS),
-    AI_SUBTITLE(Tier.PRO_PLUS),
 }
 
 /** "이 기능을 쓸 수 있는가" 를 묻는 단 하나의 자리. */

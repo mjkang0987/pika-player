@@ -1,9 +1,11 @@
 package com.pikaworks.pikaplayer.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +36,7 @@ import com.pikaworks.pikaplayer.data.prefs.SubtitleScale
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
 import com.pikaworks.pikaplayer.ui.OptionSheet
+import com.pikaworks.pikaplayer.ui.pro.ProFeatures
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
@@ -57,9 +60,10 @@ fun SettingsScreen(
     onSubtitlePositionChange: (String) -> Unit,
     onThemeChange: (String) -> Unit,
     onOpenLicenses: () -> Unit,
-    /** Tier 이름. 설정 첫 줄에 지금 등급을 보여준다. */
-    proTier: String,
+    /** Pro 기능을 쓸 수 있는가. 잠긴 항목을 그릴지 실제 설정으로 열지 가른다. */
+    proUnlocked: Boolean,
     onOpenPro: () -> Unit,
+    onAutoPipChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     versionName: String,
     modifier: Modifier = Modifier,
@@ -121,17 +125,19 @@ fun SettingsScreen(
             }
         }
 
-        item { SectionHeader("Pika Pro") }
+        item { ProCard(unlocked = proUnlocked, onClick = onOpenPro) }
+
+        // 잠긴 항목을 별도 화면으로 빼지 않는다. 같은 자리에 두어야 "여기 있는데
+        // 잠겨 있다 → 사면 여기가 열린다" 가 한 번에 읽힌다. 별도 화면이면 Free
+        // 사용자는 들어가기 전까지 무엇이 있는지 모르고, 산 사람은 어디서 켜는지
+        // 다시 찾아야 한다.
+        item { SectionHeader("Pro 기능") }
         item {
-            ValueRow(
-                if (proTier == "FREE") "Pro 알아보기" else "구매 내역",
-                when (proTier) {
-                    "PRO" -> "Pro"
-                    "PRO_PLUS" -> "Pro+"
-                    else -> "Free"
-                },
-                onOpenPro,
-            )
+            if (proUnlocked) {
+                SwitchRow("자동 작은 창", settings.autoPip, onAutoPipChange)
+            } else {
+                LockedRow("자동 작은 창", onOpenPro)
+            }
         }
 
         item { SectionHeader("재생") }
@@ -178,6 +184,93 @@ private val THEMES = listOf(
 private fun <T> label(options: List<Pair<T, String>>, value: T): String =
     options.firstOrNull { it.first == value }?.second ?: value.toString()
 
+/**
+ * Pro 진입 카드.
+ *
+ * Free 에게는 무엇을 얻는지 보여주고, 산 사람에게는 조용한 확인 줄이 된다.
+ * 이미 산 사람에게 계속 파는 화면을 보여줄 이유가 없다.
+ */
+@Composable
+private fun ProCard(unlocked: Boolean, onClick: () -> Unit) {
+    val colors = PikaTheme.colors
+    if (unlocked) {
+        Row(
+            modifier = Modifier
+                .padding(start = 20.dp, end = 20.dp, top = 14.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(colors.surface)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                Icon(AppIcons.Check, null, tint = colors.key, modifier = Modifier.size(15.dp))
+                Text("Pika Pro", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                Text("사용 중", fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("구매 내역", fontSize = 12.sp, fontWeight = FontWeight.Light, color = colors.textMeta)
+                Icon(AppIcons.ChevronRight, null, tint = colors.textFaint, modifier = Modifier.size(15.dp))
+            }
+        }
+        return
+    }
+
+    Column(
+        modifier = Modifier
+            .padding(start = 20.dp, end = 20.dp, top = 14.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(colors.surface)
+            .border(1.dp, colors.chipBorder, RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text("Pika Pro", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.key)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("자세히 보기", fontSize = 12.sp, color = colors.key)
+                Icon(AppIcons.ChevronRight, null, tint = colors.key, modifier = Modifier.size(13.dp))
+            }
+        }
+        Text(
+            "${ProFeatures.shortPitch}를 씁니다.\n한 번만 결제하고 계속 씁니다.",
+            fontSize = 12.sp, fontWeight = FontWeight.Light,
+            lineHeight = 18.sp, color = colors.textSecondary,
+        )
+    }
+}
+
+/** 잠긴 Pro 항목. 누르면 무엇을 사는지 보여주는 화면으로 보낸다. */
+@Composable
+private fun LockedRow(label: String, onClick: () -> Unit) {
+    val colors = PikaTheme.colors
+    SettingRow(
+        label = label,
+        dim = true,
+        content = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(AppIcons.Lock, null, tint = colors.textFaint, modifier = Modifier.size(13.dp))
+                Text(
+                    "Pro",
+                    fontSize = 10.sp, fontWeight = FontWeight.Medium, color = colors.textFaint,
+                    modifier = Modifier
+                        .border(1.dp, colors.chipBorder, RoundedCornerShape(3.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+        },
+        onClick = onClick,
+    )
+}
+
 @Composable
 private fun SectionHeader(title: String) {
     val colors = PikaTheme.colors
@@ -192,7 +285,13 @@ private fun SectionHeader(title: String) {
 }
 
 @Composable
-private fun SettingRow(label: String, content: @Composable () -> Unit, onClick: (() -> Unit)? = null) {
+private fun SettingRow(
+    label: String,
+    content: @Composable () -> Unit,
+    onClick: (() -> Unit)? = null,
+    /** 잠긴 항목은 글자를 한 단계 낮춰 쓸 수 없다는 것을 색으로도 알린다. */
+    dim: Boolean = false,
+) {
     val colors = PikaTheme.colors
     Row(
         modifier = Modifier
@@ -203,7 +302,7 @@ private fun SettingRow(label: String, content: @Composable () -> Unit, onClick: 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label, fontSize = 14.sp, color = colors.textPrimary)
+        Text(label, fontSize = 14.sp, color = if (dim) colors.textSecondary else colors.textPrimary)
         content()
     }
 }

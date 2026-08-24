@@ -31,6 +31,7 @@ import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import com.pikaworks.pikaplayer.entitlement.Feature
+import com.pikaworks.pikaplayer.entitlement.TierGate
 import com.pikaworks.pikaplayer.ui.BottomNav
 import com.pikaworks.pikaplayer.ui.Tab
 import com.pikaworks.pikaplayer.ui.folder.FolderScreen
@@ -80,6 +81,24 @@ class MainActivity : ComponentActivity() {
 
     /** PiP 창 안인가. 여기 있는 동안에는 영상만 그린다. */
     private val inPip = mutableStateOf(false)
+
+    /**
+     * 앱을 벗어날 때 자동으로 작은 창으로 넘어갈지. 재생 중이고 Pro 이며 설정이
+     * 켜져 있을 때만 채워진다. 플레이어 화면이 사라지면 비운다.
+     *
+     * `onUserLeaveHint()` 는 Activity 콜백이라 Compose 상태를 읽을 수 없다.
+     * 그래서 지금 할 수 있는 동작을 여기에 올려두는 방식으로 잇는다.
+     */
+    private var autoPipAction: (() -> Unit)? = null
+
+    /**
+     * 홈 버튼이나 앱 전환으로 화면을 벗어날 때 불린다. 뒤로가기로 나갈 때는
+     * 불리지 않는다 — 그때는 사용자가 재생을 끝내려는 것이므로 맞는 동작이다.
+     */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        autoPipAction?.invoke()
+    }
 
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -131,6 +150,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val proTier by app.billing.tier.collectAsStateWithLifecycle()
+                // 게이트를 여기서 만든다. `app` 에 두면 등급이 바뀌어도 화면이
+                // 다시 그려지지 않는다 — 산 직후에도 잠긴 채로 남는다.
+                val gate = TierGate { proTier }
                 val proProducts by app.billing.products.collectAsStateWithLifecycle()
                 // 화면으로 돌아올 때마다 다시 확인한다. 환불·해지가 반영되는 지점이다.
                 LaunchedEffect(resumed) { app.billing.refresh() }
@@ -231,8 +253,9 @@ class MainActivity : ComponentActivity() {
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
                         subtitleScale = settings?.subtitleScale ?: 1f,
                         subtitlePosition = settings?.subtitlePosition ?: SubtitlePosition.IN_VIDEO,
-                        pipAllowed = app.featureGate.isAllowed(Feature.PICTURE_IN_PICTURE),
+                        pipAllowed = gate.isAllowed(Feature.PICTURE_IN_PICTURE),
                         pipMode = pip,
+                        autoPip = settings?.autoPip ?: false,
                         onLockedFeature = {
                             playing = null
                             tab = Tab.SETTINGS
@@ -308,8 +331,9 @@ class MainActivity : ComponentActivity() {
                                     onSubtitlePositionChange = { scope.launch { app.settings.setSubtitlePosition(it) } },
                                     onThemeChange = { scope.launch { app.settings.setTheme(it) } },
                                     onOpenLicenses = { showLicenses = true },
-                                    proTier = proTier.name,
+                                    proUnlocked = gate.isAllowed(Feature.PICTURE_IN_PICTURE),
                                     onOpenPro = { showPro = true },
+                                    onAutoPipChange = { scope.launch { app.settings.setAutoPip(it) } },
                                     onBack = { tab = Tab.LIBRARY },
                                     versionName = BuildConfig.VERSION_NAME,
                                 )
@@ -342,6 +366,7 @@ class MainActivity : ComponentActivity() {
         subtitlePosition: String,
         pipAllowed: Boolean,
         pipMode: Boolean,
+        autoPip: Boolean,
         onLockedFeature: () -> Unit,
         onExit: () -> Unit,
     ) {
@@ -399,6 +424,19 @@ class MainActivity : ComponentActivity() {
         }
         // PiP 중에는 뒤로가기가 오지 않는다. 창을 닫는 것은 시스템이 처리한다.
         BackHandler(enabled = !pipMode, onBack = onExit)
+
+        // 재생 중인지는 보지 않는다. 플레이어 화면에 있다는 것 자체가 보고 있다는
+        // 뜻이고, 일시정지했다고 작은 창을 안 띄우면 오히려 예상과 어긋난다.
+        val canAutoPip = autoPip && pipAllowed && pipController.isSupported && !pipMode
+        DisposableEffect(canAutoPip) {
+            autoPipAction = if (!canAutoPip) null else {
+                {
+                    val size = playerVm.player.videoSize
+                    pipController.enter(size.width, size.height)
+                }
+            }
+            onDispose { autoPipAction = null }
+        }
 
         PlayerScreen(
             player = playerVm.player,

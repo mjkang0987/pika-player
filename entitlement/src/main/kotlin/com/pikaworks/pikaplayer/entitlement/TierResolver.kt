@@ -28,10 +28,7 @@ object TierResolver {
         is StoreResult.Owned -> store.tier
     }
 
-    /** 보유 상품 id 목록에서 등급을 계산한다. 여러 개면 가장 높은 것. */
-    fun tierOf(ownedProductIds: Collection<String>, proId: String, proPlusId: String): Tier = when {
-        ownedProductIds.contains(proPlusId) -> Tier.PRO_PLUS
-        ownedProductIds.contains(proId) -> Tier.PRO
-        else -> Tier.FREE
-    }
+    /** 보유 상품 id 목록에서 등급을 계산한다. */
+    fun tierOf(ownedProductIds: Collection<String>, proId: String): Tier =
+        if (ownedProductIds.contains(proId)) Tier.PRO else Tier.FREE
 }
