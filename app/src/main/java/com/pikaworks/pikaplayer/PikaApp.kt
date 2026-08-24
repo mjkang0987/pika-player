@@ -67,7 +67,11 @@ class PikaApp : Application(), ImageLoaderFactory {
             // 아직 출시 전이라 기기에 남은 DB 는 개발용뿐이다. 스키마가 계속 바뀌는
             // 동안 마이그레이션을 손으로 쓰는 것보다 다시 만드는 편이 안전하다.
             // 출시 시점에는 반드시 실제 마이그레이션으로 바꿔야 한다.
-            .fallbackToDestructiveMigration()
+            //
+            // dropAllTables = true: 스키마가 안 맞으면 테이블을 전부 지우고 새로 만든다.
+            // false 면 Room 이 아는 테이블만 지워서, 손으로 만든 테이블이 남는 경우를
+            // 위한 값이다 — 여기는 전부 Room 이 만든 것이라 true 가 맞다.
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
         mediaStore = MediaStoreSource(this)
         settings = SettingsStore(this)
