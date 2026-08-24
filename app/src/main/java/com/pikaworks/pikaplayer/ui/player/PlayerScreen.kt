@@ -83,7 +83,10 @@ fun PlayerScreen(
     onPlayVideo: (VideoItem) -> Unit,
     onBack: () -> Unit,
     isFullscreen: Boolean = false,
-    gesturesEnabled: Boolean = true,
+    /** 설정 '밝기 · 볼륨 스와이프' */
+    brightnessVolumeGestures: Boolean = true,
+    /** 설정 '더블탭 10초 이동' */
+    doubleTapSeek: Boolean = true,
     subtitleScale: Float = 1f,
     /** SubtitlePosition 값. 레터박스면 영상 프레임 아래 검은 띠에 그린다. */
     subtitlePosition: String = SubtitlePosition.IN_VIDEO,
@@ -112,7 +115,9 @@ fun PlayerScreen(
             modifier = (if (isFullscreen) Modifier.weight(1f).fillMaxWidth()
                         else Modifier.fillMaxWidth().aspectRatio(16f / 9f))
                 .playerGestures(
-                    enabled = gesturesEnabled && !state.locked,
+                    enabled = !state.locked,
+                    brightnessVolumeEnabled = brightnessVolumeGestures,
+                    doubleTapSeekEnabled = doubleTapSeek,
                     durationMs = state.durationMs,
                     currentPositionMs = { state.positionMs },
                     onTap = onToggleControls,

@@ -36,7 +36,11 @@ class MediaStoreSource(private val context: Context) {
         val sortOrder = "${MediaStore.Video.Media.DATE_MODIFIED} DESC"
 
         val items = mutableListOf<VideoItem>()
-        context.contentResolver.query(collection, projection, null, null, sortOrder)?.use { c ->
+        // 권한이 도중에 취소되면 SecurityException 이 난다. 목록이 비는 편이
+        // 앱이 죽는 것보다 낫다 — 화면은 이미 빈 상태를 다룬다.
+        runCatching {
+            context.contentResolver.query(collection, projection, null, null, sortOrder)
+        }.getOrNull()?.use { c ->
             val idCol = c.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
             val nameCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
             val durCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)

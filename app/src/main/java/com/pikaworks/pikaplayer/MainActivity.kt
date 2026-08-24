@@ -12,6 +12,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.DisposableEffect
@@ -65,6 +67,14 @@ class MainActivity : ComponentActivity() {
      */
     private val permissionGranted = mutableStateOf(false)
 
+    /**
+     * 화면으로 돌아올 때마다 올라간다.
+     *
+     * 목록 갱신을 권한 상태에만 걸면, 값이 그대로라 `LaunchedEffect` 가 다시 돌지
+     * 않는다. 다른 앱에서 영상을 받아 오고 돌아와도 목록이 그대로였다.
+     */
+    private val resumeTick = mutableStateOf(0)
+
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             permissionGranted.value = granted
@@ -74,6 +84,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         permissionGranted.value = hasMediaPermission()
+        resumeTick.value += 1
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,10 +101,13 @@ class MainActivity : ComponentActivity() {
             PikaTheme(themeMode = settings?.theme ?: ThemeMode.SYSTEM) {
                 val scope = rememberCoroutineScope()
                 val granted by permissionGranted
+                val resumed by resumeTick
 
                 var denied by remember { mutableStateOf(false) }
                 var tab by remember { mutableStateOf(Tab.LIBRARY) }
                 var showLicenses by remember { mutableStateOf(false) }
+                // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
+                LaunchedEffect(tab) { if (tab != Tab.SETTINGS) showLicenses = false }
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
@@ -145,7 +159,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val folderUri = settings?.folderTreeUri
-                LaunchedEffect(granted, folderUri) {
+                LaunchedEffect(granted, folderUri, resumed) {
                     when {
                         granted -> {
                             libraryVm.refresh()
@@ -162,6 +176,10 @@ class MainActivity : ComponentActivity() {
 
                 val video = playing
                 when {
+                    // 설정을 아직 못 읽었으면 고른 폴더가 있는지도 모른다. 그 상태로
+                    // 권한 화면을 띄우면 SAF 사용자에게 한 프레임 깜빡인다.
+                    settings == null -> Box(Modifier.fillMaxSize().background(PikaTheme.colors.background))
+
                     // 권한도 없고 고른 폴더도 없으면 보여줄 것이 없다.
                     !granted && folderUri == null -> PermissionScreen(
                         denied = denied,
@@ -175,7 +193,9 @@ class MainActivity : ComponentActivity() {
                     video != null -> PlayerRoute(
                         app = app,
                         video = video,
-                        settingsGesturesEnabled = settings?.gesturesEnabled ?: true,
+                        brightnessVolumeGestures = settings?.gesturesEnabled ?: true,
+                        doubleTapSeek = settings?.doubleTapSeekEnabled ?: true,
+                        resumePlayback = settings?.resumePlayback ?: true,
                         followAutoRotate = settings?.followAutoRotate ?: true,
                         queue = queue,
                         autoPlayNext = settings?.autoPlayNext ?: true,
@@ -187,6 +207,8 @@ class MainActivity : ComponentActivity() {
                     )
 
                     else -> Column(modifier = Modifier.fillMaxSize()) {
+                        // 다른 탭에서 뒤로가기는 보관함으로. 바로 앱이 꺼지면 당황한다.
+                        BackHandler(enabled = tab != Tab.LIBRARY && !showLicenses) { tab = Tab.LIBRARY }
                         when (tab) {
                             Tab.LIBRARY -> LibraryScreen(
                                 modifier = Modifier.weight(1f),
@@ -259,7 +281,9 @@ class MainActivity : ComponentActivity() {
     private fun PlayerRoute(
         app: PikaApp,
         video: VideoItem,
-        settingsGesturesEnabled: Boolean,
+        brightnessVolumeGestures: Boolean,
+        doubleTapSeek: Boolean,
+        resumePlayback: Boolean,
         followAutoRotate: Boolean,
         queue: List<VideoItem>,
         autoPlayNext: Boolean,
@@ -274,6 +298,7 @@ class MainActivity : ComponentActivity() {
                 context = applicationContext,
                 positionDao = app.database.playbackPositionDao(),
                 subtitleMatcher = app.subtitleMatcher,
+                persistScope = app.persistScope,
             )
         )
         val playerState by playerVm.uiState.collectAsStateWithLifecycle()
@@ -283,10 +308,11 @@ class MainActivity : ComponentActivity() {
             LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
         var forcedLandscape by remember { mutableStateOf<Boolean?>(null) }
 
+        LaunchedEffect(resumePlayback) { playerVm.setResumePlayback(resumePlayback) }
         LaunchedEffect(video.uri) {
             playerVm.open(
                 video = video,
-                resume = true,
+                resume = resumePlayback,
                 speed = defaultSpeed,
                 charset = defaultCharset,
                 queue = queue,
@@ -310,7 +336,10 @@ class MainActivity : ComponentActivity() {
         }
         DisposableEffect(Unit) {
             onDispose {
+                // ViewModel 은 Activity 에 매여 있어 여기서 멈추지 않으면 소리가 계속 난다.
+                playerVm.close()
                 systemControls.keepScreenOn(false)
+                systemControls.resetBrightness()
                 PlayerOrientation.setImmersive(this@MainActivity, false)
                 PlayerOrientation.apply(this@MainActivity, locked = false, followAutoRotate = true, forcedLandscape = null)
             }
@@ -337,7 +366,8 @@ class MainActivity : ComponentActivity() {
             onPlayVideo = playerVm::playNext,
             onBack = onExit,
             isFullscreen = isLandscape,
-            gesturesEnabled = settingsGesturesEnabled,
+            brightnessVolumeGestures = brightnessVolumeGestures,
+            doubleTapSeek = doubleTapSeek,
             subtitleScale = subtitleScale,
             subtitlePosition = subtitlePosition,
         )

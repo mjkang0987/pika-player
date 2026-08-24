@@ -16,6 +16,8 @@ import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
 import com.pikaworks.pikaplayer.subtitle.SubtitleCue
 import com.pikaworks.pikaplayer.subtitle.SubtitleTrack
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,6 +64,8 @@ class PlayerViewModel(
     context: Context,
     private val positionDao: PlaybackPositionDao,
     private val subtitleMatcher: SubtitleMatcher,
+    /** 마지막 위치 저장용. [savePosition] 의 주석 참고. */
+    private val persistScope: CoroutineScope,
 ) : ViewModel() {
 
     val player: ExoPlayer = ExoPlayer.Builder(context.applicationContext).build()
@@ -75,6 +79,11 @@ class PlayerViewModel(
     private var matches: List<SubtitleMatcher.Match> = emptyList()
     private var queue: List<VideoItem> = emptyList()
     private var autoPlayNext: Boolean = true
+    private var resumePlayback: Boolean = true
+    /** 지금 연 영상에 딸린 작업(이어보기 탐색·자막 찾기). 영상을 바꾸면 끊는다. */
+    private var videoJob: Job? = null
+    /** 자막 파일 읽기. 다른 자막이나 인코딩을 고르면 앞의 것을 끊는다. */
+    private var subtitleJob: Job? = null
 
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -104,8 +113,7 @@ class PlayerViewModel(
      * 영상마다 ViewModel 을 새로 만들면 ExoPlayer 인스턴스가 쌓인다. 코덱은
      * 기기당 개수가 제한돼 있어 몇 개만 새면 재생이 실패한다. ViewModel 은
      * 하나만 두고 여기서 갈아끼운다.
-     */
-    /**
+     *
      * [speed] 와 [charset] 은 설정 화면의 기본값이다. 아래에서 상태를 통째로
      * 새로 만들기 때문에, 기본값을 여기서 같이 받지 않으면 영상을 열 때마다
      * 사용자가 정한 값이 무시된다.
@@ -117,9 +125,12 @@ class PlayerViewModel(
         charset: String = SubtitleEncoding.AUTO,
         queue: List<VideoItem> = emptyList(),
     ) {
+        this.queue = queue
         if (currentVideo?.uri == video.uri) return
 
-        this.queue = queue
+        // 앞 영상의 자막 읽기나 이어보기 탐색이 남아 있으면 새 영상에 끼어든다.
+        videoJob?.cancel()
+        subtitleJob?.cancel()
 
         savePosition() // 이전 영상의 위치를 먼저 남긴다
         track = SubtitleTrack.EMPTY
@@ -139,16 +150,33 @@ class PlayerViewModel(
         player.setMediaItem(MediaItem.fromUri(video.uri))
         player.prepare()
 
-        viewModelScope.launch {
+        videoJob = viewModelScope.launch {
             if (resume) {
                 positionDao.find(video.uri.toString())?.let { saved ->
                     if (saved.positionMs > 0) player.seekTo(saved.positionMs)
                 }
             }
             player.play()
+            loadSubtitle(video)
         }
+    }
 
-        loadSubtitle(video)
+    /**
+     * 화면을 벗어날 때.
+     *
+     * 이 ViewModel 은 Activity 에 매여 있어 플레이어 화면을 닫아도 정리되지 않는다.
+     * 여기서 멈추지 않으면 목록으로 돌아간 뒤에도 소리가 계속 난다.
+     */
+    fun close() {
+        videoJob?.cancel()
+        subtitleJob?.cancel()
+        savePosition()
+        // stop() 이 리스너를 깨워 한 번 더 저장하지 않도록 먼저 지운다.
+        currentVideo = null
+        player.stop()
+        player.clearMediaItems()
+        queue = emptyList()
+        _uiState.value = PlayerUiState()
     }
 
     /**
@@ -169,41 +197,54 @@ class PlayerViewModel(
         val current = _uiState.value
         open(
             video = video,
-            resume = true,
+            resume = resumePlayback,
             speed = current.speed,
             charset = current.subtitleCharset,
             queue = queue,
         )
     }
 
+    /** 설정에서 온 값들. 상태를 갈아끼우는 [open] 과 무관하게 유지돼야 한다. */
+    fun setResumePlayback(enabled: Boolean) {
+        resumePlayback = enabled
+    }
+
     fun setAutoPlayNext(enabled: Boolean) {
         autoPlayNext = enabled
     }
 
-    private fun loadSubtitle(video: VideoItem) {
-        viewModelScope.launch {
-            matches = subtitleMatcher.findFor(video)
-            if (matches.isEmpty()) {
-                track = SubtitleTrack.EMPTY
-                _uiState.update {
-                    it.copy(
-                        subtitleLabel = "자막 없음",
-                        subtitleEnabled = false,
-                        subtitleOptions = emptyList(),
-                        selectedSubtitle = -1,
-                    )
-                }
-                return@launch
-            }
+    private suspend fun loadSubtitle(video: VideoItem) {
+        matches = subtitleMatcher.findFor(video)
+        if (matches.isEmpty()) {
+            track = SubtitleTrack.EMPTY
             _uiState.update {
-                it.copy(subtitleOptions = matches.map { m -> SubtitleOption(m.displayName, m.format.label) })
+                it.copy(
+                    subtitleLabel = "자막 없음",
+                    subtitleEnabled = false,
+                    subtitleOptions = emptyList(),
+                    selectedSubtitle = -1,
+                )
             }
-            selectSubtitle(0)
+            return
         }
+        _uiState.update {
+            it.copy(subtitleOptions = matches.map { m -> SubtitleOption(m.displayName, m.format.label) })
+        }
+        applySubtitle(0)
     }
 
-    /** [index] 가 -1 이면 자막을 끈다. */
+    /**
+     * [index] 가 -1 이면 자막을 끈다.
+     *
+     * 파일 읽기가 끝나기 전에 다른 자막을 고를 수 있다. 앞의 것을 끊지 않으면
+     * 늦게 끝난 쪽이 나중에 고른 것을 덮어쓴다.
+     */
     fun selectSubtitle(index: Int) {
+        subtitleJob?.cancel()
+        subtitleJob = viewModelScope.launch { applySubtitle(index) }
+    }
+
+    private suspend fun applySubtitle(index: Int) {
         if (index < 0 || index >= matches.size) {
             track = SubtitleTrack.EMPTY
             _uiState.update {
@@ -212,17 +253,15 @@ class PlayerViewModel(
             return
         }
         val match = matches[index]
-        viewModelScope.launch {
-            val charsetName = _uiState.value.subtitleCharset.takeIf { it != SubtitleEncoding.AUTO }
-            track = subtitleMatcher.load(match, charsetName) ?: SubtitleTrack.EMPTY
-            _uiState.update {
-                it.copy(
-                    selectedSubtitle = index,
-                    subtitleEnabled = !track.isEmpty(),
-                    // 외부 자막 파일에는 언어 정보가 없다. 형식명으로 표기한다.
-                    subtitleLabel = "자막 · ${match.format.label}",
-                )
-            }
+        val charsetName = _uiState.value.subtitleCharset.takeIf { it != SubtitleEncoding.AUTO }
+        track = subtitleMatcher.load(match, charsetName) ?: SubtitleTrack.EMPTY
+        _uiState.update {
+            it.copy(
+                selectedSubtitle = index,
+                subtitleEnabled = !track.isEmpty(),
+                // 외부 자막 파일에는 언어 정보가 없다. 형식명으로 표기한다.
+                subtitleLabel = "자막 · ${match.format.label}",
+            )
         }
     }
 
@@ -255,14 +294,14 @@ class PlayerViewModel(
     private fun startPositionTicker() {
         viewModelScope.launch {
             while (isActive) {
-                if (player.isPlaying || _uiState.value.positionMs == 0L) {
-                    val pos = player.currentPosition.coerceAtLeast(0L)
-                    _uiState.update { state ->
-                        state.copy(
-                            positionMs = pos,
-                            cue = if (state.subtitleEnabled) track.cueAt(pos, subtitleOffsetMs) else null,
-                        )
-                    }
+                // 조건을 걸지 않는다. 일시정지 중에 탐색하면 자막도 따라와야 하고,
+                // 값이 그대로면 StateFlow 가 알아서 흘리지 않는다(데이터 클래스 동등성).
+                val pos = player.currentPosition.coerceAtLeast(0L)
+                _uiState.update { state ->
+                    state.copy(
+                        positionMs = pos,
+                        cue = if (state.subtitleEnabled) track.cueAt(pos, subtitleOffsetMs) else null,
+                    )
                 }
                 delay(200)
             }
@@ -313,12 +352,18 @@ class PlayerViewModel(
         private const val UP_NEXT_LIMIT = 20
     }
 
+    /**
+     * 재생 위치를 남긴다.
+     *
+     * `persistScope` 를 쓰는 이유: `onCleared()` 가 불릴 때 `viewModelScope` 는
+     * 이미 취소돼 있다. 거기서 띄운 코루틴은 실행되지 않아 마지막 위치가 사라진다.
+     */
     private fun savePosition() {
         val video = currentVideo ?: return
         val pos = player.currentPosition
         val dur = player.duration
         if (dur <= 0) return
-        viewModelScope.launch {
+        persistScope.launch {
             positionDao.upsert(
                 PlaybackPosition(
                     uri = video.uri.toString(),
@@ -341,9 +386,10 @@ class PlayerViewModel(
         private val context: Context,
         private val positionDao: PlaybackPositionDao,
         private val subtitleMatcher: SubtitleMatcher,
+        private val persistScope: CoroutineScope,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            PlayerViewModel(context, positionDao, subtitleMatcher) as T
+            PlayerViewModel(context, positionDao, subtitleMatcher, persistScope) as T
     }
 }

@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +33,13 @@ enum class Tab(val label: String, val icon: ImageVector) {
     SETTINGS("설정", AppIcons.NavSettings),
 }
 
+/**
+ * 하단 네비게이션.
+ *
+ * 앱이 edge-to-edge 라 시스템 내비게이션 바 아래까지 그려진다. 아래 여백을
+ * 고정값으로 두면 3버튼 내비게이션 기기에서 버튼에 가린다 — 시스템이 알려주는
+ * 값을 받아 쓰고, 우리 여백은 그 위에 얹는다.
+ */
 @Composable
 fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
     val colors = PikaTheme.colors
@@ -37,7 +47,8 @@ fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifi
         modifier = modifier
             .fillMaxWidth()
             .background(colors.surface)
-            .padding(start = 30.dp, end = 30.dp, top = 10.dp, bottom = 26.dp),
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(start = 30.dp, end = 30.dp, top = 10.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Tab.entries.forEach { tab ->

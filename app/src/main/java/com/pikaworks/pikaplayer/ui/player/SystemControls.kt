@@ -45,6 +45,19 @@ class SystemControls(private val activity: Activity) {
         return volume
     }
 
+    /**
+     * 창 밝기 지정을 해제해 시스템 값으로 되돌린다.
+     *
+     * 이 창은 플레이어를 나가도 그대로 살아 있다. 되돌리지 않으면 목록 화면까지
+     * 어두운 채로 남아, 사용자는 앱이 고장난 것으로 읽는다.
+     */
+    fun resetBrightness() {
+        brightness = 0.5f
+        activity.window.attributes = activity.window.attributes.apply {
+            screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+        }
+    }
+
     /** 재생 중에는 화면이 꺼지지 않아야 한다. */
     fun keepScreenOn(on: Boolean) {
         if (on) {

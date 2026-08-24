@@ -1,6 +1,9 @@
 package com.pikaworks.pikaplayer
 
 import android.app.Application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
@@ -32,6 +35,15 @@ class PikaApp : Application(), ImageLoaderFactory {
         private set
     lateinit var deviceStorage: DeviceStorage
         private set
+
+    /**
+     * 화면이 사라진 뒤에도 끝나야 하는 짧은 쓰기용.
+     *
+     * ViewModel 의 `onCleared()` 시점에는 `viewModelScope` 가 이미 취소돼 있다.
+     * 거기서 코루틴을 띄우면 즉시 취소되고 마지막 재생 위치가 저장되지 않는다.
+     * 앱과 수명이 같은 스코프가 따로 필요하다.
+     */
+    val persistScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** Phase 1 은 모두 허용. Phase 2 에서 결제 상태를 읽는 구현으로 교체한다. */
     val featureGate: FeatureGate = AlwaysAllow

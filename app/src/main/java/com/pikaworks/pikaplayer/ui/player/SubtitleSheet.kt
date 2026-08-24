@@ -28,17 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
-
-private val ENCODINGS = listOf(
-    SubtitleEncoding.AUTO to "자동 감지",
-    SubtitleEncoding.UTF_8 to "UTF-8",
-    SubtitleEncoding.CP949 to "CP949",
-    SubtitleEncoding.EUC_KR to "EUC-KR",
-    SubtitleEncoding.SHIFT_JIS to "Shift-JIS",
-)
 
 /**
  * 자막 설정 시트(S4).
@@ -102,7 +94,7 @@ fun SubtitleSheet(
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
-                ENCODINGS.forEach { (value, label) ->
+                ENCODING_OPTIONS.forEach { (value, label) ->
                     Chip(
                         label = label,
                         selected = state.subtitleCharset == value,

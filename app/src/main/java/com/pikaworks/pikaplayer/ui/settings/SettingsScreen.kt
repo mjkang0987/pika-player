@@ -29,10 +29,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.pikaworks.pikaplayer.data.prefs.Settings
-import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.SubtitleScale
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
+import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
 import com.pikaworks.pikaplayer.ui.OptionSheet
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
@@ -74,7 +74,7 @@ fun SettingsScreen(
         )
         Picker.ENCODING -> OptionSheet(
             title = "기본 인코딩",
-            options = ENCODINGS,
+            options = ENCODING_OPTIONS,
             selected = settings.subtitleEncoding,
             onSelect = onSubtitleEncodingChange,
             onDismiss = { openPicker = null },
@@ -124,7 +124,7 @@ fun SettingsScreen(
         item { SwitchRow("다음 영상 자동 재생", settings.autoPlayNext, onAutoPlayNextChange) }
 
         item { SectionHeader("자막") }
-        item { ValueRow("기본 인코딩", label(ENCODINGS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
+        item { ValueRow("기본 인코딩", label(ENCODING_OPTIONS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
         item { ValueRow("글자 크기", label(SCALES, settings.subtitleScale)) { openPicker = Picker.SUBTITLE_SCALE } }
         item { ValueRow("표시 위치", label(POSITIONS, settings.subtitlePosition)) { openPicker = Picker.SUBTITLE_POSITION } }
 
@@ -148,13 +148,6 @@ private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, SUBTITLE_POSITION, 
 private val SPEEDS = listOf(
     0.5f to "0.5×", 0.75f to "0.75×", 1.0f to "1.0×",
     1.25f to "1.25×", 1.5f to "1.5×", 2.0f to "2.0×",
-)
-private val ENCODINGS = listOf(
-    SubtitleEncoding.AUTO to "자동 감지",
-    SubtitleEncoding.UTF_8 to "UTF-8",
-    SubtitleEncoding.CP949 to "CP949",
-    SubtitleEncoding.EUC_KR to "EUC-KR",
-    SubtitleEncoding.SHIFT_JIS to "Shift-JIS",
 )
 private val SCALES = listOf(
     SubtitleScale.SMALL to "작게", SubtitleScale.NORMAL to "보통", SubtitleScale.LARGE to "크게",
