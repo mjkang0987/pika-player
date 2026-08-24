@@ -9,14 +9,15 @@ plugins {
 
 android {
     namespace = "com.pikaworks.pikaplayer"
-    // 2026년 판 androidx 라이브러리들이 요구하는 수준. 부족하면 AGP 가
-    // "requires compileSdk NN" 으로 정확한 숫자를 알려준다.
-    compileSdk = 36
+    // Compose 1.12(BOM 2026.08)가 37 을 요구한다. AGP 8.13.2 가 공식으로 아는
+    // 최대치는 36 이라 gradle.properties 의 suppressUnsupportedCompileSdk 로 그
+    // 경고를 끈다. AGP 9 를 쓰면 깔끔하지만 KSP 가 아직 AGP 9 를 지원하지 않는다.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.pikaworks.pikaplayer"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
     }
