@@ -7,12 +7,14 @@ plugins {
 
 android {
     namespace = "com.pikaworks.pikaplayer"
-    compileSdk = 35
+    // 2026년 판 androidx 라이브러리들이 요구하는 수준. 부족하면 AGP 가
+    // "requires compileSdk NN" 으로 정확한 숫자를 알려준다.
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.pikaworks.pikaplayer"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
     }

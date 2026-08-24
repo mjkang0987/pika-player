@@ -1,24 +1,28 @@
-# 주의: Google Maven(AGP·Compose·Media3·Room·Billing)에 접근할 수 없는 환경에서
-# 작성했습니다. 아래 표시를 참고하세요.
-#   확인함  — Maven Central 에서 실제 존재를 확인 (kotlin, ksp)
-#   미확인  — 추정값. Android Studio 동기화에서 걸릴 수 있음
+# 표시 규칙
+#   확인함  — 저장소에서 실제 존재를 확인한 안정 버전
+#   미확인  — 추정값. 동기화에서 걸릴 수 있음
 #
-# 미확인 버전을 한 번에 확인하려면: bash tools/check_versions.sh
+# 버전을 다시 확인하려면: bash tools/check_versions.sh
+# (alpha/beta/rc 는 걸러서 안정 버전만 고를 것)
 
 [versions]
-agp = "8.7.3"
+agp = "8.7.3"               # 미확인. 조회 결과가 알파(9.5.0-alpha02)뿐이었다
 kotlin = "2.4.10"
-coreKtx = "1.15.0"
-lifecycle = "2.8.7"
-activityCompose = "1.9.3"
-composeBom = "2024.12.01"
-media3 = "1.5.1"
-room = "2.6.1"
-datastore = "1.1.1"
+coreKtx = "1.19.0"          # 확인함
+lifecycle = "2.8.7"         # 미확인. 조회 결과가 알파(2.12.0-alpha01)뿐이었다
+activityCompose = "1.13.0"  # 확인함
+composeBom = "2026.08.00"   # 확인함
+media3 = "1.11.0"           # 확인함
+room = "2.8.4"              # 확인함. 2.7+ 라야 KSP2 를 쓴다
+datastore = "1.1.1"         # 미확인. 조회 결과가 알파(1.3.0-alpha10)뿐이었다
 coil = "2.7.0"
-# 결제. 이 저장소를 만든 환경에서 Google Maven 에 접근할 수 없어 검증하지 못했다.
-# BillingRepository 는 이 버전의 API 를 전제로 쓰였다 — 버전을 올리면 그 파일만 확인하면 된다.
-billing = "7.1.1"
+# 결제. 최신은 9.1.0 이지만 일부러 7.1.1 에 둔다.
+# Billing 8.0 에서 queryProductDetailsAsync 의 콜백이 List<ProductDetails> 에서
+# QueryProductDetailsResult 로 바뀌었다. BillingRepository 는 7.x API 로 쓰여 있고
+# 이 환경에서는 어느 쪽도 컴파일해 볼 수 없다. 빌드가 한 번 통과한 뒤에 올리면
+# 컴파일러가 무엇을 고쳐야 하는지 정확히 알려준다 — 그 순서가 안전하다.
+# (Play 는 언젠가 8+ 를 요구하므로 출시 전에는 반드시 올려야 한다)
+billing = "7.1.1"           # 최신은 9.1.0. 아래 주석 참고
 # KSP2 부터 Kotlin 버전과 분리됐다. 예전 형식(2.2.21-2.0.5)은 2.2.x 까지만 있고,
 # 그 뒤로는 독립 번호를 쓴다. Maven Central 에서 확인함.
 ksp = "2.3.11"
