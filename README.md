@@ -16,6 +16,11 @@ Phase 1(로컬 재생 전체)과 Phase 2 일부(결제 뼈대 · PiP)까지 코�
 
 macOS · Windows · Linux 모두 됩니다. Android Studio 최신 안정판이면 충분합니다.
 
+**JDK 는 21(안드로이드 스튜디오 번들 JBR)을 그대로 쓰면 됩니다.** 따로 설치할 필요 없습니다.
+Settings → Build Tools → Gradle → *Gradle JDK* 가 번들 JBR 을 가리키면 그대로 두세요.
+JDK 21 로 컴파일하되 결과물은 Java 17 바이트코드로 나오도록 맞춰 뒀습니다 — 안드로이드가
+요구하는 것은 바이트코드 수준이지 컴파일에 쓴 JDK 가 아닙니다.
+
 ```
 ./gradlew :subtitle:test :entitlement:test :vault:test   # SDK 없이도 도는 테스트
 ./gradlew :app:assembleDebug                 # Android SDK 필요
