@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -31,10 +33,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
     buildFeatures {
         compose = true
         buildConfig = true // BuildConfig.VERSION_NAME 을 설정 화면에서 쓴다
+    }
+}
+
+// Kotlin 2.x 에서 android { kotlinOptions } 는 없어졌다. 순수 모듈들과 같은 방식으로
+// 바이트코드 수준만 17 로 맞춘다 — 컴파일은 JDK 21(스튜디오 번들)로 한다.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
