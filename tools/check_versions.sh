@@ -38,5 +38,16 @@ show androidx/core             core-ktx              1.15.0
 show androidx/lifecycle        lifecycle-runtime-ktx 2.8.7
 show androidx/activity         activity-compose      1.9.3
 show com/android/billingclient billing-ktx           7.1.1
+
+# AGP 는 메이저마다 호환 범위가 달라(특히 KSP·Gradle) 최신 하나만으로는 못 정한다.
+echo
+echo "AGP: 메이저별 최신 안정 버전"
+echo "---------------------------------------------------------------------------"
+curl -sS --max-time 20 "$BASE/com/android/tools/build/group-index.xml" \
+  | tr '>' '\n' | grep -o '^ *<gradle versions="[^"]*"' | sed 's/.*versions="//' | tr ',' '\n' \
+  | grep -viE 'alpha|beta|-rc|dev' \
+  | awk -F. '{print $1"\t"$0}' | sort -k1,1n -k2,2V | awk -F'\t' '{last[$1]=$2} END {for (m in last) print "  AGP " m ".x  ->  " last[m]}' | sort
+
 echo
 echo "Kotlin 2.4.10 · KSP 2.3.11 은 Maven Central 에서 확인 완료."
+echo "KSP 최신은 2.3.11(2026-08-03) 이고 AGP 9 를 아직 지원하지 않는다."
