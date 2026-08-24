@@ -5,7 +5,7 @@
 이 골격은 **Android SDK가 없고 Google Maven에 접근할 수 없는 환경에서 작성**됐습니다. 따라서:
 
 - **`:app` 모듈은 빌드해 본 적이 없습니다.** 컴파일 오류가 남아 있을 수 있습니다.
-- 반면 **`:subtitle`(23개)과 `:entitlement`(12개) 모듈은 실제로 컴파일하고 테스트를 돌려 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
+- 반면 **`:subtitle`(23개) · `:entitlement`(12개) · `:vault`(16개) 모듈은 실제로 컴파일하고 테스트를 돌려 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
 - **Play 결제(`data/billing/BillingRepository.kt`)는 이 저장소에서 가장 위험한 코드입니다.** Google Maven에 접근할 수 없어 SDK API를 한 줄도 확인하지 못했습니다. Billing 7.1.1 기준으로 썼고, 버전이 다르면 이 파일부터 봐야 합니다.
 - **`gradle/libs.versions.toml`의 버전은 검증되지 않았습니다.** Kotlin 버전만 Maven Central에서 확인했고, AGP·Compose·Media3·Room 버전은 추정값입니다. Android Studio에서 열면 동기화 단계에서 바로 걸러집니다.
 
@@ -22,6 +22,10 @@ python3 tools/check_refs.py
 ## 구조
 
 ```
+vault/                    순수 Kotlin 모듈 — 비공개 폴더 PIN
+  PinHasher.kt            PBKDF2-HMAC-SHA256. 무엇을 막고 못 막는지 주석에
+  LockoutPolicy.kt        반복 시도 차단. 실질적인 방어는 해시가 아니라 여기다
+
 entitlement/              순수 Kotlin 모듈 — 결제 등급과 기능 게이팅
   Entitlement.kt          Tier · Feature · FeatureGate
   TierResolver.kt         캐시와 스토어 응답을 합쳐 지금 등급을 정한다
@@ -41,6 +45,7 @@ app/src/main/java/com/pikaworks/pikaplayer/
     db/                 Room — 재생 위치(이어보기), SAF 메타데이터 캐시
     prefs/              DataStore — 설정 화면 값
     billing/            Play 결제. SDK 를 만지는 곳은 이 폴더뿐이다
+    vault/              비공개 폴더 — PIN 해시·소금·감춘 폴더 목록
   data/subtitle/        영상 옆 자막 파일 찾기 + 읽기 (Android 쪽)
   ui/
     theme/              기획서 7.4 디자인 토큰
@@ -50,6 +55,7 @@ app/src/main/java/com/pikaworks/pikaplayer/
     recent/             최근 탭
     settings/           설정 화면(S6) · 오픈소스 라이선스
     pro/                Pro 안내·구매 화면
+    vault/              비공개 폴더 — PIN 입력·폴더 고르기
     player/             플레이어 화면(S3)
       PlayerGestures.kt   스와이프 탐색 / 밝기 · 볼륨 / 더블탭
       SubtitleSheet.kt    자막 트랙 · 인코딩 · 싱크 (S4)
@@ -90,6 +96,12 @@ tools/
 **밝기는 창에만 적용합니다.** 기기 전체 밝기를 바꾸면 앱을 나간 뒤에도 어두운 채로 남습니다.
 
 **Play 결제 SDK를 만지는 곳은 `data/billing/BillingRepository.kt` 하나입니다.** 바깥은 `Tier`와 `ProductInfo`만 압니다. SDK 버전이 올라가 API가 바뀌어도 고칠 곳이 한 파일로 한정되고, 화면 코드가 결제 라이브러리에 묶이지 않습니다.
+
+**비공개 폴더는 "잠긴 폴더"이지 "암호화된 폴더"가 아닙니다.** 파일은 그대로 두고 이 앱의 목록에서만 감춥니다. 다른 앱이나 PC로 보면 그대로 보이고, 기기를 루팅해 저장값을 꺼내면 숫자 PIN은 오프라인 대입으로 뚫립니다(경우의 수가 백만 이하). 서버 없이 막을 방법이 없어 기획서 3장이 감수하기로 한 수준이고, **화면에도 그렇게 적어 두었습니다.** 실질적인 방어는 해시 강도가 아니라 `LockoutPolicy`의 반복 시도 차단입니다.
+
+**감출 폴더의 키는 반드시 `VideoItem.folderKey`와 같아야 합니다.** 폴더 화면의 `FolderSummary.id`는 표시 이름(MediaStore)이거나 SAF 문서 id라 값이 다릅니다. 처음에 그걸 그대로 썼다가 "골라도 아무것도 감춰지지 않는" 상태가 됐습니다. 후보 목록은 보관함이 거르기 **전** 목록에서 만듭니다 — 감춘 폴더가 후보에서 빠지면 되돌릴 방법이 사라집니다.
+
+**SAF로만 쓰는 사용자는 비공개 폴더를 쓸 수 없습니다.** SAF 영상에는 `folderKey`가 없습니다. 화면에는 "감출 수 있는 폴더가 없습니다"로 나옵니다.
 
 **Pro 기능 문구는 `ui/pro/ProFeatures.kt` 한 곳에 있습니다.** 구매 화면과 설정 카드가 같은 목록을 봅니다. 두 군데에 따로 적으면 한쪽만 고쳐져 "설정에서 본 것과 구매 화면에 적힌 것이 다르다"가 되는데, 파는 물건의 설명이 화면마다 다른 것은 기능 버그보다 신뢰를 크게 깎습니다.
 
@@ -162,6 +174,17 @@ tools/
 | 자동 작은 창 조건에 `isPlaying` | 일시정지 상태로 홈을 누르면 작은 창이 안 뜬다. 플레이어 화면에 있다는 것 자체가 보고 있다는 뜻 |
 | Pro 기능 문구가 두 화면에 중복 | `ui/pro/ProFeatures.kt` 로 통합 |
 
+### 비공개 폴더에서 나온 것
+
+| 문제 | 증상 |
+|---|---|
+| 빈 PIN 이 `false` 가 아니라 예외 | 아무것도 안 넣고 확인을 누르면 **앱이 죽는다**. 테스트가 잡았다 |
+| 감출 폴더의 키가 거르기 키와 다름 | 폴더 화면의 id 는 표시 이름/SAF 문서 id. **골라도 아무것도 감춰지지 않는다** |
+| 잠금 해제 뒤 아무 화면도 안 뜸 | PIN 을 맞게 넣어도 설정으로 돌아가 아무 일이 없는 것처럼 보인다 |
+| 탭 전환에서만 다시 잠금 | 홈 버튼으로 나갔다 오면 감춘 폴더가 그대로 열려 있다 |
+| `Flow.first()` 를 직접 구현 | 예외를 던져 수집을 끊는 방식. 표준 함수가 있다 |
+| Pro 섹션을 기능 하나로 판단 | PiP 기준으로 섹션 전체를 열었다. 등급으로 물어야 한다 |
+
 ## 자막 처리 — 왜 직접 만들었나
 
 `.smi`(SAMI)는 국내 자막 파일에서 비중이 큰데 재생 엔진이 기본 지원하지 않을 수 있습니다. 지원 여부 확인을 기다리는 대신, **의존하지 않아도 되도록 파서를 직접 만들었습니다.** 텍스트 파싱이라 분량이 크지 않고, 엔진 지원 여부와 무관하게 동작합니다.
@@ -189,8 +212,8 @@ tools/
 | 설정 화면의 Free / Pro 구분 | 됨 |
 | PiP (Pro) | 됨 |
 | 자동 작은 창 (Pro) | 됨 |
+| 비공개 폴더 · PIN (Pro) | 됨 — 테스트 16개 |
 | 네트워크 스트리밍 SMB/NAS (Pro) | 안 함 |
-| 비공개 폴더 · PIN (Pro) | 안 함 |
 | 클라우드 · Wi-Fi 전송 · Chromecast (Pro) | 안 함 |
 | AI 업스케일링 · 자막 생성 | **보류** — Pro+ 등급을 코드에서 뺐습니다. 기획서 3장 참고 |
 

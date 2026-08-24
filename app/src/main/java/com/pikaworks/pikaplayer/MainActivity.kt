@@ -31,6 +31,7 @@ import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import com.pikaworks.pikaplayer.entitlement.Feature
+import com.pikaworks.pikaplayer.entitlement.Tier
 import com.pikaworks.pikaplayer.entitlement.TierGate
 import com.pikaworks.pikaplayer.ui.BottomNav
 import com.pikaworks.pikaplayer.ui.Tab
@@ -48,6 +49,11 @@ import com.pikaworks.pikaplayer.ui.player.SystemControls
 import com.pikaworks.pikaplayer.ui.recent.RecentScreen
 import com.pikaworks.pikaplayer.ui.settings.LicenseScreen
 import com.pikaworks.pikaplayer.ui.settings.SettingsScreen
+import com.pikaworks.pikaplayer.ui.vault.PIN_LENGTH
+import com.pikaworks.pikaplayer.ui.vault.PinMode
+import com.pikaworks.pikaplayer.ui.vault.PinScreen
+import com.pikaworks.pikaplayer.ui.vault.VaultScreen
+import com.pikaworks.pikaplayer.ui.vault.VaultViewModel
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
@@ -140,12 +146,17 @@ class MainActivity : ComponentActivity() {
                 var tab by remember { mutableStateOf(Tab.LIBRARY) }
                 var showLicenses by remember { mutableStateOf(false) }
                 var showPro by remember { mutableStateOf(false) }
+                var showVault by remember { mutableStateOf(false) }
                 val pip by inPip
                 // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
                 LaunchedEffect(tab) {
                     if (tab != Tab.SETTINGS) {
                         showLicenses = false
                         showPro = false
+                        showVault = false
+                        // 설정을 벗어나면 다시 잠근다. 풀어둔 채로 폰을 넘기면
+                        // 감춘 폴더가 그대로 보인다.
+                        vaultVm.lock()
                     }
                 }
 
@@ -181,6 +192,8 @@ class MainActivity : ComponentActivity() {
                         safFolders = app.safFolders,
                     )
                 )
+                val vaultVm: VaultViewModel = viewModel(factory = VaultViewModel.Factory(app.vault))
+                val vaultState by vaultVm.uiState.collectAsStateWithLifecycle()
                 val libraryState by libraryVm.uiState.collectAsStateWithLifecycle()
                 val folderState by folderVm.uiState.collectAsStateWithLifecycle()
 
@@ -197,6 +210,23 @@ class MainActivity : ComponentActivity() {
                         libraryVm.loadFolder(treeUri)
                         folderVm.loadTree(treeUri)
                     }
+                }
+
+                // PIN 을 맞게 넣거나 처음 정하고 나면 폴더 고르는 화면으로 이어진다.
+                // 여기서 잇지 않으면 PIN 만 넣고 아무 일도 안 일어난 것처럼 보인다.
+                LaunchedEffect(vaultState.unlocked) { if (vaultState.unlocked) showVault = true }
+
+                // 앱을 벗어났다 돌아오면 다시 잠근다. 탭 전환만 막으면 홈 버튼으로
+                // 나갔다 온 사람에게는 감춘 폴더가 그대로 열려 있다.
+                LaunchedEffect(resumed) {
+                    vaultVm.lock()
+                    showVault = false
+                }
+
+                val hiddenFolders = vaultState.foldersToHide
+                LaunchedEffect(hiddenFolders) {
+                    libraryVm.setHiddenFolders(hiddenFolders)
+                    folderVm.setHiddenFolders(hiddenFolders)
                 }
 
                 // 정렬은 설정에 저장한다. 두 화면이 같은 값을 본다.
@@ -266,7 +296,10 @@ class MainActivity : ComponentActivity() {
 
                     else -> Column(modifier = Modifier.fillMaxSize()) {
                         // 다른 탭에서 뒤로가기는 보관함으로. 바로 앱이 꺼지면 당황한다.
-                        BackHandler(enabled = tab != Tab.LIBRARY && !showLicenses && !showPro) {
+                        BackHandler(
+                            enabled = tab != Tab.LIBRARY && !showLicenses && !showPro && !showVault &&
+                                vaultState.mode == PinMode.NONE
+                        ) {
                             tab = Tab.LIBRARY
                         }
                         when (tab) {
@@ -300,7 +333,41 @@ class MainActivity : ComponentActivity() {
                                 onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
                             )
 
-                            Tab.SETTINGS -> if (showPro) {
+                            Tab.SETTINGS -> if (vaultState.mode != PinMode.NONE) {
+                                BackHandler { vaultVm.cancel() }
+                                PinScreen(
+                                    modifier = Modifier.weight(1f),
+                                    title = if (vaultState.mode == PinMode.UNLOCK) "잠금 해제" else "PIN 설정",
+                                    subtitle = when (vaultState.mode) {
+                                        PinMode.SET -> "숫자 ${PIN_LENGTH}자리를 정하세요"
+                                        PinMode.CONFIRM -> "확인을 위해 한 번 더 입력하세요"
+                                        else -> "감춘 폴더를 보려면 PIN 을 입력하세요"
+                                    },
+                                    entered = vaultState.entered,
+                                    lockedForMs = vaultState.lockedForMs,
+                                    error = vaultState.error,
+                                    onDigit = { vaultVm.onDigit(it, System.currentTimeMillis()) },
+                                    onBackspace = vaultVm::onBackspace,
+                                    onBack = { vaultVm.cancel() },
+                                )
+                            } else if (showVault) {
+                                BackHandler { showVault = false }
+                                VaultScreen(
+                                    modifier = Modifier.weight(1f),
+                                    // 폴더 화면의 목록이 아니라 보관함이 만든 것을 쓴다.
+                                    // 폴더 화면의 id 는 표시 이름이나 SAF 문서 id 라
+                                    // 거르기에 쓰는 folderKey 와 값이 다르다.
+                                    folders = libraryState.allFolders,
+                                    hidden = vaultState.hiddenFolders,
+                                    onToggle = vaultVm::setHidden,
+                                    onChangePin = { vaultVm.startSet() },
+                                    onDisable = {
+                                        vaultVm.disable()
+                                        showVault = false
+                                    },
+                                    onBack = { showVault = false },
+                                )
+                            } else if (showPro) {
                                 BackHandler { showPro = false }
                                 ProScreen(
                                     modifier = Modifier.weight(1f),
@@ -331,9 +398,21 @@ class MainActivity : ComponentActivity() {
                                     onSubtitlePositionChange = { scope.launch { app.settings.setSubtitlePosition(it) } },
                                     onThemeChange = { scope.launch { app.settings.setTheme(it) } },
                                     onOpenLicenses = { showLicenses = true },
-                                    proUnlocked = gate.isAllowed(Feature.PICTURE_IN_PICTURE),
+                                    // 개별 기능이 아니라 "Pro 섹션이 열렸는가" 다.
+                                    // 기능 하나를 기준으로 삼으면 그 기능의 등급이
+                                    // 바뀔 때 관계없는 항목까지 같이 흔들린다.
+                                    proUnlocked = proTier.atLeast(Tier.PRO),
                                     onOpenPro = { showPro = true },
                                     onAutoPipChange = { scope.launch { app.settings.setAutoPip(it) } },
+                                    vaultEnabled = vaultState.settings.enabled,
+                                    onOpenVault = {
+                                        // 아직 PIN 이 없으면 정하는 것부터. 있으면 확인 먼저.
+                                        when {
+                                            !vaultState.settings.enabled -> vaultVm.startSet()
+                                            vaultState.unlocked -> showVault = true
+                                            else -> vaultVm.startUnlock(System.currentTimeMillis())
+                                        }
+                                    },
                                     onBack = { tab = Tab.LIBRARY },
                                     versionName = BuildConfig.VERSION_NAME,
                                 )

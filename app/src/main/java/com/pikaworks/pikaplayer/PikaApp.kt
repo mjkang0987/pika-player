@@ -16,6 +16,7 @@ import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.prefs.SettingsStore
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
+import com.pikaworks.pikaplayer.data.vault.VaultStore
 
 /**
  * 의존성을 손으로 엮는다. 1인 개발 규모에서 DI 프레임워크는 아직 값을 하지 않는다.
@@ -47,6 +48,8 @@ class PikaApp : Application(), ImageLoaderFactory {
 
     lateinit var billing: BillingRepository
         private set
+    lateinit var vault: VaultStore
+        private set
 
     /**
      * Coil 기본 ImageLoader 는 이미지 파일만 다룬다.
@@ -71,6 +74,7 @@ class PikaApp : Application(), ImageLoaderFactory {
         subtitleMatcher = SubtitleMatcher(this)
         safFolders = SafFolderSource(this, database.safMetadataDao())
         deviceStorage = DeviceStorage(this)
+        vault = VaultStore(this)
         billing = BillingRepository(this, persistScope, EntitlementStore(this))
         billing.start()
     }

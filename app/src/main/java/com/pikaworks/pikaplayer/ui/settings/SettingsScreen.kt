@@ -64,6 +64,9 @@ fun SettingsScreen(
     proUnlocked: Boolean,
     onOpenPro: () -> Unit,
     onAutoPipChange: (Boolean) -> Unit,
+    /** 비공개 폴더가 켜져 있는가. 켜져 있으면 폴더 고르기로, 아니면 PIN 설정으로 간다. */
+    vaultEnabled: Boolean,
+    onOpenVault: () -> Unit,
     onBack: () -> Unit,
     versionName: String,
     modifier: Modifier = Modifier,
@@ -137,6 +140,13 @@ fun SettingsScreen(
                 SwitchRow("자동 작은 창", settings.autoPip, onAutoPipChange)
             } else {
                 LockedRow("자동 작은 창", onOpenPro)
+            }
+        }
+        item {
+            if (proUnlocked) {
+                ValueRow("비공개 폴더", if (vaultEnabled) "켜짐" else "꺼짐", onOpenVault)
+            } else {
+                LockedRow("비공개 폴더", onOpenPro)
             }
         }
 

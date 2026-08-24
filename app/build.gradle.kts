@@ -39,6 +39,7 @@ android {
 dependencies {
     implementation(project(":subtitle"))
     implementation(project(":entitlement"))
+    implementation(project(":vault"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

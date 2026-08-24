@@ -74,6 +74,8 @@ class FolderViewModel(
     private var allVideos: List<VideoItem> = emptyList()
     private var mediaFolders: List<FolderSummary> = emptyList()
     private var sort: String = SortOrder.DATE_DESC
+    /** 비공개 폴더로 감춘 folderKey. 잠금을 푼 동안에는 비어 있다. */
+    private var hiddenFolders: Set<String> = emptySet()
     /** SAF 목록 조회. 폴더를 연달아 누르면 앞선 것을 버린다. */
     private var listJob: Job? = null
     /** SAF 하위 폴더의 영상 수를 뒤에서 세는 작업. 폴더를 옮기면 취소한다. */
@@ -92,6 +94,13 @@ class FolderViewModel(
         )
     }
 
+    fun setHiddenFolders(keys: Set<String>) {
+        if (hiddenFolders == keys) return
+        hiddenFolders = keys
+        // 이미 그려진 목록에서도 즉시 빠져야 한다. 다시 훑을 것 없이 다시 묶는다.
+        if (treeUri == null) refresh()
+    }
+
     /** 미디어 권한이 있을 때. 화면에 돌아올 때마다 호출한다. */
     fun refresh() {
         treeUri = null
@@ -102,6 +111,7 @@ class FolderViewModel(
             _uiState.value = _uiState.value.copy(loading = true)
             allVideos = mediaStore.queryVideos()
             mediaFolders = allVideos
+                .filter { it.folderKey !in hiddenFolders }
                 .groupBy { it.folderName ?: "기타" }
                 .map { (name, items) ->
                     FolderSummary(
@@ -147,7 +157,9 @@ class FolderViewModel(
             _uiState.value = _uiState.value.copy(
                 crumbs = listOf(crumb),
                 folders = emptyList(),
-                videos = allVideos.filter { it.folderName == folder.name }.sortedFor(sort),
+                videos = allVideos
+                    .filter { it.folderName == folder.name && it.folderKey !in hiddenFolders }
+                    .sortedFor(sort),
             )
         } else {
             openSaf(folder.id, _uiState.value.crumbs + crumb)

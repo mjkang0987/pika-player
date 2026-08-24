@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pikaworks.pikaplayer.data.db.PlaybackPosition
 import com.pikaworks.pikaplayer.data.db.PlaybackPositionDao
+import com.pikaworks.pikaplayer.data.media.FolderOption
 import com.pikaworks.pikaplayer.data.media.LibraryRow
 import android.net.Uri
 import com.pikaworks.pikaplayer.data.media.DeviceStorage
@@ -75,6 +76,13 @@ data class LibraryUiState(
     val filter: String = LibraryFilter.ALL,
     /** 검색어(S7). 비어 있으면 검색하지 않는다. */
     val query: String = "",
+    /**
+     * 비공개 폴더에서 고를 수 있는 폴더 전체.
+     *
+     * 감춘 폴더도 들어 있어야 한다 — 목록에서 사라진 폴더를 다시 꺼낼 방법이
+     * 없으면 한 번 감춘 것을 영영 되돌리지 못한다.
+     */
+    val allFolders: List<FolderOption> = emptyList(),
 ) {
     /** 검색어에 걸린 것들. 거르기 탭의 개수도 이 범위에서 센다. */
     private val searched: List<LibraryRow>
@@ -101,6 +109,8 @@ class LibraryViewModel(
     private val subtitles = MutableStateFlow(SubtitleIndex.EMPTY)
     private val storage = MutableStateFlow<StorageUsage?>(null)
     private val sort = MutableStateFlow(SortOrder.DATE_DESC)
+    /** 비공개 폴더로 감춘 folderKey. 잠금을 푼 동안에는 비어 있다. */
+    private val hiddenFolders = MutableStateFlow<Set<String>>(emptySet())
     private val loading = MutableStateFlow(true)
 
     private val _uiState = MutableStateFlow(LibraryUiState())
@@ -108,14 +118,19 @@ class LibraryViewModel(
 
     init {
         // combine 은 한 번에 다섯 개까지다. 목록과 직접 관계없는 값들을 먼저 묶는다.
-        val extras = combine(subtitles, storage, sort) { subs, space, order ->
-            Extras(subs, space, order)
+        val extras = combine(subtitles, storage, sort, hiddenFolders) { subs, space, order, hidden ->
+            Extras(subs, space, order, hidden)
         }
         viewModelScope.launch {
             combine(videos, positionDao.observeAll(), extras, loading) { list, positions, extra, isLoading ->
                 val byUri: Map<String, PlaybackPosition> = positions.associateBy { it.uri }
 
-                val rows = list.sortedFor(extra.sort).map { video ->
+                val rows = list
+                    // 감춘 폴더는 목록에 아예 올리지 않는다. 이어보기·최근도 같은
+                    // 목록에서 파생되므로 여기서 한 번만 걸러도 전부 반영된다.
+                    .filter { it.folderKey !in extra.hiddenFolders }
+                    .sortedFor(extra.sort)
+                    .map { video ->
                     LibraryRow(
                         video = video,
                         positionMs = byUri[video.uri.toString()]?.positionMs ?: 0L,
@@ -130,6 +145,15 @@ class LibraryViewModel(
                     .take(10)
                     .map { ContinueItem(it.video, it.positionMs) }
 
+                // 거르기 전 목록에서 만든다. 감춘 폴더가 후보에서 빠지면 안 된다.
+                val allFolders = list
+                    .mapNotNull { video -> video.folderKey?.let { it to video } }
+                    .groupBy({ it.first }, { it.second })
+                    .map { (key, items) ->
+                        FolderOption(key, items.first().folderName ?: key, items.size)
+                    }
+                    .sortedBy { it.name.lowercase() }
+
                 val recent = rows
                     .filter { byUri.containsKey(it.video.uri.toString()) }
                     .sortedByDescending { byUri[it.video.uri.toString()]?.updatedAtMs ?: 0L }
@@ -141,6 +165,7 @@ class LibraryViewModel(
                     recent = recent,
                     storage = extra.storage,
                     sort = extra.sort,
+                    allFolders = allFolders,
                 )
             }.collect { next ->
                 // 위 combine 은 상태를 통째로 새로 만든다. 거르기와 검색어는 화면에서
@@ -153,6 +178,10 @@ class LibraryViewModel(
 
     fun setSort(order: String) {
         sort.value = order
+    }
+
+    fun setHiddenFolders(keys: Set<String>) {
+        hiddenFolders.value = keys
     }
 
     /** 거르기와 검색어는 화면을 벗어나면 잊는다. 설정처럼 오래 남을 값이 아니다. */
@@ -197,6 +226,7 @@ class LibraryViewModel(
         val subtitles: SubtitleIndex,
         val storage: StorageUsage?,
         val sort: String,
+        val hiddenFolders: Set<String>,
     )
 
     class Factory(

@@ -24,3 +24,4 @@ rootProject.name = "PikaPlayer"
 include(":app")
 include(":subtitle")
 include(":entitlement")
+include(":vault")

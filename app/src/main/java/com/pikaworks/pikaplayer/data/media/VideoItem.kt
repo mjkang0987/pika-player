@@ -60,3 +60,11 @@ fun List<VideoItem>.sortedFor(order: String): List<VideoItem> = when (order) {
     SortOrder.DURATION_DESC -> sortedByDescending { it.durationMs }
     else -> sortedByDescending { it.dateModifiedSec }
 }
+
+/**
+ * 비공개 폴더에서 고를 수 있는 폴더 하나.
+ *
+ * [key] 는 반드시 [VideoItem.folderKey] 와 같은 값이어야 한다 — 감출 때 쓰는 키와
+ * 목록에서 거를 때 쓰는 키가 다르면 골라도 아무것도 감춰지지 않는다.
+ */
+data class FolderOption(val key: String, val name: String, val videoCount: Int)

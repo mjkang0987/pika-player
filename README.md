@@ -17,7 +17,7 @@ Phase 1(로컬 재생 전체)과 Phase 2 일부(결제 뼈대 · PiP)까지 코�
 macOS · Windows · Linux 모두 됩니다. Android Studio 최신 안정판이면 충분합니다.
 
 ```
-./gradlew :subtitle:test :entitlement:test   # SDK 없이도 도는 테스트
+./gradlew :subtitle:test :entitlement:test :vault:test   # SDK 없이도 도는 테스트
 ./gradlew :app:assembleDebug                 # Android SDK 필요
 python3 tools/check_refs.py                  # 빌드 없이 도는 참조 점검
 ```
@@ -35,7 +35,8 @@ Apple Silicon 맥이면 에뮬레이터 이미지를 **arm64-v8a** 로 받으세
 |---|---|
 | `:app` | 화면과 안드로이드 연동 전부 |
 | `:subtitle` | 자막 파싱·인코딩 판별 (순수 Kotlin, 테스트 23개) |
-| `:entitlement` | 결제 등급과 기능 게이팅 (순수 Kotlin, 테스트 14개) |
+| `:entitlement` | 결제 등급과 기능 게이팅 (순수 Kotlin, 테스트 12개) |
+| `:vault` | 비공개 폴더 PIN·잠금 정책 (순수 Kotlin, 테스트 16개) |
 
 깨지기 쉽거나 틀렸을 때 값이 큰 로직은 안드로이드 의존성 없는 모듈로 빼서
 기기 없이 테스트로 못박아 뒀습니다.
