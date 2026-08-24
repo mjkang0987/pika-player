@@ -2,9 +2,15 @@ package com.pikaworks.pikaplayer.data.media
 
 import android.content.ContentUris
 import android.content.Context
+import android.database.ContentObserver
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 
 /**
@@ -14,6 +20,27 @@ import kotlinx.coroutines.withContext
  * 권한을 거부한 사용자는 SAF 로 폴더를 직접 고르는 경로로 간다 — 기획서 7.2 참고.
  */
 class MediaStoreSource(private val context: Context) {
+
+    /**
+     * 기기의 동영상 목록이 바뀔 때마다 신호를 낸다.
+     *
+     * 전에는 화면에 다시 들어올 때만 다시 읽었다. 앱을 켜 둔 채로 파일을
+     * 내려받거나 옮기면 목록이 그대로여서, 사용자는 앱이 못 찾는다고 느꼈다.
+     * 하위 경로까지 함께 보므로 어느 폴더에 들어와도 신호가 온다.
+     */
+    fun changes(): Flow<Unit> = callbackFlow {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                trySend(Unit)
+            }
+        }
+        context.contentResolver.registerContentObserver(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            true,
+            observer,
+        )
+        awaitClose { context.contentResolver.unregisterContentObserver(observer) }
+    }
 
     suspend fun queryVideos(): List<VideoItem> = withContext(Dispatchers.IO) {
         val projection = arrayOf(

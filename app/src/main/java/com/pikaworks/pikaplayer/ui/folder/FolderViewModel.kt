@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -83,6 +84,21 @@ class FolderViewModel(
     /** SAF 모드일 때만 값이 있다. */
     private var treeUri: Uri? = null
 
+    init {
+        // 기기에 영상이 추가·삭제되면 폴더 목록도 그 자리에서 맞춘다.
+        // 폴더 안에 들어가 있을 때는 건드리지 않는다 — 목록을 다시 만들면
+        // 보고 있던 폴더에서 최상단으로 튕겨 나가기 때문이다.
+        viewModelScope.launch {
+            mediaStore.changes()
+                .debounce(500)
+                .collect {
+                    if (treeUri == null && _uiState.value.crumbs.isEmpty()) {
+                        loadMediaFolders(showLoading = false)
+                    }
+                }
+        }
+    }
+
     /** 보관함과 같은 정렬 기준을 쓴다. 화면마다 순서가 다르면 혼란스럽다. */
     fun setSort(order: String) {
         if (sort == order) return
@@ -107,8 +123,16 @@ class FolderViewModel(
         // SAF 로 보던 중에 권한을 켰을 수 있다. 남은 조회가 결과를 덮어쓰지 않게 끊는다.
         listJob?.cancel()
         countJob?.cancel()
+        loadMediaFolders(showLoading = true)
+    }
+
+    /**
+     * @param showLoading 사용자가 부른 조회에서만 참. 파일이 추가돼서 저절로
+     *   다시 읽는 경우에는 목록이 이미 떠 있으므로 자리 표시자로 덮지 않는다.
+     */
+    private fun loadMediaFolders(showLoading: Boolean) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(loading = true)
+            if (showLoading) _uiState.value = _uiState.value.copy(loading = true)
             allVideos = mediaStore.queryVideos()
             mediaFolders = allVideos
                 .filter { it.folderKey !in hiddenFolders }

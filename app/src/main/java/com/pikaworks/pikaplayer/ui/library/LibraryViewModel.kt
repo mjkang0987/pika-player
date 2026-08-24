@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 
 data class ContinueItem(
@@ -116,11 +117,26 @@ class LibraryViewModel(
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
+    /**
+     * MediaStore 를 보고 있으면 참, 사용자가 고른 SAF 폴더를 보고 있으면 거짓.
+     * SAF 목록은 MediaStore 와 무관하므로 그때는 변경 신호를 흘려보낸다.
+     */
+    private var watchingMediaStore = false
+
     init {
         // combine 은 한 번에 다섯 개까지다. 목록과 직접 관계없는 값들을 먼저 묶는다.
         val extras = combine(subtitles, storage, sort, hiddenFolders) { subs, space, order, hidden ->
             Extras(subs, space, order, hidden)
         }
+        // 파일 하나가 들어와도 MediaStore 는 신호를 여러 번 보낸다. 잠깐 모아
+        // 마지막 것만 처리한다. 화면에 없을 때도 도는 대신, 다시 들어왔을 때
+        // 목록이 이미 맞아 있다.
+        viewModelScope.launch {
+            mediaStore.changes()
+                .debounce(500)
+                .collect { if (watchingMediaStore) reload(showLoading = false) }
+        }
+
         viewModelScope.launch {
             combine(videos, positionDao.observeAll(), extras, loading) { list, positions, extra, isLoading ->
                 val byUri: Map<String, PlaybackPosition> = positions.associateBy { it.uri }
@@ -195,8 +211,17 @@ class LibraryViewModel(
 
     /** 권한을 받은 뒤, 그리고 화면에 돌아올 때마다 호출한다. */
     fun refresh() {
+        watchingMediaStore = true
+        reload(showLoading = true)
+    }
+
+    /**
+     * @param showLoading 사용자가 부른 조회에서만 참. 파일이 추가돼서 저절로
+     *   다시 읽는 경우에는 목록이 이미 떠 있으므로 자리 표시자로 덮지 않는다.
+     */
+    private fun reload(showLoading: Boolean) {
         viewModelScope.launch {
-            loading.value = true
+            if (showLoading) loading.value = true
             videos.value = mediaStore.queryVideos()
             loading.value = false
         }
@@ -212,6 +237,7 @@ class LibraryViewModel(
      * MediaStore 경로보다 느리다. 폴더 하나 분량이라 감수한다.
      */
     fun loadFolder(treeUri: Uri) {
+        watchingMediaStore = false
         viewModelScope.launch { storage.value = deviceStorage.read() }
         viewModelScope.launch {
             loading.value = true
