@@ -148,18 +148,6 @@ class MainActivity : ComponentActivity() {
                 var showPro by remember { mutableStateOf(false) }
                 var showVault by remember { mutableStateOf(false) }
                 val pip by inPip
-                // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
-                LaunchedEffect(tab) {
-                    if (tab != Tab.SETTINGS) {
-                        showLicenses = false
-                        showPro = false
-                        showVault = false
-                        // 설정을 벗어나면 다시 잠근다. 풀어둔 채로 폰을 넘기면
-                        // 감춘 폴더가 그대로 보인다.
-                        vaultVm.lock()
-                    }
-                }
-
                 val proTier by app.billing.tier.collectAsStateWithLifecycle()
                 // 게이트를 여기서 만든다. `app` 에 두면 등급이 바뀌어도 화면이
                 // 다시 그려지지 않는다 — 산 직후에도 잠긴 채로 남는다.
@@ -194,6 +182,19 @@ class MainActivity : ComponentActivity() {
                 )
                 val vaultVm: VaultViewModel = viewModel(factory = VaultViewModel.Factory(app.vault))
                 val vaultState by vaultVm.uiState.collectAsStateWithLifecycle()
+
+                // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
+                LaunchedEffect(tab) {
+                    if (tab != Tab.SETTINGS) {
+                        showLicenses = false
+                        showPro = false
+                        showVault = false
+                        // 설정을 벗어나면 다시 잠근다. 풀어둔 채로 폰을 넘기면
+                        // 감춘 폴더가 그대로 보인다.
+                        vaultVm.lock()
+                    }
+                }
+
                 val libraryState by libraryVm.uiState.collectAsStateWithLifecycle()
                 val folderState by folderVm.uiState.collectAsStateWithLifecycle()
 

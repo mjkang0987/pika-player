@@ -204,7 +204,7 @@ fun PlayerScreen(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .padding(horizontal = 26.dp, bottom = 10.dp),
+                            .padding(start = 26.dp, end = 26.dp, bottom = 10.dp),
                     )
                 }
             }

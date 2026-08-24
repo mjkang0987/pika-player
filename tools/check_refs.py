@@ -160,5 +160,20 @@ for p, s in files.items():
         if m.group(1) not in known:
             bad.append(f'{p}: `{m.group(1)}(...)` — 선언도 임포트도 없음')
 
+# 4) padding 오버로드 — horizontal/vertical 과 start/top/end/bottom 은 섞을 수 없다.
+#    Modifier.padding 에는 (all) (horizontal, vertical) (start, top, end, bottom)
+#    세 가지뿐이라 `padding(horizontal = .., bottom = ..)` 같은 조합은 없다.
+for p, s in files.items():
+    for i, line in enumerate(s.split('\n'), 1):
+        for m in re.finditer(r'\.padding\(([^)]*)\)', line):
+            names = set(re.findall(r'(\w+)\s*=', m.group(1)))
+            if names & {'horizontal', 'vertical'} and names & {'start', 'top', 'end', 'bottom'}:
+                bad.append(f'{p}:{i}: padding({m.group(1)}) — 없는 조합')
+
+# 선언보다 먼저 쓴 지역 변수(실제로 libraryVm·vaultVm 에서 두 번 났다)도 잡고 싶었지만
+# 넣지 않았다. 함수마다 같은 이름(colors 등)이 반복돼 정규식으로는 어느 함수의 것인지
+# 가릴 수 없고, 시험 삼아 넣었더니 오탐이 70개 났다. 늘 틀리는 검사는 무시하게 되고,
+# 그러면 진짜를 놓친다. 이건 컴파일러가 정확히 잡아주는 종류이기도 하다.
+
 print('\n'.join(sorted(set(bad))) if bad else '참조 일관성 OK')
 sys.exit(1 if bad else 0)
