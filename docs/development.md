@@ -7,7 +7,8 @@
 - **`:app` 모듈은 빌드해 본 적이 없습니다.** 컴파일 오류가 남아 있을 수 있습니다.
 - 반면 **`:subtitle`(23개) · `:entitlement`(12개) · `:vault`(16개) 모듈은 실제로 컴파일하고 테스트를 돌려 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
 - **Play 결제(`data/billing/BillingRepository.kt`)는 이 저장소에서 가장 위험한 코드입니다.** Google Maven에 접근할 수 없어 SDK API를 한 줄도 확인하지 못했습니다. Billing 7.1.1 기준으로 썼고, 버전이 다르면 이 파일부터 봐야 합니다.
-- **`gradle/libs.versions.toml`의 버전은 검증되지 않았습니다.** Kotlin 버전만 Maven Central에서 확인했고, AGP·Compose·Media3·Room 버전은 추정값입니다. Android Studio에서 열면 동기화 단계에서 바로 걸러집니다.
+- **`gradle/libs.versions.toml`의 Google Maven 쪽 버전은 검증되지 않았습니다.** Kotlin(2.4.10)과 KSP(2.3.11)만 Maven Central에서 확인했고, AGP·Compose·Media3·Room·Billing은 추정값입니다. `bash tools/check_versions.sh`를 개발 기계에서 돌리면 실제 최신 버전을 한 번에 뽑을 수 있습니다.
+- **Room + KSP2 조합에 주의하세요.** KSP 2.3.x는 KSP2라 Kotlin 버전과 분리됐는데, 예전 Room(2.6.x)의 프로세서는 KSP1 기준입니다. Room을 2.7 이상으로 올려야 할 가능성이 높습니다.
 
 첫 작업은 Android Studio로 열어 **동기화 → 버전 갱신 → 빌드**입니다.
 

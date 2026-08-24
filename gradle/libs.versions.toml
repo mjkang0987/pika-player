@@ -1,6 +1,9 @@
-# 주의: 아래 버전은 이 저장소를 만든 환경에서 Google Maven에 접근할 수 없어
-# 검증하지 못했습니다. Android Studio에서 최초 동기화 시 갱신하세요.
-# (Kotlin 버전만 Maven Central에서 확인함)
+# 주의: Google Maven(AGP·Compose·Media3·Room·Billing)에 접근할 수 없는 환경에서
+# 작성했습니다. 아래 표시를 참고하세요.
+#   확인함  — Maven Central 에서 실제 존재를 확인 (kotlin, ksp)
+#   미확인  — 추정값. Android Studio 동기화에서 걸릴 수 있음
+#
+# 미확인 버전을 한 번에 확인하려면: bash tools/check_versions.sh
 
 [versions]
 agp = "8.7.3"
@@ -16,7 +19,9 @@ coil = "2.7.0"
 # 결제. 이 저장소를 만든 환경에서 Google Maven 에 접근할 수 없어 검증하지 못했다.
 # BillingRepository 는 이 버전의 API 를 전제로 쓰였다 — 버전을 올리면 그 파일만 확인하면 된다.
 billing = "7.1.1"
-ksp = "2.4.10-1.0.29"
+# KSP2 부터 Kotlin 버전과 분리됐다. 예전 형식(2.2.21-2.0.5)은 2.2.x 까지만 있고,
+# 그 뒤로는 독립 번호를 쓴다. Maven Central 에서 확인함.
+ksp = "2.3.11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
