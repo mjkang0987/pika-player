@@ -1,11 +1,12 @@
-# 개발 노트 (Phase 1)
+# 개발 노트
 
 ## 확인되지 않은 것 — 먼저 읽어주세요
 
 이 골격은 **Android SDK가 없고 Google Maven에 접근할 수 없는 환경에서 작성**됐습니다. 따라서:
 
 - **`:app` 모듈은 빌드해 본 적이 없습니다.** 컴파일 오류가 남아 있을 수 있습니다.
-- 반면 **`:subtitle` 모듈은 실제로 컴파일하고 테스트를 돌려 23개 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
+- 반면 **`:subtitle`(23개)과 `:entitlement`(14개) 모듈은 실제로 컴파일하고 테스트를 돌려 전부 통과했습니다.** Android 의존성이 없는 순수 Kotlin이라 SDK 없이 검증이 가능했습니다.
+- **Play 결제(`data/billing/BillingRepository.kt`)는 이 저장소에서 가장 위험한 코드입니다.** Google Maven에 접근할 수 없어 SDK API를 한 줄도 확인하지 못했습니다. Billing 7.1.1 기준으로 썼고, 버전이 다르면 이 파일부터 봐야 합니다.
 - **`gradle/libs.versions.toml`의 버전은 검증되지 않았습니다.** Kotlin 버전만 Maven Central에서 확인했고, AGP·Compose·Media3·Room 버전은 추정값입니다. Android Studio에서 열면 동기화 단계에서 바로 걸러집니다.
 
 첫 작업은 Android Studio로 열어 **동기화 → 버전 갱신 → 빌드**입니다.
@@ -21,6 +22,10 @@ python3 tools/check_refs.py
 ## 구조
 
 ```
+entitlement/              순수 Kotlin 모듈 — 결제 등급과 기능 게이팅
+  Entitlement.kt          Tier · Feature · FeatureGate
+  TierResolver.kt         캐시와 스토어 응답을 합쳐 지금 등급을 정한다
+
 subtitle/                 순수 Kotlin 모듈 (Android 의존성 없음)
   EncodingDetector.kt     자막 파일 인코딩 판별
   SmiParser.kt            SAMI(.smi) 파서
@@ -31,12 +36,11 @@ subtitle/                 순수 Kotlin 모듈 (Android 의존성 없음)
 app/src/main/java/com/pikaworks/pikaplayer/
   PikaApp.kt            의존성 조립 (DI 프레임워크 없이 손으로)
   MainActivity.kt       진입점, 권한 요청
-  core/
-    FeatureGate.kt      Pro 게이팅 지점 — Phase 1은 항상 허용
   data/
     media/              MediaStore 조회, SAF 폴더 조회, 저장소 잔량, VideoItem 모델
     db/                 Room — 재생 위치(이어보기), SAF 메타데이터 캐시
     prefs/              DataStore — 설정 화면 값
+    billing/            Play 결제. SDK 를 만지는 곳은 이 폴더뿐이다
   data/subtitle/        영상 옆 자막 파일 찾기 + 읽기 (Android 쪽)
   ui/
     theme/              기획서 7.4 디자인 토큰
@@ -45,6 +49,7 @@ app/src/main/java/com/pikaworks/pikaplayer/
     permission/         권한 온보딩(S5)
     recent/             최근 탭
     settings/           설정 화면(S6) · 오픈소스 라이선스
+    pro/                Pro 안내·구매 화면
     player/             플레이어 화면(S3)
       PlayerGestures.kt   스와이프 탐색 / 밝기 · 볼륨 / 더블탭
       SubtitleSheet.kt    자막 트랙 · 인코딩 · 싱크 (S4)
@@ -83,6 +88,12 @@ tools/
 **영상 표면은 Media3 `PlayerView` 를 씁니다** (`useController = false`). 컨트롤과 자막은 우리가 그리지만, 화면비 처리와 표면 생명주기까지 직접 다루면 실수하기 쉽습니다.
 
 **밝기는 창에만 적용합니다.** 기기 전체 밝기를 바꾸면 앱을 나간 뒤에도 어두운 채로 남습니다.
+
+**Play 결제 SDK를 만지는 곳은 `data/billing/BillingRepository.kt` 하나입니다.** 바깥은 `Tier`와 `ProductInfo`만 압니다. SDK 버전이 올라가 API가 바뀌어도 고칠 곳이 한 파일로 한정되고, 화면 코드가 결제 라이브러리에 묶이지 않습니다.
+
+**등급 판단 규칙은 `:entitlement` 모듈에 있고 테스트로 못박혀 있습니다.** 특히 서로 반대 방향인 두 규칙이 한 함수(`TierResolver.resolve`)에 들어 있습니다 — 오프라인에서 산 사람의 기능을 뺏지 않으면서, 환불·해지는 실제로 반영해야 합니다. 어느 한쪽만 보고 짜면 반드시 다른 쪽이 깨지므로 양쪽 다 테스트가 있습니다.
+
+**결제 캐시는 기기 안에 평문입니다.** 루팅한 기기에서 고칠 수 있고, 서버 없이는 막을 방법이 없습니다 — 기획서 3장이 감수하기로 한 수준입니다.
 
 **검색어는 화면마다 따로 둡니다.** 탭을 옮겼는데 보이지 않는 검색어가 목록을 계속 좁히고 있으면 "왜 이것밖에 안 나오지"가 됩니다. 보관함만 검색어가 ViewModel 에 있는데(거르기 탭의 개수를 같은 범위에서 세야 해서), 대신 탭을 벗어나면 `MainActivity` 가 지웁니다.
 
@@ -144,16 +155,35 @@ tools/
 
 `EncodingDetector.korean`은 플랫폼마다 다른 인코딩 이름을 순서대로 시도합니다. 마지막 후보인 EUC-KR은 CP949의 부분집합이라 확장 한글이 일부 깨질 수 있지만, 앞 후보가 하나라도 있으면 문제되지 않습니다.
 
-테스트 실행: `./gradlew :subtitle:test`
+테스트 실행: `./gradlew :subtitle:test :entitlement:test`
 
 ## Phase 1 남은 작업
 
-기획서 S1~S7 은 화면과 동작이 모두 붙었습니다. 남은 것은 아래 두 가지 정도입니다.
+기획서 S1~S7 은 화면과 동작이 모두 붙었습니다. 남은 것은 아래 두 가지입니다.
 
-- **폴더 목록의 정렬 기준 중 재생시간순은 이름순으로 떨어집니다.** 폴더에는 재생시간이
-  없습니다. 세려면 하위 영상을 전부 열어야 해서 그대로 뒀습니다
-- **검색은 지금 보고 있는 단계 안에서만 찾습니다.** 폴더 화면에서 하위 폴더까지
-  뒤지지 않습니다 — 한 단계씩 이동한다는 이 화면의 규칙과 어긋나서입니다
+- **폴더 목록의 정렬 기준 중 재생시간순은 이름순으로 떨어집니다.** 폴더에는 재생시간이 없습니다
+- **검색은 지금 보고 있는 단계 안에서만 찾습니다.** 폴더 화면에서 하위 폴더까지 뒤지지 않습니다
+
+## Phase 2 진행 상황
+
+| 항목 | 상태 |
+|---|---|
+| 등급·기능 게이팅 (`:entitlement`) | 됨 — 테스트 14개 |
+| Play 결제 연결 (`data/billing`) | 코드는 있으나 **한 번도 실행된 적 없음** |
+| Pro 안내·구매 화면 | 됨 |
+| PiP (Pro) | 됨 |
+| 네트워크 스트리밍 SMB/NAS (Pro) | 안 함 |
+| 비공개 폴더 · PIN (Pro) | 안 함 |
+| 클라우드 · Wi-Fi 전송 · Chromecast (Pro) | 안 함 |
+| AI 업스케일링 · 자막 생성 (Pro+) | 안 함 — 서버가 필요합니다 |
+
+### 결제를 실제로 켤 때 할 일
+
+1. Play Console 에 상품 등록 — id 는 `data/billing/ProductIds.kt` 와 **정확히** 같아야
+   합니다. 다르면 산 사람이 Free 로 보입니다
+2. 라이선스 테스터 계정으로 실제 구매·환불·해지를 한 번씩 돌려볼 것.
+   특히 **구매 확인(acknowledge)** — 3일 안에 확인하지 않으면 자동 환불됩니다
+3. 내부 테스트 트랙에 올려야 결제가 동작합니다. 디버그 빌드로는 확인할 수 없습니다
 
 ## 출시 전에 반드시 할 것
 
