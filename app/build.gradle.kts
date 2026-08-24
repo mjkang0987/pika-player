@@ -1,8 +1,8 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
+// AGP 9 부터 Kotlin 지원이 AGP 안에 들어왔다. kotlin.android 를 따로 적용하면
+// "no longer required for Kotlin support since AGP 9.0" 으로 막힌다.
+// https://kotl.in/gradle/agp-built-in-kotlin
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
@@ -38,13 +38,7 @@ android {
     }
 }
 
-// Kotlin 2.x 에서 android { kotlinOptions } 는 없어졌다. 순수 모듈들과 같은 방식으로
-// 바이트코드 수준만 17 로 맞춘다 — 컴파일은 JDK 21(스튜디오 번들)로 한다.
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
-    }
-}
+// jvmTarget 은 위 compileOptions 를 AGP 내장 Kotlin 이 따라간다. 따로 지정하지 않는다.
 
 dependencies {
     implementation(project(":subtitle"))
