@@ -311,32 +311,37 @@ fun PlayerScreen(
                             modifier = Modifier.align(Alignment.Center),
                         )
 
+                        // 세로에는 제목 줄이 영상 위에 따로 있다. 가로에서만
+                        // 영상 위에 얹는다.
                         if (isFullscreen) {
-                            // 가로에서는 컨트롤이 전부 영상 위에 얹힌다. 아래에 둘 자리가 없다.
                             FullscreenTopBar(
                                 title = state.title,
                                 onBack = onBack,
                                 modifier = Modifier.align(Alignment.TopStart),
                             )
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
-                            ) {
-                                SeekBar(state = state, onSeek = seek, onMarkAb = onMarkAb)
-                                Spacer(Modifier.height(2.dp))
-                                SecondaryControls(
-                                    state = state,
-                                    isFullscreen = isFullscreen,
-                                    onOpenSubtitleSheet = { subtitleSheetVisible = true },
-                                    onCycleResize = onCycleResize,
-                                    onOpenSpeedSheet = { speedSheetVisible = true },
-                                    onToggleFullscreen = onToggleFullscreen,
-                                    onToggleLock = onToggleLock,
-                                    onOpenPlaybackSheet = { playbackSheetVisible = true },
-                                    onEnterPip = onEnterPip,
-                                )
-                            }
+                        }
+
+                        // 세로든 가로든 컨트롤은 영상 위에 얹는다. 아래에 따로
+                        // 두면 그만큼 영상이 위로 밀려 올라가고, 컨트롤이 사라져도
+                        // 그 자리는 검게 남는다. 얹어 두면 걷혔을 때 영상만 남는다.
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
+                        ) {
+                            SeekBar(state = state, onSeek = seek, onMarkAb = onMarkAb)
+                            Spacer(Modifier.height(2.dp))
+                            SecondaryControls(
+                                state = state,
+                                isFullscreen = isFullscreen,
+                                onOpenSubtitleSheet = { subtitleSheetVisible = true },
+                                onCycleResize = onCycleResize,
+                                onOpenSpeedSheet = { speedSheetVisible = true },
+                                onToggleFullscreen = onToggleFullscreen,
+                                onToggleLock = onToggleLock,
+                                onOpenPlaybackSheet = { playbackSheetVisible = true },
+                                onEnterPip = onEnterPip,
+                            )
                         }
                     }
                 }
@@ -352,7 +357,13 @@ fun PlayerScreen(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .padding(start = 26.dp, end = 26.dp, bottom = 10.dp),
+                            // 컨트롤이 떠 있는 동안에는 그 위로 올라간다. 자막과
+                            // 시크바가 겹치면 둘 다 못 읽는다.
+                            .padding(
+                                start = 26.dp,
+                                end = 26.dp,
+                                bottom = if (state.controlsVisible && !state.locked) 96.dp else 10.dp,
+                            ),
                     )
                 }
             }
@@ -374,30 +385,13 @@ fun PlayerScreen(
         }
 
         if (!isFullscreen) {
-            Spacer(Modifier.height(20.dp))
-            SeekBar(
-                state = state,
-                onSeek = seek,
-                onMarkAb = onMarkAb,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
-            Spacer(Modifier.height(12.dp))
-            SecondaryControls(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                state = state,
-                isFullscreen = isFullscreen,
-                onOpenSubtitleSheet = { subtitleSheetVisible = true },
-                onCycleResize = onCycleResize,
-                onOpenSpeedSheet = { speedSheetVisible = true },
-                onToggleFullscreen = onToggleFullscreen,
-                onToggleLock = onToggleLock,
-                onOpenPlaybackSheet = { playbackSheetVisible = true },
-                onEnterPip = onEnterPip,
-            )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             // 목록을 펼쳐 두면 남는 높이만큼만 보여서, 화면이 좁으면 한 줄도
             // 안 나오고 넓으면 영상을 위로 밀어 올린다. 자리를 차지하지 않는
             // 버튼 하나로 두고 목록은 시트에서 편다.
+            //
+            // 이것만 영상 밖에 남긴다. 컨트롤과 달리 재생을 보는 동안 가릴 이유가
+            // 없고, 영상 위에 또 하나 얹으면 걷어야 할 것이 늘어난다.
             UpNextButton(
                 count = state.upNext.size,
                 onClick = { upNextSheetVisible = true },

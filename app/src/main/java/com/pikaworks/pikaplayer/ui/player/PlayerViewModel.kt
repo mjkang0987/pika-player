@@ -527,6 +527,13 @@ class PlayerViewModel(
         _uiState.update { it.copy(repeatEnabled = next) }
     }
 
+    /**
+     * 그 자리로 옮긴다. 재생 여부는 건드리지 않는다.
+     *
+     * 보고 있었으면 옮긴 자리에서 계속 나오고, 세워 뒀으면 세워 둔 채로 자리만
+     * 바뀐다. 어디쯤인지 보려고 시크바를 만졌을 뿐인데 소리가 나기 시작하면
+     * 곤란하다.
+     */
     fun seekTo(ms: Long) {
         player.seekTo(ms.coerceIn(0L, player.duration.coerceAtLeast(0L)))
         _uiState.update { it.copy(positionMs = ms) }
