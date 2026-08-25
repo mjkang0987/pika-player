@@ -20,6 +20,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -619,7 +622,13 @@ class MainActivity : ComponentActivity() {
 
             if (askingPin) {
                 PinScreen(
-                    modifier = Modifier.fillMaxSize().background(Color.Black),
+                    // 이 화면만 시스템 바 아래까지 홀로 놓인다. 설정 안에서는
+                    // 아래에 하단 네비게이션이 있어 그쪽이 인셋을 먹지만,
+                    // 여기서는 받아 주는 것이 없어 숫자판이 시스템 버튼에 가린다.
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                        .windowInsetsPadding(WindowInsets.navigationBars),
                     title = "잠금 해제",
                     subtitle = "어린이 잠금이 켜져 있습니다",
                     entered = vaultState.entered,
