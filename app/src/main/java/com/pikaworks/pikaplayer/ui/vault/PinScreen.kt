@@ -60,7 +60,13 @@ fun PinScreen(
     val locked = lockedForMs > 0
 
     Column(
-        modifier = modifier.fillMaxSize().background(colors.background),
+        // 아래 여백은 따로 잡는다. 숫자판은 가운데 정렬이라 남는 자리를 위아래로
+        // 똑같이 나눠 갖는데, 아래쪽에는 하단 네비게이션이 붙어 있어 같은 간격이면
+        // 좁아 보인다.
+        modifier = modifier
+            .fillMaxSize()
+            .background(colors.background)
+            .padding(bottom = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ScreenHeader(title, onBack)
@@ -111,7 +117,7 @@ fun PinScreen(
             // 자리를 꽉 채우지 않는다. 남긴 만큼이 숫자판 위아래 여백이 된다
             // (가운데 정렬이라 절반씩 나뉜다). 딱 맞추면 하단 네비게이션에
             // 붙어 보인다.
-            val breathing = 56.dp
+            val breathing = 32.dp
             // 아래 한계는 44dp. 손가락으로 겨눌 수 있는 최소 크기라 더 줄이지 않는다.
             val keySize = ((maxHeight - gaps - breathing) / 4).coerceIn(44.dp, 72.dp)
             Keypad(
