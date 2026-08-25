@@ -471,8 +471,16 @@ class MainActivity : ComponentActivity() {
                                 },
                                 // 이어보기는 그 줄에 보이는 것들을 대기열로 삼는다.
                                 // 거르기 탭에 걸려 목록에서 빠진 영상도 여기서는 눌린다.
+                                //
+                                // 여러 폴더에서 모인 줄이라 explicitQueue 로 넘긴다.
+                                // 그러지 않으면 폴더로 한 번 더 걸러져, 화면에 보이는
+                                // 줄과 '다음 영상'이 서로 다른 목록이 된다.
                                 onContinueClick = { item ->
-                                    play(item.video, libraryState.continueWatching.map { it.video })
+                                    play(
+                                        item.video,
+                                        libraryState.continueWatching.map { it.video },
+                                        explicitQueue = true,
+                                    )
                                 },
                                 onVideoLongClick = { row -> pendingAdd = row.video },
                                 onVideoMenu = { row -> pendingMenu = row.video },
@@ -575,8 +583,15 @@ class MainActivity : ComponentActivity() {
                             Tab.RECENT -> RecentScreen(
                                 modifier = Modifier.weight(1f),
                                 rows = libraryState.recent,
-                                // 목록은 최근 순이지만 '다음 영상'은 폴더 안 순서를 따른다.
-                                onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
+                                // 대기열은 이 화면에 보이는 최근 목록 그대로다.
+                                //
+                                // 전에는 기기의 모든 영상을 넘기고 폴더로 걸렀다. 그래서
+                                // 최근에서 한 편을 틀면 화면에 없던 같은 폴더의 영상들이
+                                // '다음 영상'으로 붙었다 — 어디서 온 목록인지 알 방법이
+                                // 없었다. 보고 있던 것이 곧 대기열이어야 한다.
+                                onVideoClick = { row ->
+                                    play(row.video, libraryState.recent.map { it.video }, explicitQueue = true)
+                                },
                                 onVideoLongClick = { row -> pendingAdd = row.video },
                                 onVideoMenu = { row -> pendingMenu = row.video },
                                 onRefresh = refreshAll,

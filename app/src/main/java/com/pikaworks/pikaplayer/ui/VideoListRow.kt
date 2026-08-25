@@ -38,6 +38,16 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
  * 바가 반경보다 얇으면 클리핑 곡선이 바를 대각선으로 잘라 끝이 쐐기가 된다.
  */
 @OptIn(ExperimentalFoundationApi::class)
+/**
+ * 목록 한 줄의 썸네일 크기.
+ *
+ * 보관함·폴더·재생목록·담기 시트·다음 영상이 전부 같은 모양의 줄인데 화면마다
+ * 값을 따로 적어 두어 68 에서 92 까지 제각각이었다. 16:9 를 지키는 한 쌍이라
+ * 떨어뜨려 두면 다시 어긋난다.
+ */
+val ThumbWidth = 92.dp
+val ThumbHeight = 52.dp
+
 @Composable
 fun VideoListRow(
     video: VideoItem,
@@ -65,7 +75,7 @@ fun VideoListRow(
     ) {
         Box(
             modifier = Modifier
-                .width(92.dp).height(52.dp)
+                .width(ThumbWidth).height(ThumbHeight)
                 .clip(RoundedCornerShape(4.dp))
                 .background(colors.divider),
         ) {

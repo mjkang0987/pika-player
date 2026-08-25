@@ -37,6 +37,8 @@ import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import com.pikaworks.pikaplayer.ui.ThumbHeight
+import com.pikaworks.pikaplayer.ui.ThumbWidth
 
 /**
  * 재생목록 안에서 영상을 고르는 시트.
@@ -92,7 +94,7 @@ fun PickVideosSheet(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .width(70.dp).height(40.dp)
+                                    .width(ThumbWidth).height(ThumbHeight)
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(colors.divider),
                             ) {

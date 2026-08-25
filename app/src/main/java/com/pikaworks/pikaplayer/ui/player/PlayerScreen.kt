@@ -69,6 +69,8 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlin.math.abs
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.pikaworks.pikaplayer.ui.ThumbHeight
+import com.pikaworks.pikaplayer.ui.ThumbWidth
 
 /**
  * 플레이어(S3, 세로).
@@ -395,7 +397,7 @@ private fun UpNextRow(video: VideoItem, onClick: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .width(68.dp).height(38.dp)
+                .width(ThumbWidth).height(ThumbHeight)
                 .clip(RoundedCornerShape(4.dp))
                 .background(Color.White.copy(alpha = 0.10f)),
         ) {

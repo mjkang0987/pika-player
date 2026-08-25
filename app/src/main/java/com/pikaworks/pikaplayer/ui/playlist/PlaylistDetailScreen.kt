@@ -44,6 +44,8 @@ import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import com.pikaworks.pikaplayer.ui.ThumbHeight
+import com.pikaworks.pikaplayer.ui.ThumbWidth
 
 /**
  * 재생목록 하나의 내용.
@@ -184,7 +186,7 @@ fun PlaylistDetailScreen(
 private fun Thumbnail(row: PlaylistRow, placeholder: Color) {
     Box(
         modifier = Modifier
-            .width(78.dp).height(44.dp)
+            .width(ThumbWidth).height(ThumbHeight)
             .clip(RoundedCornerShape(4.dp))
             .background(placeholder),
     ) {
