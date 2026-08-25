@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.pikaworks.pikaplayer.ui.player
 
 import android.view.LayoutInflater
@@ -80,9 +82,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.border
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.ui.draw.alpha
+import androidx.compose.animation.core.animateFloatAsState
 
 /**
  * 플레이어(S3, 세로).
@@ -294,12 +295,19 @@ fun PlayerScreen(
             } else {
                 // 사라질 때 툭 꺼지면 영상이 깜빡인 것처럼 보인다. 스크림과 버튼이
                 // 같이 옅어져야 "가려져 있던 것이 걷혔다" 로 읽힌다.
-                AnimatedVisibility(
-                    visible = state.controlsVisible,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                ) {
-                    Box(Modifier.fillMaxSize()) {
+                //
+                // AnimatedVisibility 를 쓰지 않는다. 여기는 Box 안이지만 바깥에
+                // Column 이 있어서 같은 이름의 ColumnScope 확장이 먼저 잡히고,
+                // 그쪽은 이 자리에서 부를 수 없다. 알파를 직접 다루는 편이 짧다.
+                //
+                // 다 옅어지면 아예 그리지 않는다. 투명한 채로 남으면 안 보이는
+                // 버튼이 화면을 덮어, 영상을 눌러도 컨트롤이 다시 나오지 않는다.
+                val controlsAlpha by animateFloatAsState(
+                    targetValue = if (state.controlsVisible) 1f else 0f,
+                    label = "controls",
+                )
+                if (controlsAlpha > 0f) {
+                    Box(Modifier.fillMaxSize().alpha(controlsAlpha)) {
                         // 밝은 장면에서 흰 아이콘이 묻히지 않도록 스크림을 깐다.
                         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.30f)))
                         TransportControls(
@@ -440,7 +448,6 @@ private fun UpNextButton(count: Int, onClick: () -> Unit, modifier: Modifier = M
  * 플레이어는 라이트 테마에서도 검은 배경이라 목록 행을 그대로 쓸 수 없다.
  * 여기서는 영상 위에 얹는 색(onMedia*)만 쓴다.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UpNextSheet(
     videos: List<VideoItem>,
