@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  테마 아이콘(Android 13+). 시스템이 배경을 깔고 이 모양에 제 색을 입힌다.
+  그래서 여기 색은 무엇이든 무시된다 — 모양만 정확하면 된다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M44,41 L67,54 L44,67 Z"
+        android:fillColor="#FFFFFFFF"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round" />
+</vector>

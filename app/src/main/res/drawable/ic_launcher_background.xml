@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  적응형 아이콘의 배경. 108 을 꽉 채운다.
+
+  런처가 어떤 모양으로 잘라 낼지는 기기마다 다르다(원·둥근 사각형·물방울…).
+  가장자리까지 색이 닿아 있어야 어느 모양으로 잘려도 빈 데가 생기지 않는다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108">
+                <item android:offset="0" android:color="#FF6FD8C4" />
+                <item android:offset="1" android:color="#FF2E9E90" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

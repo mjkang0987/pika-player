@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  재생 삼각형. 108 중 가운데 72 안에만 그린다 — 그 바깥은 런처가 잘라 낼 수 있다.
+
+  꼭짓점을 둥글리려고 같은 색으로 획을 덧댄다. 벡터에는 모서리를 둥글리는 속성이
+  따로 없어서, 획 이음새를 round 로 두고 채우기와 같은 색을 주는 것이 가장 짧다.
+
+  가로 자리는 무게중심과 외곽 상자 가운데의 사이에 둔다. 삼각형은 왼쪽에 살이
+  몰려 있어서 상자를 정확히 가운데 두면 오른쪽으로 치우쳐 보인다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M44,41 L67,54 L44,67 Z"
+        android:fillColor="#FFFFFFFF"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round" />
+</vector>
