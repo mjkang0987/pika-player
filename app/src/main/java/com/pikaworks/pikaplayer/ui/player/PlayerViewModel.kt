@@ -54,6 +54,20 @@ data class PlayerUiState(
     val previous: VideoItem? = null,
     /** 한 편 반복. 켜면 끝나도 넘어가지 않고 처음부터 다시 튼다. */
     val repeatEnabled: Boolean = false,
+    /**
+     * 재생목록에서 튼 것인가.
+     *
+     * 목록 반복과 랜덤은 사용자가 직접 세운 목록일 때만 뜻이 있다. 보관함에서
+     * 튼 대기열은 "같은 폴더의 나머지" 라서, 거기서 섞어 봐야 사용자가 정한
+     * 순서를 흐트러뜨리는 것이 아니라 그냥 아무 영상이나 튼 것이 된다.
+     */
+    val playlistPlayback: Boolean = false,
+    /** 목록 반복. 마지막 영상 다음에 처음으로 돌아간다. */
+    val loopQueueEnabled: Boolean = false,
+    /** 랜덤. 지금 영상 뒤를 섞는다. */
+    val shuffleEnabled: Boolean = false,
+    /** 끝나면 다음 영상으로 넘어갈지. 설정과 같은 값을 본다. */
+    val autoPlayNextEnabled: Boolean = true,
     /** 구간 반복의 시작점. 찍기 전에는 null. */
     val abStartMs: Long? = null,
     /** 구간 반복의 끝점. 둘 다 있어야 반복이 돈다. */
@@ -93,6 +107,14 @@ class PlayerViewModel(
     private var subtitleOffsetMs: Long = 0L
     private var currentVideo: VideoItem? = null
     private var matches: List<SubtitleMatcher.Match> = emptyList()
+    /**
+     * 사용자가 정한 원래 순서. 랜덤을 끄면 여기로 되돌린다.
+     *
+     * 섞은 결과만 들고 있으면 되돌릴 방법이 없다 — 다시 섞으면 원래와 다른
+     * 또 하나의 순서가 나올 뿐이다.
+     */
+    private var orderedQueue: List<VideoItem> = emptyList()
+    /** 지금 쓰는 순서. 랜덤이 꺼져 있으면 [orderedQueue] 와 같다. */
     private var queue: List<VideoItem> = emptyList()
     /**
      * 대기열을 사용자가 직접 정했는가(재생목록).
@@ -104,6 +126,7 @@ class PlayerViewModel(
     private var explicitQueue: Boolean = false
     /** 마지막까지 가면 처음으로 돌아간다. 재생목록에서만 켠다. */
     private var loopQueue: Boolean = false
+    private var shuffle: Boolean = false
     private var autoPlayNext: Boolean = true
     private var resumePlayback: Boolean = true
     /** 지금 연 영상에 딸린 작업(이어보기 탐색·자막 찾기). 영상을 바꾸면 끊는다. */
@@ -161,14 +184,32 @@ class PlayerViewModel(
         queue: List<VideoItem> = emptyList(),
         /** 재생목록처럼 사용자가 직접 세운 대기열인가. 폴더로 거르지 않는다. */
         explicitQueue: Boolean = false,
-        /** 마지막까지 가면 처음으로 돌아갈지. */
-        loopQueue: Boolean = false,
     ) {
+        this.orderedQueue = queue
         this.queue = queue
         this.explicitQueue = explicitQueue
-        this.loopQueue = loopQueue
-        if (currentVideo?.uri == video.uri) return
+        // 새 재생이다. 지난번에 켜 둔 랜덤·목록 반복은 여기서 끊는다 — 목록마다
+        // 기억하지 않는 값이라, 남아 있으면 어디서 켠 것인지 알 수 없다.
+        this.loopQueue = false
+        this.shuffle = false
+        if (currentVideo?.uri == video.uri) {
+            // 같은 영상이면 다시 틀지 않는다. 다만 방금 되돌린 값이 화면에는
+            // 그대로 켜져 보이지 않도록 상태만 맞춰 둔다.
+            _uiState.update {
+                it.copy(
+                    playlistPlayback = explicitQueue,
+                    loopQueueEnabled = false,
+                    shuffleEnabled = false,
+                )
+            }
+            refreshQueue()
+            return
+        }
+        start(video, resume, speed, charset)
+    }
 
+    /** 미디어를 실제로 갈아끼우는 부분. 대기열은 건드리지 않는다. */
+    private fun start(video: VideoItem, resume: Boolean, speed: Float, charset: String) {
         // 앞 영상의 자막 읽기나 이어보기 탐색이 남아 있으면 새 영상에 끼어든다.
         videoJob?.cancel()
         subtitleJob?.cancel()
@@ -179,6 +220,8 @@ class PlayerViewModel(
         matches = emptyList()
         currentVideo = video
         // 이전 영상의 자막·화면비·잠금 상태가 넘어오지 않도록 초기화한다.
+        // 대기열 설정(랜덤·목록 반복·자동 재생)은 재생 한 판을 통틀어 유지되는
+        // 값이라 여기서 다시 실어 준다.
         _uiState.value = PlayerUiState(
             title = video.baseName,
             durationMs = video.durationMs,
@@ -186,6 +229,10 @@ class PlayerViewModel(
             subtitleCharset = charset,
             upNext = upNextOf(video),
             previous = previousOf(video),
+            playlistPlayback = explicitQueue,
+            loopQueueEnabled = loopQueue,
+            shuffleEnabled = shuffle,
+            autoPlayNextEnabled = autoPlayNext,
             // 첫 프레임이 오기 전에도 알아야 한다. MediaStore 가 준 값으로 먼저
             // 채우고, onVideoSizeChanged 가 오면 그 값으로 바로잡는다.
             videoAspect = if (video.width > 0 && video.height > 0) {
@@ -203,13 +250,25 @@ class PlayerViewModel(
         videoJob = viewModelScope.launch {
             if (resume) {
                 positionDao.find(video.uri.toString())?.let { saved ->
-                    if (saved.positionMs > 0) player.seekTo(saved.positionMs)
+                    // 끝까지 본 영상은 이어보지 않고 처음부터 튼다. 저장된 위치로
+                    // 가면 열자마자 끝나 버려서, 자동으로 넘어온 다음 영상이
+                    // 눈 깜짝할 사이에 지나간다.
+                    if (saved.positionMs > 0 && !watchedToEnd(saved)) player.seekTo(saved.positionMs)
                 }
             }
             player.play()
             loadSubtitle(video)
         }
     }
+
+    /**
+     * 사실상 끝까지 본 영상인가.
+     *
+     * 기준을 보관함의 '이어보기' 와 같은 값으로 맞춘다. 거기서 이어볼 것으로
+     * 세지 않는 영상이 여기서는 이어져 열린다면 앞뒤가 맞지 않는다.
+     */
+    private fun watchedToEnd(saved: PlaybackPosition): Boolean =
+        saved.durationMs > 0 && saved.positionMs.toFloat() / saved.durationMs >= WATCHED_RATIO
 
     /**
      * 화면을 벗어날 때.
@@ -226,6 +285,7 @@ class PlayerViewModel(
         player.stop()
         player.clearMediaItems()
         queue = emptyList()
+        orderedQueue = emptyList()
         _uiState.value = PlayerUiState()
     }
 
@@ -263,18 +323,46 @@ class PlayerViewModel(
         _uiState.value.previous?.let(::playNext)
     }
 
-    /** 목록에서 고르거나 자동 재생으로 넘어갈 때. 재생속도·인코딩은 이어받는다. */
+    /**
+     * 목록에서 고르거나 자동 재생으로 넘어갈 때. 재생속도·인코딩은 이어받는다.
+     *
+     * [open] 이 아니라 [start] 를 부른다. 같은 재생 한 판 안에서의 이동이라
+     * 대기열도, 켜 둔 랜덤·목록 반복도 그대로 두어야 한다.
+     */
     fun playNext(video: VideoItem) {
         val current = _uiState.value
-        open(
-            video = video,
-            resume = resumePlayback,
-            speed = current.speed,
-            charset = current.subtitleCharset,
-            queue = queue,
-            explicitQueue = explicitQueue,
-            loopQueue = loopQueue,
-        )
+        start(video, resumePlayback, current.speed, current.subtitleCharset)
+    }
+
+    /**
+     * 랜덤.
+     *
+     * 지금 보는 것을 맨 앞에 두고 나머지를 섞는다. 자리를 그대로 두고 뒤만
+     * 섞으면 이미 지나온 영상들이 앞쪽에 남아 목록 반복을 켰을 때 다시 나온다.
+     */
+    fun toggleShuffle() {
+        shuffle = !shuffle
+        val video = currentVideo
+        queue = when {
+            !shuffle -> orderedQueue
+            video == null -> orderedQueue.shuffled()
+            else -> listOf(video) + orderedQueue.filter { it.uri != video.uri }.shuffled()
+        }
+        _uiState.update { it.copy(shuffleEnabled = shuffle) }
+        refreshQueue()
+    }
+
+    /** 목록 반복. 마지막 영상 다음에 처음으로 돌아간다. */
+    fun toggleLoopQueue() {
+        loopQueue = !loopQueue
+        _uiState.update { it.copy(loopQueueEnabled = loopQueue) }
+        refreshQueue()
+    }
+
+    /** 대기열이 바뀌면 앞·뒤 영상을 다시 계산한다. 버튼이 그 자리에서 생기고 사라진다. */
+    private fun refreshQueue() {
+        val video = currentVideo ?: return
+        _uiState.update { it.copy(upNext = upNextOf(video), previous = previousOf(video)) }
     }
 
     /** 설정에서 온 값들. 상태를 갈아끼우는 [open] 과 무관하게 유지돼야 한다. */
@@ -284,6 +372,7 @@ class PlayerViewModel(
 
     fun setAutoPlayNext(enabled: Boolean) {
         autoPlayNext = enabled
+        _uiState.update { it.copy(autoPlayNextEnabled = enabled) }
     }
 
     private suspend fun loadSubtitle(video: VideoItem) {
@@ -469,6 +558,9 @@ class PlayerViewModel(
 
         /** 하단 목록에 쓰는 개수. 화면에 다 보이지도 않는 분량을 들고 있을 이유가 없다. */
         private const val UP_NEXT_LIMIT = 20
+
+        /** 여기까지 봤으면 다 본 것으로 친다. 보관함의 '이어보기' 와 같은 값. */
+        private const val WATCHED_RATIO = 0.97f
     }
 
     /**

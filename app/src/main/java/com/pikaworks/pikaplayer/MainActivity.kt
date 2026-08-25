@@ -55,7 +55,6 @@ import com.pikaworks.pikaplayer.ui.permission.PermissionScreen
 import com.pikaworks.pikaplayer.ui.playlist.AddToPlaylistSheet
 import com.pikaworks.pikaplayer.ui.playlist.NameDialog
 import com.pikaworks.pikaplayer.ui.playlist.PickVideosSheet
-import com.pikaworks.pikaplayer.ui.playlist.PlayMode
 import com.pikaworks.pikaplayer.ui.playlist.PlaylistDetailScreen
 import com.pikaworks.pikaplayer.ui.playlist.PlaylistRow
 import com.pikaworks.pikaplayer.ui.playlist.PlaylistScreen
@@ -176,19 +175,17 @@ class MainActivity : ComponentActivity() {
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
-                // 재생목록에서 튼 것인지, 끝에서 처음으로 돌아갈지를 함께 넘긴다.
+                // 재생목록에서 튼 것인지를 함께 넘긴다. 반복·랜덤은 재생 화면에서
+                // 켜므로 여기서는 정하지 않는다.
                 // 람다로는 기본값을 줄 수 없어 지역 함수로 둔다.
                 var queueIsPlaylist by remember { mutableStateOf(false) }
-                var queueLoops by remember { mutableStateOf(false) }
                 fun play(
                     video: VideoItem,
                     from: List<VideoItem>,
                     fromPlaylist: Boolean = false,
-                    loop: Boolean = false,
                 ) {
                     queue = from
                     queueIsPlaylist = fromPlaylist
-                    queueLoops = loop
                     playing = video
                 }
 
@@ -244,7 +241,6 @@ class MainActivity : ComponentActivity() {
                 // 재생목록에 영상을 고르는 시트를 열었는가.
                 var picking by remember { mutableStateOf(false) }
                 // 이번 재생에 쓸 방식. 목록마다 기억하지는 않는다.
-                var playMode by remember { mutableStateOf(PlayMode()) }
 
                 // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
                 LaunchedEffect(tab) {
@@ -418,8 +414,8 @@ class MainActivity : ComponentActivity() {
                         followAutoRotate = settings?.followAutoRotate ?: true,
                         queue = queue,
                         queueIsPlaylist = queueIsPlaylist,
-                        queueLoops = queueLoops,
                         autoPlayNext = settings?.autoPlayNext ?: true,
+                        onAutoPlayNextChange = { scope.launch { app.settings.setAutoPlayNext(it) } },
                         defaultSpeed = settings?.playbackSpeed ?: 1f,
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
                         subtitleScale = settings?.subtitleScale ?: 1f,
@@ -497,20 +493,12 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.weight(1f),
                                         name = open.name,
                                         rows = rows,
-                                        playMode = playMode,
-                                        onPlayModeChange = { playMode = it },
                                         onPlay = { index ->
                                             // 대기열은 목록 순서 그대로. 찾을 수 없는 것은 뺀다.
+                                            // 반복이나 랜덤은 재생 화면에서 켠다.
                                             val found = rows.mapNotNull { it.video }
                                             rows[index].video?.let { picked ->
-                                                // 랜덤이면 고른 것만 앞에 두고 나머지를 섞는다.
-                                                // 고른 것부터 트는 것이 누른 사람의 뜻이다.
-                                                val queue = if (playMode.shuffle) {
-                                                    listOf(picked) + (found - picked).shuffled()
-                                                } else {
-                                                    found
-                                                }
-                                                play(picked, queue, fromPlaylist = true, loop = playMode.loop)
+                                                play(picked, found, fromPlaylist = true)
                                             }
                                         },
                                         onReorder = { uris -> playlistVm.reorder(open.id, uris) },
@@ -651,9 +639,9 @@ class MainActivity : ComponentActivity() {
         queue: List<VideoItem>,
         /** 재생목록에서 튼 대기열인가. 폴더로 거르지 않는다. */
         queueIsPlaylist: Boolean,
-        /** 마지막까지 가면 처음으로 돌아갈지. */
-        queueLoops: Boolean,
         autoPlayNext: Boolean,
+        /** 재생 화면에서 자동 재생을 껐다 켜면 설정에도 남긴다. */
+        onAutoPlayNextChange: (Boolean) -> Unit,
         defaultSpeed: Float,
         defaultCharset: String,
         subtitleScale: Float,
@@ -704,7 +692,6 @@ class MainActivity : ComponentActivity() {
                 charset = defaultCharset,
                 queue = queue,
                 explicitQueue = queueIsPlaylist,
-                loopQueue = queueLoops,
             )
         }
         LaunchedEffect(autoPlayNext) { playerVm.setAutoPlayNext(autoPlayNext) }
@@ -842,6 +829,11 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 onToggleRepeat = playerVm::toggleRepeat,
+                onToggleShuffle = playerVm::toggleShuffle,
+                onToggleLoopQueue = playerVm::toggleLoopQueue,
+                // 설정의 '다음 영상 자동 재생' 과 같은 값이다. 여기서 바꾼 것이
+                // 설정에 남지 않으면 두 곳이 서로 다른 말을 하게 된다.
+                onSetAutoPlayNext = onAutoPlayNextChange,
                 onMarkAb = playerVm::markAb,
                 onCycleResize = playerVm::cycleResizeMode,
                 onSelectSpeed = playerVm::setSpeed,

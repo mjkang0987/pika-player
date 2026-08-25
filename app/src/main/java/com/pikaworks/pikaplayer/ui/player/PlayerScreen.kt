@@ -61,6 +61,8 @@ import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.IconTap
 import com.pikaworks.pikaplayer.ui.OptionSheet
+import com.pikaworks.pikaplayer.ui.SheetToggle
+import com.pikaworks.pikaplayer.ui.ToggleSheet
 import com.pikaworks.pikaplayer.ui.SPEED_OPTIONS
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
@@ -89,6 +91,9 @@ fun PlayerScreen(
     onResetSubtitleOffset: () -> Unit,
     onToggleLock: () -> Unit,
     onToggleRepeat: () -> Unit,
+    onToggleShuffle: () -> Unit,
+    onToggleLoopQueue: () -> Unit,
+    onSetAutoPlayNext: (Boolean) -> Unit,
     onMarkAb: () -> Unit,
     onCycleResize: () -> Unit,
     onSelectSpeed: (Float) -> Unit,
@@ -126,6 +131,44 @@ fun PlayerScreen(
     // 속도는 순환 버튼이었다. 0.5 에서 2.0 으로 가려면 다섯 번을 눌러야 했고,
     // 지금 몇 배인지 보려고 또 눌러 보게 된다. 목록에서 고르게 바꾼다.
     var speedSheetVisible by remember { mutableStateOf(false) }
+    // 반복·랜덤·자동 재생은 모두 "이 영상이 끝나면 무엇이 일어나는가" 한 가지
+    // 질문의 답이다. 흩어 놓으면 서로 어떻게 맞물리는지 알기 어려워 한데 묶었다.
+    var playbackSheetVisible by remember { mutableStateOf(false) }
+
+    if (playbackSheetVisible) {
+        ToggleSheet(
+            title = "반복과 순서",
+            toggles = listOfNotNull(
+                SheetToggle(
+                    label = "한 편 반복",
+                    on = state.repeatEnabled,
+                    description = "지금 영상이 끝나면 처음부터 다시 틉니다.",
+                    onToggle = onToggleRepeat,
+                ),
+                // 재생목록으로 튼 것이 아니면 뒤에 올 목록 자체가 없다.
+                SheetToggle(
+                    label = "목록 반복",
+                    on = state.loopQueueEnabled,
+                    description = "마지막 영상 다음에 목록의 처음으로 돌아갑니다.",
+                    onToggle = onToggleLoopQueue,
+                ).takeIf { state.playlistPlayback },
+                SheetToggle(
+                    label = "랜덤",
+                    on = state.shuffleEnabled,
+                    description = "지금 영상 뒤의 순서를 섞습니다.",
+                    onToggle = onToggleShuffle,
+                ).takeIf { state.playlistPlayback },
+                SheetToggle(
+                    label = "자동 재생",
+                    on = state.autoPlayNextEnabled,
+                    description = "끝나면 다음 영상으로 넘어갑니다. 이미 끝까지 본 영상은 처음부터 틉니다.",
+                    onToggle = { onSetAutoPlayNext(!state.autoPlayNextEnabled) },
+                ),
+            ),
+            onDismiss = { playbackSheetVisible = false },
+            onMedia = true,
+        )
+    }
 
     if (speedSheetVisible) {
         OptionSheet(
@@ -233,7 +276,7 @@ fun PlayerScreen(
                             onOpenSpeedSheet = { speedSheetVisible = true },
                             onToggleFullscreen = onToggleFullscreen,
                             onToggleLock = onToggleLock,
-                            onToggleRepeat = onToggleRepeat,
+                            onOpenPlaybackSheet = { playbackSheetVisible = true },
                             onEnterPip = onEnterPip,
                         )
                     }
@@ -289,7 +332,7 @@ fun PlayerScreen(
                 onOpenSpeedSheet = { speedSheetVisible = true },
                 onToggleFullscreen = onToggleFullscreen,
                 onToggleLock = onToggleLock,
-                onToggleRepeat = onToggleRepeat,
+                onOpenPlaybackSheet = { playbackSheetVisible = true },
                 onEnterPip = onEnterPip,
             )
             // 남는 세로 공간만 쓴다. 좁은 화면에서는 높이가 0이 되어 조용히 사라진다.
@@ -666,7 +709,7 @@ private fun SecondaryControls(
     onOpenSpeedSheet: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onToggleLock: () -> Unit,
-    onToggleRepeat: () -> Unit,
+    onOpenPlaybackSheet: () -> Unit,
     onEnterPip: (() -> Unit)?,
 ) {
     Row(modifier = modifier.fillMaxWidth()) {
@@ -681,7 +724,15 @@ private fun SecondaryControls(
             onClick = onCycleResize,
             modifier = Modifier.weight(1f),
         )
-        IconItem(AppIcons.Repeat, "반복", state.repeatEnabled, onToggleRepeat, Modifier.weight(1f))
+        // 켜짐은 한 편 반복만이 아니다. 목록 반복이나 랜덤이 켜져 있는데 이
+        // 버튼이 꺼진 것으로 보이면, 순서가 왜 이런지 찾을 곳이 없어진다.
+        IconItem(
+            icon = AppIcons.Repeat,
+            label = "반복",
+            active = state.repeatEnabled || state.loopQueueEnabled || state.shuffleEnabled,
+            onClick = onOpenPlaybackSheet,
+            modifier = Modifier.weight(1f),
+        )
         // 이름은 그대로 두고 아이콘과 색이 상태를 말한다. 이 줄의 다른 버튼도
         // 모두 기능 이름을 달고 켜짐만 색으로 알린다 — 여기만 "나가기" 같은
         // 동사가 되면 결이 깨지고, 무엇을 나가는지도 애매해진다.

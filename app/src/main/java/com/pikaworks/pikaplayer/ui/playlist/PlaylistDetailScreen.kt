@@ -45,13 +45,6 @@ import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
-/** 재생목록을 어떻게 틀지. 목록마다 따로 기억하지 않고 이번 재생에만 쓴다. */
-data class PlayMode(
-    val shuffle: Boolean = false,
-    /** 마지막까지 가면 처음으로 돌아간다. */
-    val loop: Boolean = false,
-)
-
 /**
  * 재생목록 하나의 내용.
  *
@@ -64,8 +57,6 @@ data class PlayMode(
 fun PlaylistDetailScreen(
     name: String,
     rows: List<PlaylistRow>,
-    playMode: PlayMode,
-    onPlayModeChange: (PlayMode) -> Unit,
     onPlay: (Int) -> Unit,
     onReorder: (List<String>) -> Unit,
     onRemove: (String) -> Unit,
@@ -88,20 +79,18 @@ fun PlaylistDetailScreen(
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
         ScreenHeader(name, onBack)
 
-        // 켜고 끄는 것(편집·랜덤·반복)과 한 번 하고 마는 것(추가·이름·삭제)을
-        // 줄로 나눈다. 같은 줄에 섞여 있으면 무엇이 상태이고 무엇이 동작인지
-        // 눌러 보기 전에는 알 수 없다.
+        // 켜고 끄는 것(편집)과 한 번 하고 마는 것(추가·이름·삭제)을 줄로 나눈다.
+        // 같은 줄에 섞여 있으면 무엇이 상태이고 무엇이 동작인지 눌러 보기 전에는
+        // 알 수 없다.
+        //
+        // 랜덤과 목록 반복은 여기 있었는데 재생 화면으로 옮겼다. 틀기 전에
+        // 미리 정해 두는 값이라 정작 보는 중에는 바꿀 수 없었고, 지금 그렇게
+        // 돌고 있다는 표시도 재생 화면에는 없었다.
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Toggle("편집", editing) { editing = !editing }
-            Toggle("랜덤", playMode.shuffle) {
-                onPlayModeChange(playMode.copy(shuffle = !playMode.shuffle))
-            }
-            Toggle("목록 반복", playMode.loop) {
-                onPlayModeChange(playMode.copy(loop = !playMode.loop))
-            }
         }
 
         Row(
