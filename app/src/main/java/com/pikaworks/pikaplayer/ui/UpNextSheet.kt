@@ -32,7 +32,7 @@ import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
 
 /**
- * 다음 영상 목록.
+ * 지금 틀고 있는 목록. 이 영상 뒤에 오는 것들을 차례대로 보여준다.
  *
  * 플레이어는 라이트 테마에서도 검은 배경이라 목록 행을 그대로 쓸 수 없다.
  * 여기서는 영상 위에 얹는 색(onMedia*)만 쓴다.
@@ -51,7 +51,7 @@ fun UpNextSheet(
         containerColor = colors.surface,
     ) {
         Text(
-            "다음 영상",
+            "재생목록",
             fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
         )

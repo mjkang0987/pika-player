@@ -383,10 +383,14 @@ fun PlayerScreen(
 }
 
 /**
- * 다음 영상으로 가는 문.
+ * 지금 틀고 있는 목록을 여는 문.
  *
- * 목록이 없어도 자리를 지운다기보다 왜 없는지 말한다 — 있었다가 사라지면
- * 버튼이 있었는지조차 알 수 없다. 대신 누를 수 없게 두어 손이 헛돌지 않는다.
+ * 이름은 '재생목록'. 코드에서는 upNext(이 영상 뒤에 오는 것들)로 부르는데,
+ * 화면에서는 그것이 곧 지금 재생 중인 목록이라 그렇게 읽는 편이 자연스럽다.
+ *
+ * 뒤에 남은 것이 없어도 자리를 지우지 않고 왜 비었는지 말한다 — 있었다가
+ * 사라지면 버튼이 있었는지조차 알 수 없다. 대신 누를 수 없게 두어 손이 헛돌지
+ * 않는다.
  */
 @Composable
 private fun UpNextButton(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -405,7 +409,7 @@ private fun UpNextButton(count: Int, onClick: () -> Unit, modifier: Modifier = M
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Text(
-            if (has) "다음 영상" else "다음 영상이 없습니다",
+            if (has) "재생목록" else "마지막 영상입니다",
             fontSize = 12.sp,
             color = if (has) colors.onMediaText else colors.onMediaTextFaint,
         )
