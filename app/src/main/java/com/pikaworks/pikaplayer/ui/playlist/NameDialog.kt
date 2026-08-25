@@ -67,7 +67,7 @@ fun NameDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
             ) {
-                DialogAction("취소", colors.textMeta, onDismiss)
+                DialogAction("취소", colors.textMeta, onClick = onDismiss)
                 // 빈 이름은 만들 수 없다. 눌러도 안 되는 대신 글자를 낮춰 알린다.
                 DialogAction(
                     confirmLabel,

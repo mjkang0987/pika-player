@@ -194,6 +194,80 @@ for p, s in files.items():
         if owner and not re.search(r'\bvar\b', owner):
             bad.append(f'{p}:{i + 1}: `{line.strip()}` — 딸린 선언이 var 가 아니다 ({owner[:50]})')
 
+# 6) 함수형이 아닌 자리에 넘긴 콜백
+#    파라미터를 중간에 끼워 넣으면 그 뒤의 위치 인자가 한 칸씩 밀린다. 밀린 자리가
+#    Boolean 이나 String 인데 콜백을 넘기고 있으면 컴파일러가 잡아 주지만, 그때는
+#    이미 빌드를 한 번 버린 뒤다. ValueRow 와 DialogAction 에서 같은 실수를 두 번 했다.
+def _split_args(text):
+    """괄호·중괄호 깊이를 세며 최상위 쉼표로만 자른다."""
+    out, depth, cur = [], 0, ''
+    for ch in text:
+        if ch in '([{':
+            depth += 1
+        elif ch in ')]}':
+            depth -= 1
+        if ch == ',' and depth == 0:
+            out.append(cur); cur = ''
+        else:
+            cur += ch
+    if cur.strip():
+        out.append(cur)
+    return [a.strip() for a in out]
+
+# 선언에서 파라미터 이름과 형을 뽑는다.
+decl_params = {}
+for src in files.values():
+    for m in re.finditer(r'\bfun\s+(\w+)\s*\(', src):
+        i = m.end() - 1
+        depth, j = 0, i
+        while j < len(src):
+            if src[j] == '(':
+                depth += 1
+            elif src[j] == ')':
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        params = []
+        for part in _split_args(src[i + 1:j]):
+            pm = re.match(r'(?:@\w+\s+)*(?:\w+\s+)*?(\w+)\s*:\s*(.+)', part.replace('\n', ' '))
+            if pm:
+                params.append((pm.group(1), pm.group(2)))
+        # 같은 이름이 여러 번이면 판단할 수 없다. 오탐을 내느니 건너뛴다.
+        decl_params[m.group(1)] = None if m.group(1) in decl_params else params
+
+CALLBACKISH = re.compile(r'^(::\w+|\w+::\w+|on[A-Z]\w*)$')
+for p, src in files.items():
+    for m in re.finditer(r'(?<![\w.])([A-Z]\w+)\s*\(', src):
+        name = m.group(1)
+        params = decl_params.get(name)
+        if not params:
+            continue
+        i = m.end() - 1
+        depth, j = 0, i
+        while j < len(src):
+            if src[j] == '(':
+                depth += 1
+            elif src[j] == ')':
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        if j >= len(src):
+            continue
+        for idx, arg in enumerate(_split_args(src[i + 1:j])):
+            if '=' in arg.split('(')[0]:
+                break  # 이름 붙인 인자부터는 자리와 무관하다
+            if idx >= len(params):
+                break
+            pname, ptype = params[idx]
+            if CALLBACKISH.match(arg) and '->' not in ptype:
+                line = src[:i].count('\n') + 1
+                bad.append(
+                    f'{p}:{line}: {name}(...) {idx + 1}번째 자리는 `{pname}: {ptype.strip()}` '
+                    f'인데 `{arg}` 를 넘김'
+                )
+
 # 선언보다 먼저 쓴 지역 변수(실제로 libraryVm·vaultVm 에서 두 번 났다)도 잡고 싶었지만
 # 넣지 않았다. 함수마다 같은 이름(colors 등)이 반복돼 정규식으로는 어느 함수의 것인지
 # 가릴 수 없고, 시험 삼아 넣었더니 오탐이 70개 났다. 늘 틀리는 검사는 무시하게 되고,
