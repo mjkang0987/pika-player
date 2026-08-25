@@ -588,6 +588,10 @@ private fun SeekBar(
  *
  * 찍은 지점을 글자로 보여 준다. 시크바의 눈금만으로는 어디였는지 읽기 어렵고,
  * 반복 연습은 몇 초 구간인지가 곧 목적이기 때문이다.
+ *
+ * 라벨은 지금 상태와 **다음에 할 일**을 함께 말한다. 'A-B' 는 그 용어를 아는
+ * 사람에게만 읽히는 말이다 — VLC 가 메뉴에 "시작 지점 설정" 이라고 풀어 쓰는
+ * 것과 같은 이유로, 처음 보는 사람도 무엇을 하는 버튼인지 알 수 있어야 한다.
  */
 @Composable
 private fun AbButton(state: PlayerUiState, onClick: () -> Unit) {
@@ -595,8 +599,8 @@ private fun AbButton(state: PlayerUiState, onClick: () -> Unit) {
     val start = state.abStartMs
     val end = state.abEndMs
     val label = when {
-        start == null -> "A-B"
-        end == null -> "A " + formatDuration(start)
+        start == null -> "구간 반복"
+        end == null -> "A " + formatDuration(start) + " · 끝 지정"
         else -> formatDuration(start) + " ~ " + formatDuration(end)
     }
     Text(
