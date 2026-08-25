@@ -1,5 +1,6 @@
 package com.pikaworks.pikaplayer.ui.player
 
+import android.view.LayoutInflater
 import android.view.View
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -52,6 +54,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.IconTap
 import com.pikaworks.pikaplayer.ui.formatDuration
@@ -143,6 +146,9 @@ fun PlayerScreen(
         Box(
             modifier = (if (isFullscreen) Modifier.weight(1f).fillMaxWidth()
                         else Modifier.fillMaxWidth().aspectRatio(16f / 9f))
+                // '채움' 은 넘치는 부분을 잘라내는 게 목적이다. 잘리지 않으면
+                // 영상이 아래 버튼 줄 위로 흘러나온다.
+                .clipToBounds()
                 .playerGestures(
                     enabled = !state.locked,
                     brightnessVolumeEnabled = brightnessVolumeGestures,
@@ -395,12 +401,12 @@ private fun FullscreenTopBar(title: String, onBack: () -> Unit, modifier: Modifi
 private fun VideoSurface(player: ExoPlayer, resizeMode: Int, modifier: Modifier = Modifier) {
     AndroidView(
         modifier = modifier,
+        // 레이아웃에서 부풀린다. surface_type 은 XML 에서만 정할 수 있는데,
+        // 기본값인 SurfaceView 는 '채움' 에서 상자 밖으로 넘쳐 아래 버튼 줄을
+        // 덮는다. 자세한 사정은 pika_player_view.xml 에 적어 두었다.
         factory = { context ->
-            PlayerView(context).apply {
-                useController = false
-                setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
-                subtitleView?.visibility = View.GONE
-            }
+            (LayoutInflater.from(context).inflate(R.layout.pika_player_view, null) as PlayerView)
+                .apply { subtitleView?.visibility = View.GONE }
         },
         update = { view ->
             view.player = player

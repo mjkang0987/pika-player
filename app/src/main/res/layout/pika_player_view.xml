@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    영상 표면.
+
+    surface_type 은 XML 에서만 정할 수 있어서 이 레이아웃이 있다. 코드로
+    PlayerView(context) 를 만들면 기본값인 SurfaceView 가 된다.
+
+    SurfaceView 를 쓰면 '채움' 에서 영상이 상자 밖으로 넘쳐 아래 버튼 줄을
+    덮는다. AspectRatioFrameLayout 이 채움 모드에서 자기 자신을 부모보다 크게
+    잡는데, SurfaceView 는 별도 레이어라 부모 경계로 잘리지 않기 때문이다.
+    TextureView 는 보통의 뷰 계층에서 그려져 정상적으로 잘린다.
+
+    맞바꾼 것: TextureView 는 전력을 조금 더 쓰고 HDR·보호 콘텐츠를 다루지
+    못한다. 기기 안 파일을 트는 지금 단계에서는 감수할 만하다.
+-->
+<androidx.media3.ui.PlayerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:surface_type="texture_view"
+    app:use_controller="false"
+    app:show_buffering="never" />
