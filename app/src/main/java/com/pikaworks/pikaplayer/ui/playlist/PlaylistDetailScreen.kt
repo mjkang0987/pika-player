@@ -1,6 +1,7 @@
 package com.pikaworks.pikaplayer.ui.playlist
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -87,36 +88,31 @@ fun PlaylistDetailScreen(
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
         ScreenHeader(name, onBack)
 
+        // 켜고 끄는 것(편집·랜덤·반복)과 한 번 하고 마는 것(추가·이름·삭제)을
+        // 줄로 나눈다. 같은 줄에 섞여 있으면 무엇이 상태이고 무엇이 동작인지
+        // 눌러 보기 전에는 알 수 없다.
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Pill("영상 추가", colors.key, onClick = onAdd)
-            Pill(
-                if (editing) "완료" else "편집",
-                if (editing) colors.key else colors.textSecondary,
-                onClick = { editing = !editing },
-            )
-            Spacer(Modifier.weight(1f))
-            Pill("이름", colors.textMeta, onClick = onRename)
-            Pill("삭제", colors.textMeta, onClick = onDelete)
+            Toggle("편집", editing) { editing = !editing }
+            Toggle("랜덤", playMode.shuffle) {
+                onPlayModeChange(playMode.copy(shuffle = !playMode.shuffle))
+            }
+            Toggle("목록 반복", playMode.loop) {
+                onPlayModeChange(playMode.copy(loop = !playMode.loop))
+            }
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Pill(
-                "랜덤",
-                if (playMode.shuffle) colors.key else colors.textFaint,
-                onClick = { onPlayModeChange(playMode.copy(shuffle = !playMode.shuffle)) },
-            )
-            Pill(
-                "목록 반복",
-                if (playMode.loop) colors.key else colors.textFaint,
-                onClick = { onPlayModeChange(playMode.copy(loop = !playMode.loop)) },
-            )
+            Action("영상 추가", colors.key, onAdd)
+            Spacer(Modifier.weight(1f))
+            Action("이름", colors.textSecondary, onRename)
+            Action("삭제", colors.textSecondary, onDelete)
         }
 
         if (rows.isEmpty()) {
@@ -215,16 +211,49 @@ private fun Thumbnail(row: PlaylistRow, placeholder: Color) {
     }
 }
 
-/** 화면 위쪽 작은 버튼들. 켜짐은 색으로만 알린다. */
+/**
+ * 켜고 끄는 버튼.
+ *
+ * 켜지면 채우고 꺼지면 테두리만 남긴다. 색만 바꾸면 "지금 켜져 있다" 와
+ * "이걸 누르면 켜진다" 가 구분되지 않는다 — 실제로 그래서 눌러 보기 전에는
+ * 무엇이 켜졌는지 알 수 없었다.
+ */
 @Composable
-private fun Pill(label: String, color: Color, onClick: () -> Unit) {
+private fun Toggle(label: String, on: Boolean, onClick: () -> Unit) {
+    val colors = PikaTheme.colors
+    val shape = RoundedCornerShape(14.dp)
+    Text(
+        label,
+        fontSize = 12.sp,
+        fontWeight = if (on) FontWeight.Medium else FontWeight.Light,
+        color = if (on) colors.background else colors.textSecondary,
+        modifier = Modifier
+            .clip(shape)
+            .background(if (on) colors.key else Color.Transparent)
+            .border(1.dp, if (on) colors.key else colors.chipBorder, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+    )
+}
+
+/**
+ * 한 번 하고 마는 버튼.
+ *
+ * 켜고 끄는 쪽과 달리 채워지지 않는다. 테두리 없이 글자만 두면 눌리는 것인지
+ * 안내문인지 알 수 없어서 테두리는 남긴다.
+ */
+@Composable
+private fun Action(label: String, color: Color, onClick: () -> Unit) {
+    val colors = PikaTheme.colors
+    val shape = RoundedCornerShape(8.dp)
     Text(
         label,
         fontSize = 12.sp,
         color = color,
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(shape)
+            .border(1.dp, colors.chipBorder, shape)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = 7.dp),
     )
 }
