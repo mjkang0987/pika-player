@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -44,6 +45,17 @@ class PlaylistViewModel(private val dao: PlaylistDao) : ViewModel() {
     val openItems: StateFlow<List<PlaylistItem>> = _openId
         .flatMapLatest { id -> if (id == null) flowOf(emptyList()) else dao.observeItems(id) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** 담기 시트가 물어보는 영상. 어느 목록에 이미 들어 있는지 알려면 필요하다. */
+    private val _addTarget = MutableStateFlow<String?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val containing: StateFlow<Set<Long>> = _addTarget
+        .flatMapLatest { uri -> if (uri == null) flowOf(emptyList()) else dao.observePlaylistsContaining(uri) }
+        .map { it.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    fun setAddTarget(uri: String?) { _addTarget.value = uri }
 
     fun open(id: Long) { _openId.value = id }
     fun close() { _openId.value = null }

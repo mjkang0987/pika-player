@@ -35,6 +35,8 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 fun AddToPlaylistSheet(
     videoName: String,
     playlists: List<PlaylistSummary>,
+    /** 이 영상이 이미 들어 있는 목록. */
+    containing: Set<Long>,
     onSelect: (Long) -> Unit,
     onCreate: () -> Unit,
     onDismiss: () -> Unit,
@@ -60,10 +62,13 @@ fun AddToPlaylistSheet(
             )
 
             playlists.forEach { playlist ->
+                val already = playlist.id in containing
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
+                        // 이미 들어 있는 목록은 누를 수 없다. 눌리게 두면 담긴
+                        // 것처럼 알림이 뜨는데 실제로는 아무 일도 일어나지 않는다.
+                        .clickable(enabled = !already) {
                             onSelect(playlist.id)
                             onDismiss()
                         }
@@ -72,11 +77,25 @@ fun AddToPlaylistSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(playlist.name, fontSize = 14.sp, color = colors.textPrimary)
                     Text(
-                        "${playlist.itemCount}개",
-                        fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
+                        playlist.name,
+                        fontSize = 14.sp,
+                        color = if (already) colors.textFaint else colors.textPrimary,
                     )
+                    if (already) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        ) {
+                            Icon(AppIcons.Check, null, tint = colors.key, modifier = Modifier.size(14.dp))
+                            Text("담김", fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta)
+                        }
+                    } else {
+                        Text(
+                            "${playlist.itemCount}개",
+                            fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
+                        )
+                    }
                 }
             }
 

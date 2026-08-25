@@ -217,6 +217,7 @@ class MainActivity : ComponentActivity() {
                 val playlists by playlistVm.playlists.collectAsStateWithLifecycle()
                 val openPlaylistId by playlistVm.openId.collectAsStateWithLifecycle()
                 val openPlaylistItems by playlistVm.openItems.collectAsStateWithLifecycle()
+                val containingPlaylists by playlistVm.containing.collectAsStateWithLifecycle()
                 // 길게 눌러 담을 영상. null 이면 시트를 띄우지 않는다.
                 var pendingAdd by remember { mutableStateOf<VideoItem?>(null) }
                 // 더보기(⋯)를 누른 영상. null 이면 시트를 띄우지 않는다.
@@ -354,10 +355,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                // 시트가 열릴 때 어느 목록에 이미 들어 있는지 물어 둔다.
+                LaunchedEffect(pendingAdd) { playlistVm.setAddTarget(pendingAdd?.uri?.toString()) }
+
                 pendingAdd?.let { target ->
                     AddToPlaylistSheet(
                         videoName = target.displayName,
                         playlists = playlists,
+                        containing = containingPlaylists,
                         onSelect = { id ->
                             playlistVm.add(id, target)
                             message = "${playlists.firstOrNull { it.id == id }?.name.orEmpty()} 에 담았습니다"
