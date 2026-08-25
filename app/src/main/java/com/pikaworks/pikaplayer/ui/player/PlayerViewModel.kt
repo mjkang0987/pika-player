@@ -39,6 +39,9 @@ object RepeatMode {
     const val ONE = "one"
     /** 목록의 마지막 다음에 처음으로. */
     const val ALL = "all"
+    /** 순서를 섞은 채로 목록을 돈다. 섞기만 하고 끝나는 경우는 두지 않는다 —
+     *  섞어 놓고 마지막에서 멈추면 무엇을 위해 섞었는지가 사라진다. */
+    const val SHUFFLE = "shuffle"
 }
 
 data class PlayerUiState(
@@ -86,8 +89,6 @@ data class PlayerUiState(
      * 뜨리는 것이 아니라 그냥 아무 영상이나 트는 것이 된다.
      */
     val explicitQueue: Boolean = false,
-    /** 랜덤. 지금 영상 뒤를 섞는다. */
-    val shuffleEnabled: Boolean = false,
     /** 끝나면 다음 영상으로 넘어갈지. 설정과 같은 값을 본다. */
     val autoPlayNextEnabled: Boolean = true,
     /** 구간 반복의 시작점. 찍기 전에는 null. */
@@ -140,9 +141,9 @@ class PlayerViewModel(
      */
     private var explicitQueue: Boolean = false
     private var repeatMode: String = RepeatMode.OFF
-    /** 마지막까지 가면 처음으로 돌아간다. 재생목록·폴더에서만 뜻이 있다. */
-    private val loopQueue: Boolean get() = repeatMode == RepeatMode.ALL
-    private var shuffle: Boolean = false
+    /** 마지막까지 가면 처음으로 돌아간다. */
+    private val loopQueue: Boolean
+        get() = repeatMode == RepeatMode.ALL || repeatMode == RepeatMode.SHUFFLE
     private var autoPlayNext: Boolean = true
     private var resumePlayback: Boolean = true
     /** 지금 연 영상에 딸린 작업(이어보기 탐색·자막 찾기). 영상을 바꾸면 끊는다. */
@@ -203,7 +204,6 @@ class PlayerViewModel(
         // 새 재생이다. 지난번에 켜 둔 랜덤·목록 반복은 여기서 끊는다 — 목록마다
         // 기억하지 않는 값이라, 남아 있으면 어디서 켠 것인지 알 수 없다.
         this.repeatMode = RepeatMode.OFF
-        this.shuffle = false
         if (currentVideo?.uri == video.uri) {
             // 같은 영상이면 다시 틀지 않는다. 다만 방금 되돌린 값이 화면에는
             // 그대로 켜져 보이지 않도록 상태만 맞춰 둔다.
@@ -211,7 +211,6 @@ class PlayerViewModel(
                 it.copy(
                     explicitQueue = explicitQueue,
                     repeatMode = RepeatMode.OFF,
-                    shuffleEnabled = false,
                 )
             }
             refreshQueue()
@@ -245,7 +244,6 @@ class PlayerViewModel(
             previous = previousOf(video),
             explicitQueue = explicitQueue,
             repeatMode = repeatMode,
-            shuffleEnabled = shuffle,
             autoPlayNextEnabled = autoPlayNext,
         )
 
@@ -343,31 +341,29 @@ class PlayerViewModel(
         start(video, resumePlayback, current.speed, current.subtitleCharset)
     }
 
-    /**
-     * 랜덤.
-     *
-     * 지금 보는 것을 맨 앞에 두고 나머지를 섞는다. 자리를 그대로 두고 뒤만
-     * 섞으면 이미 지나온 영상들이 앞쪽에 남아 목록 반복을 켰을 때 다시 나온다.
-     */
-    fun toggleShuffle() {
-        shuffle = !shuffle
-        val video = currentVideo
-        queue = when {
-            !shuffle -> orderedQueue
-            video == null -> orderedQueue.shuffled()
-            else -> listOf(video) + orderedQueue.filter { it.uri != video.uri }.shuffled()
-        }
-        _uiState.update { it.copy(shuffleEnabled = shuffle) }
-        refreshQueue()
-    }
-
     /** 목록 반복. 마지막 영상 다음에 처음으로 돌아간다. */
-    /** 반복 방식을 고른다. 목록이 바뀌므로 앞·뒤 영상도 다시 센다. */
+    /** 반복 방식을 고른다. 순서와 앞·뒤 영상이 함께 바뀐다. */
     fun setRepeatMode(mode: String) {
         repeatMode = mode
         player.repeatMode = exoRepeatMode()
+        applyOrder()
         _uiState.update { it.copy(repeatMode = mode) }
         refreshQueue()
+    }
+
+    /**
+     * 랜덤이면 섞고, 아니면 원래 순서로 되돌린다.
+     *
+     * 섞을 때 지금 보는 것을 맨 앞으로 옮긴다. 자리를 그대로 두고 뒤만 섞으면
+     * 이미 지나온 영상들이 앞쪽에 남아 한 바퀴 돌 때 다시 나온다.
+     */
+    private fun applyOrder() {
+        val video = currentVideo
+        queue = when {
+            repeatMode != RepeatMode.SHUFFLE -> orderedQueue
+            video == null -> orderedQueue.shuffled()
+            else -> listOf(video) + orderedQueue.filter { it.uri != video.uri }.shuffled()
+        }
     }
 
     /**

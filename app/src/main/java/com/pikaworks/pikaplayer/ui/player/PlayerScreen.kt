@@ -95,7 +95,6 @@ fun PlayerScreen(
     onResetSubtitleOffset: () -> Unit,
     onToggleLock: () -> Unit,
     onSetRepeatMode: (String) -> Unit,
-    onToggleShuffle: () -> Unit,
     onMarkAb: () -> Unit,
     onCycleResize: () -> Unit,
     onSelectSpeed: (Float) -> Unit,
@@ -167,8 +166,6 @@ fun PlayerScreen(
         PlaybackSheet(
             repeatMode = state.repeatMode,
             onRepeatModeChange = onSetRepeatMode,
-            shuffle = state.shuffleEnabled,
-            onShuffleChange = onToggleShuffle,
             onDismiss = { playbackSheetVisible = false },
         )
     }
@@ -686,7 +683,7 @@ private fun SecondaryControls(
         IconItem(
             icon = AppIcons.Repeat,
             label = "반복",
-            active = state.repeatMode != RepeatMode.OFF || state.shuffleEnabled,
+            active = state.repeatMode != RepeatMode.OFF,
             onClick = onOpenPlaybackSheet,
             modifier = Modifier.weight(1f),
         )

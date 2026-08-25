@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -34,9 +33,9 @@ import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
  * 돌아간다. '다음 영상 자동 재생' 처럼 한 번 정해 두고 잊는 값은 설정에 있다 —
  * 성격이 다른 것을 섞어 두면 어느 것이 남고 어느 것이 사라지는지 알 수 없다.
  *
- * 반복은 셋 중 하나를 고르는 것이라 동그라미로, 랜덤은 따로 켜고 끄는 것이라
- * 체크로 그린다. 생김새가 다르면 "이걸 켜면 저건 꺼지나" 를 눌러 보지 않고도
- * 알 수 있다.
+ * 넷 중 하나만 고른다. 랜덤을 따로 켜고 끄게 두었더니 "목록 반복 + 랜덤" 과
+ * "랜덤" 이 무엇이 다른지 설명할 길이 없었다 — 섞어 놓고 마지막에서 멈추면
+ * 무엇을 위해 섞었는지가 사라진다. 랜덤은 곧 섞어서 도는 것이다.
  *
  * 여기서 말하는 '목록' 은 지금 틀고 있는 대기열이다. 재생목록·폴더에서 튼 것은
  * 그 목록이고, 보관함에서 한 편을 누른 것은 그 영상이 든 폴더다. 어느 쪽이든
@@ -47,8 +46,6 @@ import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
 fun PlaybackSheet(
     repeatMode: String,
     onRepeatModeChange: (String) -> Unit,
-    shuffle: Boolean,
-    onShuffleChange: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = PikaDarkColors
@@ -60,12 +57,11 @@ fun PlaybackSheet(
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
             Text(
-                "반복과 순서",
+                "반복",
                 fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 4.dp),
             )
 
-            GroupLabel("반복")
             Choice(
                 label = "반복 안 함",
                 selected = repeatMode == RepeatMode.OFF,
@@ -83,28 +79,14 @@ fun PlaybackSheet(
                 selected = repeatMode == RepeatMode.ALL,
                 onSelect = { onRepeatModeChange(RepeatMode.ALL) },
             )
-
-            GroupLabel("순서")
-            Toggle(
-                label = "랜덤",
-                description = "지금 영상 뒤의 순서를 섞습니다.",
-                on = shuffle,
-                onToggle = onShuffleChange,
+            Choice(
+                label = "랜덤 반복",
+                description = "순서를 섞은 채로 목록을 계속 돕니다.",
+                selected = repeatMode == RepeatMode.SHUFFLE,
+                onSelect = { onRepeatModeChange(RepeatMode.SHUFFLE) },
             )
         }
     }
-}
-
-@Composable
-private fun GroupLabel(text: String) {
-    Text(
-        text,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        letterSpacing = 0.8.sp,
-        color = PikaDarkColors.textMeta,
-        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 2.dp),
-    )
 }
 
 /** 셋 중 하나. 고르면 나머지가 풀린다. */
@@ -129,24 +111,6 @@ private fun Choice(
             if (selected) {
                 Box(Modifier.size(9.dp).clip(CircleShape).background(colors.key))
             }
-        }
-    }
-}
-
-/** 따로 켜고 끄는 것. 서로 영향이 없다. */
-@Composable
-private fun Toggle(
-    label: String,
-    on: Boolean,
-    onToggle: () -> Unit,
-    description: String? = null,
-) {
-    val colors = PikaDarkColors
-    SheetRow(label, description, on, onToggle) {
-        if (on) {
-            Icon(AppIcons.Check, "켜짐", tint = colors.key, modifier = Modifier.size(18.dp))
-        } else {
-            Box(Modifier.size(18.dp))
         }
     }
 }

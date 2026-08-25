@@ -899,7 +899,6 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 onSetRepeatMode = playerVm::setRepeatMode,
-                onToggleShuffle = playerVm::toggleShuffle,
                 onMarkAb = playerVm::markAb,
                 onCycleResize = playerVm::cycleResizeMode,
                 onSelectSpeed = playerVm::setSpeed,
