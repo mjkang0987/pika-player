@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -64,6 +65,7 @@ data class FolderUiState(
  * 미디어 권한을 거부한 사용자는 SAF 경로로만 앱을 쓴다. 전에는 이 화면이
  * MediaStore 만 알아서 그런 사용자에게 폴더 탭이 늘 비어 있었다.
  */
+@OptIn(FlowPreview::class)
 class FolderViewModel(
     private val mediaStore: MediaStoreSource,
     private val safFolders: SafFolderSource,

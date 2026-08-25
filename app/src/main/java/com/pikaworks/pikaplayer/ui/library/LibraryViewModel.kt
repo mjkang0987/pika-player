@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 
@@ -101,6 +102,7 @@ data class LibraryUiState(
     fun countOf(filter: String): Int = searched.count { LibraryFilter.matches(filter, it) }
 }
 
+@OptIn(FlowPreview::class)
 class LibraryViewModel(
     private val mediaStore: MediaStoreSource,
     private val safFolders: SafFolderSource,
