@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -65,9 +66,16 @@ class MediaStoreSource(private val context: Context) {
         val items = mutableListOf<VideoItem>()
         // 권한이 도중에 취소되면 SecurityException 이 난다. 목록이 비는 편이
         // 앱이 죽는 것보다 낫다 — 화면은 이미 빈 상태를 다룬다.
+        //
+        // 다만 조용히 삼키기만 하면 "목록이 왜 비었나"를 밖에서 알 길이 없다.
+        // 빈 목록은 권한 거부·조회 실패·정말 영상이 없음이 모두 같은 모습이다.
+        // 남기는 곳은 여기 한 군데뿐이므로 로그로 구분한다.
         runCatching {
             context.contentResolver.query(collection, projection, null, null, sortOrder)
+        }.onFailure {
+            Log.w(TAG, "MediaStore 조회 실패", it)
         }.getOrNull()?.use { c ->
+            Log.i(TAG, "MediaStore 조회: ${c.count}건")
             val idCol = c.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
             val nameCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
             val durCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
@@ -104,6 +112,11 @@ class MediaStoreSource(private val context: Context) {
                 )
             }
         }
+        Log.i(TAG, "읽어들인 영상: ${items.size}건")
         items
+    }
+
+    private companion object {
+        const val TAG = "PikaMedia"
     }
 }
