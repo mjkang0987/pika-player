@@ -7,7 +7,7 @@ import android.os.Build
 import android.util.Rational
 
 /**
- * 화면 속 화면(PiP) — Pro 기능.
+ * 화면 속 화면(PiP).
  *
  * 기기가 지원하지 않는 경우가 실제로 있다(태블릿·저사양 기기, 제조사 제외).
  * 지원 여부를 먼저 물어보지 않으면 버튼을 눌러도 아무 일이 없는 것처럼 보인다.
