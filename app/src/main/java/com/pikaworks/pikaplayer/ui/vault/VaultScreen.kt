@@ -53,73 +53,76 @@ fun VaultScreen(
 ) {
     val colors = PikaTheme.colors
 
-    LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
-        item {
-            ScreenHeader("비공개 폴더", onBack)
-        }
+    Column(modifier = modifier.fillMaxSize().background(colors.background)) {
+        // 제목은 목록과 함께 밀려 올라가지 않는다. 어느 화면에 있는지와
+        // 뒤로 갈 길은 스크롤 위치와 상관없이 늘 보여야 한다.
+        ScreenHeader("비공개 폴더", onBack)
 
-        item {
-            Text(
-                "고른 폴더를 이 앱의 목록에서 감춥니다. 파일을 암호화하지는 않으므로 " +
-                    "다른 앱이나 PC 에 연결하면 그대로 보입니다.",
-                fontSize = 12.sp, fontWeight = FontWeight.Light,
-                lineHeight = 18.sp, color = colors.textMeta,
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
-            )
-        }
+        LazyColumn(modifier = Modifier.weight(1f)) {
 
-        item { SectionHeader("감출 폴더") }
-        if (folders.isEmpty()) {
             item {
                 Text(
-                    "감출 수 있는 폴더가 없습니다",
-                    fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                    "고른 폴더를 이 앱의 목록에서 감춥니다. 파일을 암호화하지는 않으므로 " +
+                        "다른 앱이나 PC 에 연결하면 그대로 보입니다.",
+                    fontSize = 12.sp, fontWeight = FontWeight.Light,
+                    lineHeight = 18.sp, color = colors.textMeta,
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
                 )
             }
-        }
-        items(folders, key = { it.key }) { folder ->
-            val isHidden = folder.key in hidden
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onToggle(folder.key, !isHidden) }
-                    .heightIn(min = 56.dp)
-                    .padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Icon(AppIcons.NavFolder, null, tint = colors.textSecondary, modifier = Modifier.size(24.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(folder.name, fontSize = 14.sp, color = colors.textPrimary,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Spacer(Modifier.height(3.dp))
-                    Text("영상 ${folder.videoCount}", fontSize = 10.sp,
-                        fontWeight = FontWeight.Light, color = colors.textMeta)
+
+            item { SectionHeader("감출 폴더") }
+            if (folders.isEmpty()) {
+                item {
+                    Text(
+                        "감출 수 있는 폴더가 없습니다",
+                        fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                    )
                 }
-                Box(
+            }
+            items(folders, key = { it.key }) { folder ->
+                val isHidden = folder.key in hidden
+                Row(
                     modifier = Modifier
-                        .size(22.dp)
-                        .clip(RoundedCornerShape(11.dp))
-                        .background(if (isHidden) colors.key else colors.chipBorder),
-                    contentAlignment = Alignment.Center,
+                        .fillMaxWidth()
+                        .clickable { onToggle(folder.key, !isHidden) }
+                        .heightIn(min = 56.dp)
+                        .padding(horizontal = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    if (isHidden) {
-                        Icon(AppIcons.Check, "감춤", tint = colors.background, modifier = Modifier.size(13.dp))
+                    Icon(AppIcons.NavFolder, null, tint = colors.textSecondary, modifier = Modifier.size(24.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(folder.name, fontSize = 14.sp, color = colors.textPrimary,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Spacer(Modifier.height(3.dp))
+                        Text("영상 ${folder.videoCount}", fontSize = 10.sp,
+                            fontWeight = FontWeight.Light, color = colors.textMeta)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(if (isHidden) colors.key else colors.chipBorder),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (isHidden) {
+                            Icon(AppIcons.Check, "감춤", tint = colors.background, modifier = Modifier.size(13.dp))
+                        }
                     }
                 }
             }
-        }
 
-        item { SectionHeader("PIN") }
-        item { ActionRow("PIN 바꾸기", colors.textPrimary, onChangePin) }
-        item { ActionRow("비공개 폴더 끄기", colors.textMeta, onDisable) }
-        item {
-            Text(
-                "끄면 감춘 폴더 목록도 함께 지워집니다.",
-                fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textFaint,
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 32.dp),
-            )
+            item { SectionHeader("PIN") }
+            item { ActionRow("PIN 바꾸기", colors.textPrimary, onChangePin) }
+            item { ActionRow("비공개 폴더 끄기", colors.textMeta, onDisable) }
+            item {
+                Text(
+                    "끄면 감춘 폴더 목록도 함께 지워집니다.",
+                    fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textFaint,
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 32.dp),
+                )
+            }
         }
     }
 }

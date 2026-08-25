@@ -63,35 +63,38 @@ Unless required by applicable law or agreed to in writing, software distributed 
 fun LicenseScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = PikaTheme.colors
 
-    LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
-        item {
-            ScreenHeader("오픈소스 라이선스", onBack)
-        }
+    Column(modifier = modifier.fillMaxSize().background(colors.background)) {
+        // 제목은 목록과 함께 밀려 올라가지 않는다. 어느 화면에 있는지와
+        // 뒤로 갈 길은 스크롤 위치와 상관없이 늘 보여야 한다.
+        ScreenHeader("오픈소스 라이선스", onBack)
 
-        items(LIBRARIES, key = { it.name }) { library ->
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 9.dp)) {
-                Text(library.name, fontSize = 14.sp, color = colors.textPrimary)
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    "${library.owner} · ${library.license}",
-                    fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
-                )
+        LazyColumn(modifier = Modifier.weight(1f)) {
+
+            items(LIBRARIES, key = { it.name }) { library ->
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 9.dp)) {
+                    Text(library.name, fontSize = 14.sp, color = colors.textPrimary)
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        "${library.owner} · ${library.license}",
+                        fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
+                    )
+                }
             }
-        }
 
-        item {
-            Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 40.dp)) {
-                Text(
-                    "Apache License 2.0",
-                    fontSize = 11.sp, fontWeight = FontWeight.Medium,
-                    letterSpacing = 0.8.sp, color = colors.key,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    APACHE_2_0,
-                    fontSize = 11.sp, fontWeight = FontWeight.Light,
-                    lineHeight = 17.sp, color = colors.textSecondary,
-                )
+            item {
+                Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 40.dp)) {
+                    Text(
+                        "Apache License 2.0",
+                        fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                        letterSpacing = 0.8.sp, color = colors.key,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        APACHE_2_0,
+                        fontSize = 11.sp, fontWeight = FontWeight.Light,
+                        lineHeight = 17.sp, color = colors.textSecondary,
+                    )
+                }
             }
         }
     }

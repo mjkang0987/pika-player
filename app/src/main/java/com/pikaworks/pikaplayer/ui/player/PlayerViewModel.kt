@@ -400,15 +400,6 @@ class PlayerViewModel(
         _uiState.update { it.copy(resizeMode = (it.resizeMode + 1) % RESIZE_MODE_LABELS.size) }
     }
 
-    private val speedPresets = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
-
-    fun cycleSpeed() {
-        val next = speedPresets[(speedPresets.indexOf(_uiState.value.speed).let {
-            if (it < 0) speedPresets.indexOf(1.0f) else it
-        } + 1) % speedPresets.size]
-        setSpeed(next)
-    }
-
     companion object {
         val RESIZE_MODE_LABELS = listOf("맞춤", "채움", "늘이기")
 

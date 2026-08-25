@@ -60,6 +60,8 @@ import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.IconTap
+import com.pikaworks.pikaplayer.ui.OptionSheet
+import com.pikaworks.pikaplayer.ui.SPEED_OPTIONS
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlin.math.abs
@@ -89,7 +91,7 @@ fun PlayerScreen(
     onToggleRepeat: () -> Unit,
     onMarkAb: () -> Unit,
     onCycleResize: () -> Unit,
-    onCycleSpeed: () -> Unit,
+    onSelectSpeed: (Float) -> Unit,
     onToggleFullscreen: () -> Unit,
     onBrightnessDelta: (Float) -> Float,
     onVolumeDelta: (Float) -> Float,
@@ -121,6 +123,19 @@ fun PlayerScreen(
     val colors = PikaTheme.colors
     var feedback by remember { mutableStateOf<GestureFeedback?>(null) }
     var subtitleSheetVisible by remember { mutableStateOf(false) }
+    // 속도는 순환 버튼이었다. 0.5 에서 2.0 으로 가려면 다섯 번을 눌러야 했고,
+    // 지금 몇 배인지 보려고 또 눌러 보게 된다. 목록에서 고르게 바꾼다.
+    var speedSheetVisible by remember { mutableStateOf(false) }
+
+    if (speedSheetVisible) {
+        OptionSheet(
+            title = "재생속도",
+            options = SPEED_OPTIONS,
+            selected = state.speed,
+            onSelect = onSelectSpeed,
+            onDismiss = { speedSheetVisible = false },
+        )
+    }
 
     if (subtitleSheetVisible) {
         SubtitleSheet(
@@ -211,7 +226,7 @@ fun PlayerScreen(
                             state = state,
                             onOpenSubtitleSheet = { subtitleSheetVisible = true },
                             onCycleResize = onCycleResize,
-                            onCycleSpeed = onCycleSpeed,
+                            onOpenSpeedSheet = { speedSheetVisible = true },
                             onToggleFullscreen = onToggleFullscreen,
                             onToggleLock = onToggleLock,
                             onToggleRepeat = onToggleRepeat,
@@ -266,7 +281,7 @@ fun PlayerScreen(
                 state = state,
                 onOpenSubtitleSheet = { subtitleSheetVisible = true },
                 onCycleResize = onCycleResize,
-                onCycleSpeed = onCycleSpeed,
+                onOpenSpeedSheet = { speedSheetVisible = true },
                 onToggleFullscreen = onToggleFullscreen,
                 onToggleLock = onToggleLock,
                 onToggleRepeat = onToggleRepeat,
@@ -621,7 +636,7 @@ private fun SecondaryControls(
     state: PlayerUiState,
     onOpenSubtitleSheet: () -> Unit,
     onCycleResize: () -> Unit,
-    onCycleSpeed: () -> Unit,
+    onOpenSpeedSheet: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onToggleLock: () -> Unit,
     onToggleRepeat: () -> Unit,
@@ -630,7 +645,7 @@ private fun SecondaryControls(
     Row(modifier = modifier.fillMaxWidth()) {
         // 폭을 고정하면 버튼이 하나 늘 때마다 좁은 화면에서 넘친다. 남는 폭을
         // 균등하게 나눠 갖게 해서 개수·화면 크기와 무관하게 들어맞게 한다.
-        SpeedItem(state.speed, onCycleSpeed, Modifier.weight(1f))
+        SpeedItem(state.speed, onOpenSpeedSheet, Modifier.weight(1f))
         IconItem(AppIcons.Subtitle, "자막", state.subtitleEnabled, onOpenSubtitleSheet, Modifier.weight(1f))
         IconItem(
             AppIcons.AspectRatio,

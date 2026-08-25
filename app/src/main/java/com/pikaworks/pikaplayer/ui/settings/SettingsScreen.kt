@@ -35,6 +35,7 @@ import com.pikaworks.pikaplayer.data.prefs.SubtitleScale
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
 import com.pikaworks.pikaplayer.ui.OptionSheet
+import com.pikaworks.pikaplayer.ui.SPEED_OPTIONS
 import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
@@ -73,7 +74,7 @@ fun SettingsScreen(
     when (openPicker) {
         Picker.SPEED -> OptionSheet(
             title = "기본 재생속도",
-            options = SPEEDS,
+            options = SPEED_OPTIONS,
             selected = settings.playbackSpeed,
             onSelect = onPlaybackSpeedChange,
             onDismiss = { openPicker = null },
@@ -109,57 +110,56 @@ fun SettingsScreen(
         null -> Unit
     }
 
-    LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
-        item {
-            ScreenHeader("설정", onBack)
-        }
+    Column(modifier = modifier.fillMaxSize().background(colors.background)) {
+        // 제목은 목록과 함께 밀려 올라가지 않는다. 어느 화면에 있는지와
+        // 뒤로 갈 길은 스크롤 위치와 상관없이 늘 보여야 한다.
+        ScreenHeader("설정", onBack)
+
+        LazyColumn(modifier = Modifier.weight(1f)) {
 
 
-        item { SectionHeader("라이브러리") }
-        item { SwitchRow("자동 작은 창", settings.autoPip, onAutoPipChange) }
-        item { ValueRow("비공개 폴더", if (vaultEnabled) "켜짐" else "꺼짐", onOpenVault) }
-        // 어린이 잠금은 비공개 폴더와 같은 PIN 을 쓴다. PIN 이 없으면 켤 수 없으므로
-        // 스위치 대신 PIN 을 정하러 가는 줄을 보여 준다 — 눌러도 안 켜지는 스위치는
-        // 고장으로 읽힌다.
-        item {
-            if (vaultEnabled) {
-                SwitchRow("어린이 잠금", settings.childLock, onChildLockChange)
-            } else {
-                ValueRow("어린이 잠금", "PIN 설정 필요", onOpenVault)
+            item { SectionHeader("라이브러리") }
+            item { SwitchRow("자동 작은 창", settings.autoPip, onAutoPipChange) }
+            item { ValueRow("비공개 폴더", if (vaultEnabled) "켜짐" else "꺼짐", onOpenVault) }
+            // 어린이 잠금은 비공개 폴더와 같은 PIN 을 쓴다. PIN 이 없으면 켤 수 없으므로
+            // 스위치 대신 PIN 을 정하러 가는 줄을 보여 준다 — 눌러도 안 켜지는 스위치는
+            // 고장으로 읽힌다.
+            item {
+                if (vaultEnabled) {
+                    SwitchRow("어린이 잠금", settings.childLock, onChildLockChange)
+                } else {
+                    ValueRow("어린이 잠금", "PIN 설정 필요", onOpenVault)
+                }
             }
+
+            item { SectionHeader("재생") }
+            item { ValueRow("기본 재생속도", label(SPEED_OPTIONS, settings.playbackSpeed)) { openPicker = Picker.SPEED } }
+            item { SwitchRow("이어보기", settings.resumePlayback, onResumeChange) }
+            item { SwitchRow("다음 영상 자동 재생", settings.autoPlayNext, onAutoPlayNextChange) }
+
+            item { SectionHeader("자막") }
+            item { ValueRow("기본 인코딩", label(ENCODING_OPTIONS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
+            item { ValueRow("글자 크기", label(SCALES, settings.subtitleScale)) { openPicker = Picker.SUBTITLE_SCALE } }
+            item { ValueRow("표시 위치", label(POSITIONS, settings.subtitlePosition)) { openPicker = Picker.SUBTITLE_POSITION } }
+
+            item { SectionHeader("제스처") }
+            item { SwitchRow("밝기 · 볼륨 스와이프", settings.gesturesEnabled, onGesturesChange) }
+            item { SwitchRow("더블탭 10초 이동", settings.doubleTapSeekEnabled, onDoubleTapSeekChange) }
+
+            item { SectionHeader("화면") }
+            item { ValueRow("테마", label(THEMES, settings.theme)) { openPicker = Picker.THEME } }
+            item { SwitchRow("자동회전 연동", settings.followAutoRotate, onFollowAutoRotateChange) }
+
+            item { SectionHeader("정보") }
+            item { InfoRow("버전", versionName) }
+            item { ValueRow("오픈소스 라이선스", "", onOpenLicenses) }
+            item { Spacer(Modifier.height(32.dp)) }
         }
-
-        item { SectionHeader("재생") }
-        item { ValueRow("기본 재생속도", label(SPEEDS, settings.playbackSpeed)) { openPicker = Picker.SPEED } }
-        item { SwitchRow("이어보기", settings.resumePlayback, onResumeChange) }
-        item { SwitchRow("다음 영상 자동 재생", settings.autoPlayNext, onAutoPlayNextChange) }
-
-        item { SectionHeader("자막") }
-        item { ValueRow("기본 인코딩", label(ENCODING_OPTIONS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
-        item { ValueRow("글자 크기", label(SCALES, settings.subtitleScale)) { openPicker = Picker.SUBTITLE_SCALE } }
-        item { ValueRow("표시 위치", label(POSITIONS, settings.subtitlePosition)) { openPicker = Picker.SUBTITLE_POSITION } }
-
-        item { SectionHeader("제스처") }
-        item { SwitchRow("밝기 · 볼륨 스와이프", settings.gesturesEnabled, onGesturesChange) }
-        item { SwitchRow("더블탭 10초 이동", settings.doubleTapSeekEnabled, onDoubleTapSeekChange) }
-
-        item { SectionHeader("화면") }
-        item { ValueRow("테마", label(THEMES, settings.theme)) { openPicker = Picker.THEME } }
-        item { SwitchRow("자동회전 연동", settings.followAutoRotate, onFollowAutoRotateChange) }
-
-        item { SectionHeader("정보") }
-        item { InfoRow("버전", versionName) }
-        item { ValueRow("오픈소스 라이선스", "", onOpenLicenses) }
-        item { Spacer(Modifier.height(32.dp)) }
     }
 }
 
 private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, SUBTITLE_POSITION, THEME }
 
-private val SPEEDS = listOf(
-    0.5f to "0.5×", 0.75f to "0.75×", 1.0f to "1.0×",
-    1.25f to "1.25×", 1.5f to "1.5×", 2.0f to "2.0×",
-)
 private val SCALES = listOf(
     SubtitleScale.SMALL to "작게", SubtitleScale.NORMAL to "보통", SubtitleScale.LARGE to "크게",
 )
