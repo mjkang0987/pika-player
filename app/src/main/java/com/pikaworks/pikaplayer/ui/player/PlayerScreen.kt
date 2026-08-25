@@ -658,11 +658,12 @@ private fun SecondaryControls(
             modifier = Modifier.weight(1f),
         )
         IconItem(AppIcons.Repeat, "반복", state.repeatEnabled, onToggleRepeat, Modifier.weight(1f))
-        // 지금 상태가 아니라 누르면 무엇이 되는지를 보여 준다. 전체화면인데
-        // 들어가는 아이콘이 그대로면 눌러도 안 먹은 것처럼 읽힌다.
+        // 이름은 그대로 두고 아이콘과 색이 상태를 말한다. 이 줄의 다른 버튼도
+        // 모두 기능 이름을 달고 켜짐만 색으로 알린다 — 여기만 "나가기" 같은
+        // 동사가 되면 결이 깨지고, 무엇을 나가는지도 애매해진다.
         IconItem(
             icon = if (isFullscreen) AppIcons.FullscreenExit else AppIcons.Fullscreen,
-            label = if (isFullscreen) "나가기" else "전체화면",
+            label = "전체화면",
             active = isFullscreen,
             onClick = onToggleFullscreen,
             modifier = Modifier.weight(1f),
