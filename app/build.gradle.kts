@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // AGP 9 부터 Kotlin 지원이 AGP 안에 들어왔다. kotlin.android 를 따로 적용하면
 // "no longer required for Kotlin support since AGP 9.0" 으로 막힌다.
 // https://kotl.in/gradle/agp-built-in-kotlin
@@ -6,6 +8,19 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+/**
+ * 서명 정보. 저장소에 넣지 않는다.
+ *
+ * keystore.properties 와 .jks 는 .gitignore 에 있다. 파일이 없으면 서명 설정을
+ * 달지 않고, 릴리스는 서명 없이 빌드된다 — 다른 기계에서 체크아웃했을 때
+ * 빌드가 통째로 막히는 것보다, R8 검증까지는 되고 설치만 안 되는 편이 낫다.
+ */
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use(::load)
+}
+val keystorePath: String? = keystoreProperties.getProperty("storeFile")
 
 android {
     namespace = "com.pikaworks.pikaplayer"
@@ -20,8 +35,21 @@ android {
         versionName = "0.1.0"
     }
 
+    // buildTypes 보다 먼저 와야 한다. 아래에서 이름으로 찾아 쓴다.
+    signingConfigs {
+        create("release") {
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

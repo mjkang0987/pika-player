@@ -7,3 +7,8 @@ build/
 captures/
 .externalNativeBuild
 .cxx
+
+# 서명 키. 저장소에 들어가면 안 된다.
+keystore.properties
+*.jks
+*.keystore
