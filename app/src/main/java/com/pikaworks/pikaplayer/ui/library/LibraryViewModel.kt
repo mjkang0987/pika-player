@@ -162,8 +162,10 @@ class LibraryViewModel(
                 }
 
                 // 이어보기: 시작만 했거나 거의 끝난 것은 뺀다. 최근 순 최대 10개.
+                // 손으로 뺀 것도 제외한다 — 위치는 그대로 두고 이 줄에서만 감춘다.
                 val continueItems = rows
                     .filter { it.progress?.let { p -> p in 0.02f..0.97f } == true }
+                    .filter { byUri[it.video.uri.toString()]?.dismissedFromContinue != true }
                     .sortedByDescending { byUri[it.video.uri.toString()]?.updatedAtMs ?: 0L }
                     .take(10)
                     .map { ContinueItem(it.video, it.positionMs) }
@@ -210,13 +212,13 @@ class LibraryViewModel(
 
     /** 거르기와 검색어는 화면을 벗어나면 잊는다. 설정처럼 오래 남을 값이 아니다. */
     /**
-     * 이어보기에서 뺀다.
+     * 이어보기 줄에서 뺀다.
      *
-     * 지우는 것은 저장해 둔 재생 위치뿐이다. 영상은 그대로 남고, 다시 틀면
-     * 처음부터 시작한다.
+     * 저장된 위치는 건드리지 않는다. 보관함에서 그 영상을 다시 열면 보던 데서
+     * 이어진다 — 줄을 정리한 대가로 기록을 잃게 하지 않는다.
      */
-    fun forgetPosition(uri: String) {
-        viewModelScope.launch { positionDao.delete(uri) }
+    fun dismissFromContinue(uri: String) {
+        viewModelScope.launch { positionDao.dismissFromContinue(uri) }
     }
 
     fun setFilter(value: String) {

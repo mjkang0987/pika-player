@@ -17,6 +17,7 @@ import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.prefs.SettingsStore
 import com.pikaworks.pikaplayer.data.subtitle.SubtitleMatcher
 import com.pikaworks.pikaplayer.data.vault.VaultStore
+import com.pikaworks.pikaplayer.data.db.MIGRATION_3_4
 
 /**
  * 의존성을 손으로 엮는다. 1인 개발 규모에서 DI 프레임워크는 아직 값을 하지 않는다.
@@ -77,6 +78,7 @@ class PikaApp : Application(), ImageLoaderFactory {
             // 첫 인자는 dropAllTables — 지울 때 Room 이 아는 테이블만이 아니라
             // 전부 지운다. 여기 테이블은 모두 Room 이 만든 것이라 이 값이 맞다.
             .fallbackToDestructiveMigrationFrom(true, 1, 2)
+            .addMigrations(MIGRATION_3_4)
             .build()
         mediaStore = MediaStoreSource(this)
         settings = SettingsStore(this)

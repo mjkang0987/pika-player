@@ -581,6 +581,9 @@ class PlayerViewModel(
                     positionMs = pos,
                     durationMs = dur,
                     updatedAtMs = System.currentTimeMillis(),
+                    // 기본값 false 로 덮어쓴다. 이어보기 줄에서 뺐던 영상이라도
+                    // 다시 보기 시작했으면 그 줄에 도로 나와야 한다.
+                    dismissedFromContinue = false,
                 )
             )
         }

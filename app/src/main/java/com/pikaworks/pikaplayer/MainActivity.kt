@@ -480,13 +480,13 @@ class MainActivity : ComponentActivity() {
                                 onContinueRemove = { item ->
                                     confirming = Confirm(
                                         title = "이어보기에서 빼기",
-                                        // 영상이 지워지는 줄 알고 못 누르는 일이 없게 한다.
+                                        // 무엇이 사라지고 무엇이 남는지 말한다.
                                         body = "${item.video.displayName}\n\n" +
-                                            "저장해 둔 재생 위치만 지웁니다. 영상 파일은 그대로 남고, " +
-                                            "다시 틀면 처음부터 시작합니다.",
+                                            "이 줄에서만 빠집니다. 보던 위치는 그대로 남아, " +
+                                            "보관함에서 다시 열면 이어서 재생합니다.",
                                         confirmLabel = "빼기",
                                         onConfirm = {
-                                            libraryVm.forgetPosition(item.video.uri.toString())
+                                            libraryVm.dismissFromContinue(item.video.uri.toString())
                                         },
                                     )
                                 },
