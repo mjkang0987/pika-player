@@ -235,9 +235,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val folderUri = settings?.folderTreeUri
-                LaunchedEffect(granted, folderUri, resumed) {
-                    // 목록이 비었을 때 어느 경로를 탔는지 밖에서 알 수 있어야 한다.
-                    Log.i("PikaMedia", "미디어 권한=$granted, 선택한 폴더=${folderUri != null}")
+                // 화면에 돌아올 때와 사용자가 당겨서 새로고침할 때가 같은 일을
+                // 한다. 두 벌로 두면 한쪽만 고치는 실수가 난다.
+                val refreshAll = {
                     when {
                         granted -> {
                             libraryVm.refresh()
@@ -250,6 +250,11 @@ class MainActivity : ComponentActivity() {
                             folderVm.loadTree(tree)
                         }
                     }
+                }
+                LaunchedEffect(granted, folderUri, resumed) {
+                    // 목록이 비었을 때 어느 경로를 탔는지 밖에서 알 수 있어야 한다.
+                    Log.i("PikaMedia", "미디어 권한=$granted, 선택한 폴더=${folderUri != null}")
+                    refreshAll()
                 }
 
                 val video = playing
@@ -314,6 +319,7 @@ class MainActivity : ComponentActivity() {
                                 onFilterChange = libraryVm::setFilter,
                                 onQueryChange = libraryVm::setQuery,
                                 onRescan = libraryVm::rescan,
+                                onRefresh = refreshAll,
                             )
 
                             Tab.FOLDER -> {
@@ -323,6 +329,7 @@ class MainActivity : ComponentActivity() {
                                     state = folderState,
                                     onOpenFolder = folderVm::open,
                                     onNavigateTo = folderVm::navigateTo,
+                                onRefresh = refreshAll,
                                     onVideoClick = { play(it, folderState.videos) },
                                     onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 )
@@ -333,6 +340,7 @@ class MainActivity : ComponentActivity() {
                                 rows = libraryState.recent,
                                 // 목록은 최근 순이지만 '다음 영상'은 폴더 안 순서를 따른다.
                                 onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
+                                onRefresh = refreshAll,
                             )
 
                             Tab.SETTINGS -> if (vaultState.mode != PinMode.NONE) {

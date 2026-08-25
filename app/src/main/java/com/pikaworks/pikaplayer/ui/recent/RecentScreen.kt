@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,10 +27,12 @@ import com.pikaworks.pikaplayer.ui.matchesQuery
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /** 최근 탭. 한 번이라도 재생한 영상을 최근 순으로. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentScreen(
     rows: List<LibraryRow>,
     onVideoClick: (LibraryRow) -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
@@ -51,25 +55,31 @@ fun RecentScreen(
 
     val visible = rows.filter { matchesQuery(query, it.video.displayName, it.video.folderName) }
 
-    LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
-        item {
-            SearchHeader(
-                title = "최근",
-                query = query,
-                onQueryChange = { query = it },
-                searching = searching,
-                onSearchingChange = { searching = it },
-                placeholder = "영상 · 폴더 이름",
-                modifier = Modifier.padding(bottom = 14.dp),
-            )
-        }
-        items(visible, key = { it.video.id }) { row ->
-            VideoListRow(
-                video = row.video,
-                onClick = { onVideoClick(row) },
-                progress = row.progress,
-                subtitleFormat = row.subtitleFormat,
-            )
+    PullToRefreshBox(
+        isRefreshing = false,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize().background(colors.background),
+    ) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+                SearchHeader(
+                    title = "최근",
+                    query = query,
+                    onQueryChange = { query = it },
+                    searching = searching,
+                    onSearchingChange = { searching = it },
+                    placeholder = "영상 · 폴더 이름",
+                    modifier = Modifier.padding(bottom = 14.dp),
+                )
+            }
+            items(visible, key = { it.video.id }) { row ->
+                VideoListRow(
+                    video = row.video,
+                    onClick = { onVideoClick(row) },
+                    progress = row.progress,
+                    subtitleFormat = row.subtitleFormat,
+                )
+            }
         }
     }
 }

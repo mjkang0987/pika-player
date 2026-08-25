@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,6 +56,7 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
  *
  * 구성: 헤더 → 이어보기 가로 캐러셀(최대 10) → 상단 탭 → 정렬·용량 → 목록
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
@@ -63,6 +66,7 @@ fun LibraryScreen(
     onFilterChange: (String) -> Unit,
     onQueryChange: (String) -> Unit,
     onRescan: () -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
@@ -80,46 +84,52 @@ fun LibraryScreen(
         )
     }
 
-    LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
+    PullToRefreshBox(
+        isRefreshing = state.loading,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize().background(colors.background),
+    ) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
 
-        item {
-            SearchHeader(
-                title = "보관함",
-                query = state.query,
-                onQueryChange = onQueryChange,
-                searching = searching,
-                onSearchingChange = { searching = it },
-                placeholder = "영상 · 폴더 이름",
-            )
-        }
-
-        if (state.continueWatching.isNotEmpty()) {
-            item { SectionTitle("이어보기", state.continueWatching.size) }
-            item { ContinueRow(state.continueWatching, onContinueClick) }
-        }
-
-        item { LibraryTabs(state = state, onSelect = onFilterChange) }
-        item { SortBar(sort = state.sort, storage = state.storage, onSortClick = { sortSheetVisible = true }) }
-
-        if (state.visibleRows.isEmpty() && !state.loading) {
-            // 왜 비었는지에 따라 할 말이 다르다. 검색으로 걸러진 거라면 다시
-            // 훑어봐야 소용없고, 정말 아무것도 없을 때만 탈출구를 보여준다.
             item {
-                EmptyLibrary(
-                    filtered = state.query.isNotBlank() || state.filter != LibraryFilter.ALL,
-                    scanning = state.scanning,
-                    onRescan = onRescan,
+                SearchHeader(
+                    title = "보관함",
+                    query = state.query,
+                    onQueryChange = onQueryChange,
+                    searching = searching,
+                    onSearchingChange = { searching = it },
+                    placeholder = "영상 · 폴더 이름",
                 )
             }
-        }
 
-        items(state.visibleRows, key = { it.video.id }) { row ->
-            VideoListRow(
-                video = row.video,
-                onClick = { onVideoClick(row) },
-                progress = row.progress,
-                subtitleFormat = row.subtitleFormat,
-            )
+            if (state.continueWatching.isNotEmpty()) {
+                item { SectionTitle("이어보기", state.continueWatching.size) }
+                item { ContinueRow(state.continueWatching, onContinueClick) }
+            }
+
+            item { LibraryTabs(state = state, onSelect = onFilterChange) }
+            item { SortBar(sort = state.sort, storage = state.storage, onSortClick = { sortSheetVisible = true }) }
+
+            if (state.visibleRows.isEmpty() && !state.loading) {
+                // 왜 비었는지에 따라 할 말이 다르다. 검색으로 걸러진 거라면 다시
+                // 훑어봐야 소용없고, 정말 아무것도 없을 때만 탈출구를 보여준다.
+                item {
+                    EmptyLibrary(
+                        filtered = state.query.isNotBlank() || state.filter != LibraryFilter.ALL,
+                        scanning = state.scanning,
+                        onRescan = onRescan,
+                    )
+                }
+            }
+
+            items(state.visibleRows, key = { it.video.id }) { row ->
+                VideoListRow(
+                    video = row.video,
+                    onClick = { onVideoClick(row) },
+                    progress = row.progress,
+                    subtitleFormat = row.subtitleFormat,
+                )
+            }
         }
     }
 }

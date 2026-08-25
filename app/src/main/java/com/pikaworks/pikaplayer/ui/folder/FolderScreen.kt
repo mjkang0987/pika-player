@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,12 +45,14 @@ import com.pikaworks.pikaplayer.ui.formatSize
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /** 폴더 탐색(S2). 폴더 목록 → 폴더 안 영상, 한 단계씩. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderScreen(
     state: FolderUiState,
     onOpenFolder: (FolderSummary) -> Unit,
     /** 0 이면 최상단, n 이면 앞의 n 단계까지 남긴다. */
     onNavigateTo: (Int) -> Unit,
+    onRefresh: () -> Unit,
     onVideoClick: (VideoItem) -> Unit,
     onSortChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -115,12 +119,18 @@ fun FolderScreen(
 
         // SAF 로 연 폴더에는 하위 폴더와 영상이 같은 자리에 함께 있다.
         // MediaStore 는 둘 중 한쪽만 채워지므로 같은 코드로 처리된다.
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(visibleFolders, key = { "d:" + it.id }) { folder ->
-                FolderRow(folder = folder, onClick = { onOpenFolder(folder) })
-            }
-            items(visibleVideos, key = { "f:" + it.uri }) { video ->
-                VideoListRow(video = video, onClick = { onVideoClick(video) })
+        PullToRefreshBox(
+            isRefreshing = state.loading,
+            onRefresh = onRefresh,
+            modifier = Modifier.weight(1f),
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(visibleFolders, key = { "d:" + it.id }) { folder ->
+                    FolderRow(folder = folder, onClick = { onOpenFolder(folder) })
+                }
+                items(visibleVideos, key = { "f:" + it.uri }) { video ->
+                    VideoListRow(video = video, onClick = { onVideoClick(video) })
+                }
             }
         }
     }
