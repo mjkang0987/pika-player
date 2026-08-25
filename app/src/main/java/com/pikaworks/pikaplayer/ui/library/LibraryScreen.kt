@@ -242,7 +242,7 @@ private fun LibraryTabs(state: LibraryUiState, onSelect: (String) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(start = 20.dp, end = 20.dp, top = 24.dp),
+            .padding(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(22.dp),
     ) {
         LibraryFilter.ORDER.forEach { filter ->
@@ -266,8 +266,10 @@ private fun LibraryTabs(state: LibraryUiState, onSelect: (String) -> Unit) {
                             size = Size(size.width, thickness),
                         )
                     }
-                    // 고르지 않았을 때도 밑줄 자리를 비워 둔다. 줄 높이가 흔들리지 않는다.
-                    .padding(bottom = 12.dp),
+                    // 위 여백도 탭 안쪽에 둔다. 스트립이 갖고 있으면 눌린 배경이
+                    // 글자에만 붙어 잘려 보인다. 아래 여백은 고르지 않았을 때도
+                    // 밑줄 자리를 비워 두는 몫이다 — 줄 높이가 흔들리지 않는다.
+                    .padding(top = 24.dp, bottom = 12.dp),
             )
         }
     }
@@ -280,12 +282,15 @@ private fun SortBar(sort: String, storage: StorageUsage?, onSortClick: () -> Uni
         modifier = Modifier
             .fillMaxWidth()
             .background(colors.surface)
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(start = 12.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(
-            modifier = Modifier.clickable(onClick = onSortClick),
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable(onClick = onSortClick)
+                .padding(horizontal = 8.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -293,6 +298,9 @@ private fun SortBar(sort: String, storage: StorageUsage?, onSortClick: () -> Uni
             Text("▾", fontSize = 11.sp, color = colors.textFaint)
         }
         Row(
+            // 누를 수 없는 쪽이라 여백을 옮길 이유는 없지만, 정렬 버튼이 여백을
+            // 가져간 만큼 여기서도 같은 값을 줘야 줄 높이가 맞는다.
+            modifier = Modifier.padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {

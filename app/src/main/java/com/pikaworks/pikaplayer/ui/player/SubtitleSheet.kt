@@ -118,7 +118,10 @@ fun SubtitleSheet(
                 Text(
                     formatOffset(state.subtitleOffsetMs),
                     fontSize = 20.sp, fontWeight = FontWeight.Light, color = colors.textPrimary,
-                    modifier = Modifier.clickable(onClick = onResetOffset),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onResetOffset)
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
                 )
                 OffsetButton("+0.5") { onAdjustOffset(500) }
             }

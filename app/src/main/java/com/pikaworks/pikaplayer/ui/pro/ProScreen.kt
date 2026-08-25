@@ -29,6 +29,7 @@ import com.pikaworks.pikaplayer.data.billing.ProductIds
 import com.pikaworks.pikaplayer.data.billing.ProductInfo
 import com.pikaworks.pikaplayer.entitlement.Tier
 import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /**
@@ -53,17 +54,7 @@ fun ProScreen(
 
     LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Icon(AppIcons.Back, "뒤로", tint = colors.textPrimary,
-                    modifier = Modifier.size(23.dp).clickable(onClick = onBack))
-                Text("Pika Pro", fontSize = 20.sp, color = colors.textPrimary)
-            }
+            ScreenHeader("Pika Pro", onBack)
         }
 
         item { CurrentTier(tier) }

@@ -38,6 +38,7 @@ import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
 import com.pikaworks.pikaplayer.ui.OptionSheet
 import com.pikaworks.pikaplayer.ui.pro.ProFeatures
 import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /**
@@ -115,17 +116,7 @@ fun SettingsScreen(
 
     LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Icon(AppIcons.Back, "뒤로", tint = colors.textPrimary,
-                    modifier = Modifier.size(23.dp).clickable(onClick = onBack))
-                Text("설정", fontSize = 20.sp, color = colors.textPrimary)
-            }
+            ScreenHeader("설정", onBack)
         }
 
         item { ProCard(unlocked = proUnlocked, onClick = onOpenPro) }

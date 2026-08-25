@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /** PIN 길이. 짧으면 외우기 쉽고 길면 대입이 어렵다. 4는 너무 얕다. */
@@ -60,17 +61,7 @@ fun PinScreen(
         modifier = modifier.fillMaxSize().background(colors.background),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Icon(AppIcons.Back, "뒤로", tint = colors.textPrimary,
-                modifier = Modifier.size(23.dp).clickable(onClick = onBack))
-            Text(title, fontSize = 20.sp, color = colors.textPrimary)
-        }
+        ScreenHeader(title, onBack)
 
         Spacer(Modifier.height(28.dp))
         Text(

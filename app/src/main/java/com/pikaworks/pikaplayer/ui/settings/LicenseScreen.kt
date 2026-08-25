@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /**
@@ -64,17 +65,7 @@ fun LicenseScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     LazyColumn(modifier = modifier.fillMaxSize().background(colors.background)) {
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Icon(AppIcons.Back, "뒤로", tint = colors.textPrimary,
-                    modifier = Modifier.size(23.dp).clickable(onClick = onBack))
-                Text("오픈소스 라이선스", fontSize = 20.sp, color = colors.textPrimary)
-            }
+            ScreenHeader("오픈소스 라이선스", onBack)
         }
 
         items(LIBRARIES, key = { it.name }) { library ->

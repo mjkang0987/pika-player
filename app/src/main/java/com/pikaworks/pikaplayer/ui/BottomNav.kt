@@ -48,7 +48,7 @@ fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifi
             .fillMaxWidth()
             .background(colors.surface)
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(start = 30.dp, end = 30.dp, top = 10.dp, bottom = 12.dp),
+            .padding(horizontal = 30.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Tab.entries.forEach { tab ->
@@ -57,7 +57,10 @@ fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifi
                 modifier = Modifier
                     .widthIn(min = 56.dp)
                     .heightIn(min = 44.dp)
-                    .clickable { onSelect(tab) },
+                    .clickable { onSelect(tab) }
+                    // 여백은 버튼 안쪽에 둔다. 바깥에 두면 눌렀을 때 칠해지는
+                    // 배경이 여백을 뺀 안쪽만 덮어 잘려 보인다.
+                    .padding(top = 10.dp, bottom = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(

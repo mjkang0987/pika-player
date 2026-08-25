@@ -49,6 +49,7 @@ import coil.compose.AsyncImage
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.ui.AppIcons
+import com.pikaworks.pikaplayer.ui.IconTap
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlin.math.abs
@@ -177,10 +178,10 @@ fun PlayerScreen(
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                            .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
                     ) {
                         SeekBar(state = state, onSeek = onSeek)
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(2.dp))
                         SecondaryControls(
                             state = state,
                             onOpenSubtitleSheet = { subtitleSheetVisible = true },
@@ -228,7 +229,7 @@ fun PlayerScreen(
         if (!isFullscreen) {
             Spacer(Modifier.height(20.dp))
             SeekBar(state = state, onSeek = onSeek, modifier = Modifier.padding(horizontal = 24.dp))
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
             SecondaryControls(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 state = state,
@@ -342,12 +343,14 @@ private fun SubtitleText(text: String, scale: Float, modifier: Modifier = Modifi
 @Composable
 private fun FullscreenTopBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+        // 왼쪽·위아래 여백은 IconTap 이 아이콘보다 커진 만큼(가로 10dp, 세로 10dp)
+        // 덜어낸 값이다. 아이콘이 놓이는 자리는 전과 같다.
+        modifier = modifier.fillMaxWidth()
+            .padding(start = 10.dp, end = 20.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(AppIcons.Back, "뒤로", tint = Color.White,
-            modifier = Modifier.size(24.dp).clickable(onClick = onBack))
+        IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = Color.White, iconSize = 24.dp)
         Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White, maxLines = 1)
     }
 }
@@ -396,12 +399,7 @@ private fun TopBar(title: String, onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Icon(
-            imageVector = AppIcons.Back,
-            contentDescription = "뒤로",
-            tint = colors.textPrimary,
-            modifier = Modifier.size(24.dp).clickable(onClick = onBack),
-        )
+        IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = colors.textPrimary, iconSize = 24.dp)
         Text(
             title,
             fontSize = 14.sp,
@@ -543,7 +541,11 @@ private fun SecondaryControls(
 private fun SpeedItem(speed: Float, onClick: () -> Unit) {
     val colors = PikaTheme.colors
     Column(
-        modifier = Modifier.width(56.dp).clickable(onClick = onClick),
+        modifier = Modifier
+            .width(56.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text("${speed}×", fontSize = 13.sp, color = colors.key)
@@ -557,7 +559,11 @@ private fun IconItem(icon: ImageVector, label: String, active: Boolean, onClick:
     val colors = PikaTheme.colors
     val tint = if (active) colors.key else colors.textSecondary
     Column(
-        modifier = Modifier.width(56.dp).clickable(onClick = onClick),
+        modifier = Modifier
+            .width(56.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))

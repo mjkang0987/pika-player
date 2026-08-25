@@ -50,7 +50,8 @@ fun SearchHeader(
     val focusRequester = remember { FocusRequester() }
 
     Row(
-        modifier = modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 60.dp),
+        // 오른쪽 여백은 IconTap 이 아이콘보다 커진 만큼(11dp) 덜어낸 값이다.
+        modifier = modifier.fillMaxWidth().padding(start = 20.dp, end = 9.dp, top = 56.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -81,17 +82,15 @@ fun SearchHeader(
         } else {
             Text(title, fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
         }
-        Icon(
-            if (searching) AppIcons.Close else AppIcons.Search,
-            if (searching) "검색 닫기" else "검색",
+        IconTap(
+            icon = if (searching) AppIcons.Close else AppIcons.Search,
+            contentDescription = if (searching) "검색 닫기" else "검색",
             tint = colors.textSecondary,
-            modifier = Modifier
-                .padding(start = 12.dp)
-                .size(22.dp)
-                .clickable {
-                    onSearchingChange(!searching)
-                    if (searching) onQueryChange("") // 닫을 때는 걸러둔 것도 푼다
-                },
+            iconSize = 22.dp,
+            onClick = {
+                onSearchingChange(!searching)
+                if (searching) onQueryChange("") // 닫을 때는 걸러둔 것도 푼다
+            },
         )
     }
 }

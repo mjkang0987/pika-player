@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -88,12 +90,16 @@ fun FolderScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.surface)
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(start = 12.dp, end = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(
-                modifier = Modifier.clickable { sortSheetVisible = true },
+                // 여백을 버튼 안으로. 바깥에 두면 눌린 배경이 글자에만 붙는다.
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable { sortSheetVisible = true }
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -103,6 +109,7 @@ fun FolderScreen(
             Text(
                 summaryLabel(visibleFolders, visibleVideos.size),
                 fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
+                modifier = Modifier.padding(vertical = 10.dp),
             )
         }
 
@@ -138,9 +145,11 @@ private fun Breadcrumb(rootLabel: String, crumbs: List<Crumb>, onNavigateTo: (In
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 14.dp),
+            // 조각마다 가로 4dp·세로 7dp 를 안쪽에 갖는다. 그만큼 여기서 덜어내
+            // 글자가 놓이는 자리는 전과 같다.
+            .padding(start = 16.dp, end = 16.dp, top = 3.dp, bottom = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         val atRoot = crumbs.isEmpty()
         Text(
@@ -148,7 +157,11 @@ private fun Breadcrumb(rootLabel: String, crumbs: List<Crumb>, onNavigateTo: (In
             fontSize = 12.sp,
             maxLines = 1,
             color = if (atRoot) colors.textSecondary else colors.key,
-            modifier = if (atRoot) Modifier else Modifier.clickable { onNavigateTo(0) },
+            // 누를 수 없는 조각도 같은 여백을 가져야 줄이 흔들리지 않는다.
+            modifier = (if (atRoot) Modifier else Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable { onNavigateTo(0) })
+                .padding(horizontal = 4.dp, vertical = 7.dp),
         )
         crumbs.forEachIndexed { index, crumb ->
             val isLast = index == crumbs.lastIndex
@@ -160,7 +173,10 @@ private fun Breadcrumb(rootLabel: String, crumbs: List<Crumb>, onNavigateTo: (In
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = if (isLast) colors.textSecondary else colors.key,
-                modifier = if (isLast) Modifier else Modifier.clickable { onNavigateTo(index + 1) },
+                modifier = (if (isLast) Modifier else Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable { onNavigateTo(index + 1) })
+                    .padding(horizontal = 4.dp, vertical = 7.dp),
             )
         }
     }
