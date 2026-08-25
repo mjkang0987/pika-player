@@ -357,14 +357,11 @@ fun PlayerScreen(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            // 컨트롤이 떠 있는 동안에는 그 위로 올라간다. 자막과
-                            // 시크바가 겹치면 둘 다 못 읽는다. 150dp 는 다음 영상
-                            // 버튼부터 보조 버튼 줄까지의 높이다.
-                            .padding(
-                                start = 26.dp,
-                                end = 26.dp,
-                                bottom = if (state.controlsVisible && !state.locked) 150.dp else 10.dp,
-                            ),
+                            // 컨트롤이 뜰 때 비켜서게 해 봤는데, 자막이 화면 한가운데
+                            // 까지 뛰어올랐다가 3초 뒤에 도로 내려온다. 겹쳐서 한
+                            // 줄 못 읽는 것보다 눈이 따라가야 하는 쪽이 더 거슬린다.
+                            // 자리를 고정하고, 겹치는 것은 컨트롤이 걷힐 때까지다.
+                            .padding(start = 26.dp, end = 26.dp, bottom = 28.dp),
                     )
                 }
             }
