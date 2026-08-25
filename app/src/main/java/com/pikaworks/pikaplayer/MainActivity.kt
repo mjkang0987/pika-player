@@ -477,7 +477,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onContinueRemove = { item ->
                                     confirming = Confirm(
-                                        title = "최근에서 빼기",
+                                        title = "이어보기에서 빼기",
                                         // 무엇이 사라지고 무엇이 남는지 말한다.
                                         body = "${item.video.displayName}\n\n" +
                                             "이 줄에서만 빠집니다. 보던 위치는 그대로 남아, " +
