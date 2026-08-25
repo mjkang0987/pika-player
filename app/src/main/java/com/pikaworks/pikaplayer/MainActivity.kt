@@ -520,6 +520,15 @@ class MainActivity : ComponentActivity() {
                                         playlists = playlists,
                                         onOpen = playlistVm::open,
                                         onCreate = { naming = Naming.Create() },
+                                        onDelete = { target ->
+                                            confirming = Confirm(
+                                                title = "재생목록 삭제",
+                                                body = "${target.name}\n\n목록만 지워집니다. " +
+                                                    "담아 둔 영상 파일은 그대로 남습니다.",
+                                                confirmLabel = "삭제",
+                                                onConfirm = { playlistVm.delete(target.id) },
+                                            )
+                                        },
                                     )
                                 } else {
                                     BackHandler { playlistVm.close() }
@@ -540,29 +549,11 @@ class MainActivity : ComponentActivity() {
                                                 play(picked, found, explicitQueue = true)
                                             }
                                         },
-                                        onReorder = { uris -> playlistVm.reorder(open.id, uris) },
-                                        onRemove = { uri ->
-                                            val label = rows.firstOrNull { it.item.uri == uri }
-                                                ?.item?.displayName?.substringBeforeLast('.')
-                                                ?: "이 영상"
-                                            confirming = Confirm(
-                                                title = "목록에서 빼기",
-                                                // 파일이 지워지는 줄 알고 못 누르는 일이 없게 한다.
-                                                body = "$label\n\n목록에서만 빠집니다. 영상 파일은 그대로 남습니다.",
-                                                confirmLabel = "빼기",
-                                                onConfirm = { playlistVm.remove(open.id, uri) },
-                                            )
-                                        },
+                                        // 편집에서 완료를 누를 때 한 번만 저장한다.
+                                        // 잘못 뺀 것은 취소로 되돌아가므로 따로 묻지 않는다.
+                                        onApplyEdit = { uris -> playlistVm.applyEdit(open.id, uris) },
                                         onAdd = { picking = true },
                                         onRename = { naming = Naming.Rename(open.id, open.name) },
-                                        onDelete = {
-                                            confirming = Confirm(
-                                                title = "재생목록 삭제",
-                                                body = "${open.name}\n\n목록만 지워집니다. 담아 둔 영상 파일은 그대로 남습니다.",
-                                                confirmLabel = "삭제",
-                                                onConfirm = { playlistVm.delete(open.id) },
-                                            )
-                                        },
                                         onBack = { playlistVm.close() },
                                     )
 

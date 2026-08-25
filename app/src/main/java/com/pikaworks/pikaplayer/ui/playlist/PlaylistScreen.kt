@@ -46,6 +46,8 @@ fun PlaylistScreen(
     playlists: List<PlaylistSummary>,
     onOpen: (Long) -> Unit,
     onCreate: () -> Unit,
+    /** 목록 삭제. 목록 안이 아니라 여기서 한다 — 손보러 들어간 자리에서 통째로 사라지면 안 된다. */
+    onDelete: (PlaylistSummary) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
@@ -96,7 +98,8 @@ fun PlaylistScreen(
                         .fillMaxWidth()
                         .clickable { onOpen(playlist.id) }
                         .heightIn(min = 58.dp)
-                        .padding(horizontal = 20.dp),
+                        // 지우기 버튼이 제 여백을 갖고 있어 오른쪽은 덜어낸다.
+                        .padding(start = 20.dp, end = 9.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -117,7 +120,16 @@ fun PlaylistScreen(
                             fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                         )
                     }
-                    Text("›", fontSize = 16.sp, color = colors.textFaint)
+                    // 글자를 낮춰 둔다. 목록을 여는 것이 이 줄에서 할 일이고,
+                    // 지우는 것은 가끔 하는 일이다.
+                    IconTap(
+                        icon = AppIcons.Trash,
+                        contentDescription = "재생목록 삭제",
+                        onClick = { onDelete(playlist) },
+                        tint = colors.textFaint,
+                        iconSize = 17.dp,
+                        tapSize = 40.dp,
+                    )
                     }
                 }
             }

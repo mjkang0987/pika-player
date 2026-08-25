@@ -91,13 +91,14 @@ class PlaylistViewModel(private val dao: PlaylistDao) : ViewModel() {
         viewModelScope.launch { dao.addItem(playlistId, video.uri.toString(), video.displayName) }
     }
 
-    fun remove(playlistId: Long, uri: String) {
-        viewModelScope.launch { dao.removeItem(playlistId, uri) }
-    }
-
-    /** 화면이 정한 최종 순서를 그대로 저장한다. 끌기가 끝났을 때 한 번 부른다. */
-    fun reorder(playlistId: Long, urisInOrder: List<String>) {
-        viewModelScope.launch { dao.renumber(playlistId, urisInOrder) }
+    /**
+     * 편집에서 '완료'를 누른 결과. 남은 것과 그 순서를 한 번에 적는다.
+     *
+     * 편집 중에는 화면이 임시로 들고만 있다가 여기로 넘긴다. 한 칸 옮길 때마다
+     * 저장하면 '취소'가 되돌릴 것이 남지 않는다.
+     */
+    fun applyEdit(playlistId: Long, urisInOrder: List<String>) {
+        viewModelScope.launch { dao.applyEdit(playlistId, urisInOrder) }
     }
 
     class Factory(private val dao: PlaylistDao) : ViewModelProvider.Factory {

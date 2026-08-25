@@ -125,4 +125,27 @@ interface PlaylistDao {
     suspend fun renumber(playlistId: Long, urisInOrder: List<String>) {
         urisInOrder.forEachIndexed { index, uri -> setPosition(playlistId, uri, index) }
     }
+
+    @Query("DELETE FROM playlist_item WHERE playlistId = :playlistId")
+    suspend fun clearItems(playlistId: Long)
+
+    @Query("DELETE FROM playlist_item WHERE playlistId = :playlistId AND uri NOT IN (:keep)")
+    suspend fun removeItemsNotIn(playlistId: Long, keep: List<String>)
+
+    /**
+     * 편집 화면이 '완료'로 넘긴 최종 상태를 한 번에 적는다.
+     *
+     * 빼기와 순서 바꾸기가 한 트랜잭션이어야 한다. 따로 부르면 중간에 앱이
+     * 죽었을 때 뺀 것만 반영되고 순서는 옛것으로 남는다.
+     */
+    @Transaction
+    suspend fun applyEdit(playlistId: Long, urisInOrder: List<String>) {
+        // 다 빼고 완료를 누를 수 있다. SQLite 에서 IN () 은 문법 오류라 갈라 둔다.
+        if (urisInOrder.isEmpty()) {
+            clearItems(playlistId)
+            return
+        }
+        removeItemsNotIn(playlistId, urisInOrder)
+        renumber(playlistId, urisInOrder)
+    }
 }
