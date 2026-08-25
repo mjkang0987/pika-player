@@ -898,9 +898,8 @@ class MainActivity : ComponentActivity() {
                         playerVm.toggleLock()
                     }
                 },
-                onToggleRepeat = playerVm::toggleRepeat,
+                onSetRepeatMode = playerVm::setRepeatMode,
                 onToggleShuffle = playerVm::toggleShuffle,
-                onToggleLoopQueue = playerVm::toggleLoopQueue,
                 // 설정의 '다음 영상 자동 재생' 과 같은 값이다. 여기서 바꾼 것이
                 // 설정에 남지 않으면 두 곳이 서로 다른 말을 하게 된다.
                 onSetAutoPlayNext = onAutoPlayNextChange,

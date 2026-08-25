@@ -54,8 +54,6 @@ import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.IconTap
 import com.pikaworks.pikaplayer.ui.OptionSheet
-import com.pikaworks.pikaplayer.ui.SheetToggle
-import com.pikaworks.pikaplayer.ui.ToggleSheet
 import com.pikaworks.pikaplayer.ui.SPEED_OPTIONS
 import com.pikaworks.pikaplayer.ui.formatDuration
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
@@ -71,6 +69,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.animation.core.animateFloatAsState
 import com.pikaworks.pikaplayer.ui.UpNextSheet
 import androidx.compose.ui.text.style.TextOverflow
+import com.pikaworks.pikaplayer.ui.PlaybackSheet
 
 /**
  * 플레이어(S3, 세로).
@@ -95,9 +94,8 @@ fun PlayerScreen(
     onAdjustSubtitleOffset: (Long) -> Unit,
     onResetSubtitleOffset: () -> Unit,
     onToggleLock: () -> Unit,
-    onToggleRepeat: () -> Unit,
+    onSetRepeatMode: (String) -> Unit,
     onToggleShuffle: () -> Unit,
-    onToggleLoopQueue: () -> Unit,
     onSetAutoPlayNext: (Boolean) -> Unit,
     onMarkAb: () -> Unit,
     onCycleResize: () -> Unit,
@@ -167,37 +165,15 @@ fun PlayerScreen(
     }
 
     if (playbackSheetVisible) {
-        ToggleSheet(
-            title = "반복과 순서",
-            toggles = listOfNotNull(
-                SheetToggle(
-                    label = "한 편 반복",
-                    on = state.repeatEnabled,
-                    description = "지금 영상이 끝나면 처음부터 다시 틉니다.",
-                    onToggle = onToggleRepeat,
-                ),
-                // 목록을 통째로 튼 것이 아니면(보관함에서 한 편) 뒤에 올 목록 자체가 없다.
-                SheetToggle(
-                    label = "목록 반복",
-                    on = state.loopQueueEnabled,
-                    description = "마지막 영상 다음에 목록의 처음으로 돌아갑니다.",
-                    onToggle = onToggleLoopQueue,
-                ).takeIf { state.explicitQueue },
-                SheetToggle(
-                    label = "랜덤",
-                    on = state.shuffleEnabled,
-                    description = "지금 영상 뒤의 순서를 섞습니다.",
-                    onToggle = onToggleShuffle,
-                ).takeIf { state.explicitQueue },
-                SheetToggle(
-                    label = "자동 재생",
-                    on = state.autoPlayNextEnabled,
-                    description = "끝나면 다음 영상으로 넘어갑니다. 이미 끝까지 본 영상은 처음부터 틉니다.",
-                    onToggle = { onSetAutoPlayNext(!state.autoPlayNextEnabled) },
-                ),
-            ),
+        PlaybackSheet(
+            repeatMode = state.repeatMode,
+            onRepeatModeChange = onSetRepeatMode,
+            queueControls = state.explicitQueue,
+            shuffle = state.shuffleEnabled,
+            onShuffleChange = onToggleShuffle,
+            autoPlayNext = state.autoPlayNextEnabled,
+            onAutoPlayNextChange = onSetAutoPlayNext,
             onDismiss = { playbackSheetVisible = false },
-            onMedia = true,
         )
     }
 
@@ -714,7 +690,7 @@ private fun SecondaryControls(
         IconItem(
             icon = AppIcons.Repeat,
             label = "반복",
-            active = state.repeatEnabled || state.loopQueueEnabled || state.shuffleEnabled,
+            active = state.repeatMode != RepeatMode.OFF || state.shuffleEnabled,
             onClick = onOpenPlaybackSheet,
             modifier = Modifier.weight(1f),
         )

@@ -26,6 +26,21 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+/**
+ * 끝났을 때 무엇을 반복할지. 셋 중 하나다.
+ *
+ * 한 편 반복과 목록 반복을 따로 켜고 끄던 때가 있었는데, 둘 다 켜면 무엇이
+ * 이기는지 화면만 봐서는 알 수 없었다(한 편이 이긴다 — 영상이 끝나지 않으니
+ * 목록으로 넘어갈 일이 없다). 고르는 것으로 바꾸면 그 상태 자체가 생기지 않는다.
+ */
+object RepeatMode {
+    const val OFF = "off"
+    /** 지금 영상을 끝나면 다시 처음부터. */
+    const val ONE = "one"
+    /** 목록의 마지막 다음에 처음으로. */
+    const val ALL = "all"
+}
+
 data class PlayerUiState(
     val title: String = "",
     val isPlaying: Boolean = false,
@@ -61,8 +76,8 @@ data class PlayerUiState(
     val playingUri: String? = null,
     /** 대기열에서 이 영상 앞에 오는 것. 없으면 이전 버튼을 만들지 않는다. */
     val previous: VideoItem? = null,
-    /** 한 편 반복. 켜면 끝나도 넘어가지 않고 처음부터 다시 튼다. */
-    val repeatEnabled: Boolean = false,
+    /** [RepeatMode] 값. 셋 중 하나만 고를 수 있다. */
+    val repeatMode: String = RepeatMode.OFF,
     /**
      * 사용자가 목록 하나를 통째로 튼 것인가 — 재생목록, 또는 폴더.
      *
@@ -71,8 +86,6 @@ data class PlayerUiState(
      * 뜨리는 것이 아니라 그냥 아무 영상이나 트는 것이 된다.
      */
     val explicitQueue: Boolean = false,
-    /** 목록 반복. 마지막 영상 다음에 처음으로 돌아간다. */
-    val loopQueueEnabled: Boolean = false,
     /** 랜덤. 지금 영상 뒤를 섞는다. */
     val shuffleEnabled: Boolean = false,
     /** 끝나면 다음 영상으로 넘어갈지. 설정과 같은 값을 본다. */
@@ -126,8 +139,9 @@ class PlayerViewModel(
      * 반대다 — 여러 폴더에서 모은 것이 곧 사용자의 뜻이므로 거르면 안 된다.
      */
     private var explicitQueue: Boolean = false
-    /** 마지막까지 가면 처음으로 돌아간다. 재생목록에서만 켠다. */
-    private var loopQueue: Boolean = false
+    private var repeatMode: String = RepeatMode.OFF
+    /** 마지막까지 가면 처음으로 돌아간다. 재생목록·폴더에서만 뜻이 있다. */
+    private val loopQueue: Boolean get() = repeatMode == RepeatMode.ALL
     private var shuffle: Boolean = false
     private var autoPlayNext: Boolean = true
     private var resumePlayback: Boolean = true
@@ -183,7 +197,7 @@ class PlayerViewModel(
         this.explicitQueue = explicitQueue
         // 새 재생이다. 지난번에 켜 둔 랜덤·목록 반복은 여기서 끊는다 — 목록마다
         // 기억하지 않는 값이라, 남아 있으면 어디서 켠 것인지 알 수 없다.
-        this.loopQueue = false
+        this.repeatMode = RepeatMode.OFF
         this.shuffle = false
         if (currentVideo?.uri == video.uri) {
             // 같은 영상이면 다시 틀지 않는다. 다만 방금 되돌린 값이 화면에는
@@ -191,7 +205,7 @@ class PlayerViewModel(
             _uiState.update {
                 it.copy(
                     explicitQueue = explicitQueue,
-                    loopQueueEnabled = false,
+                    repeatMode = RepeatMode.OFF,
                     shuffleEnabled = false,
                 )
             }
@@ -225,15 +239,15 @@ class PlayerViewModel(
             playingUri = video.uri.toString(),
             previous = previousOf(video),
             explicitQueue = explicitQueue,
-            loopQueueEnabled = loopQueue,
+            repeatMode = repeatMode,
             shuffleEnabled = shuffle,
             autoPlayNextEnabled = autoPlayNext,
         )
 
         player.setPlaybackSpeed(speed)
-        // 화면비·잠금과 같은 결로 영상마다 초기화한다. 반복을 켠 채 다른 영상을
-        // 열었을 때 모르는 사이에 계속 돌고 있으면 곤란하다.
-        player.repeatMode = Player.REPEAT_MODE_OFF
+        // 재생 한 판을 통틀어 유지되는 값이라 여기서 다시 걸어 준다. open() 이
+        // 새 재생을 열 때만 끊는다.
+        player.repeatMode = exoRepeatMode()
         player.setMediaItem(MediaItem.fromUri(video.uri))
         player.prepare()
 
@@ -343,11 +357,22 @@ class PlayerViewModel(
     }
 
     /** 목록 반복. 마지막 영상 다음에 처음으로 돌아간다. */
-    fun toggleLoopQueue() {
-        loopQueue = !loopQueue
-        _uiState.update { it.copy(loopQueueEnabled = loopQueue) }
+    /** 반복 방식을 고른다. 목록이 바뀌므로 앞·뒤 영상도 다시 센다. */
+    fun setRepeatMode(mode: String) {
+        repeatMode = mode
+        player.repeatMode = exoRepeatMode()
+        _uiState.update { it.copy(repeatMode = mode) }
         refreshQueue()
     }
+
+    /**
+     * 목록 반복은 ExoPlayer 에 맡기지 않는다.
+     *
+     * REPEAT_MODE_ALL 은 플레이어에 담긴 항목을 도는 것인데, 우리는 한 번에 한
+     * 편만 담고 대기열은 우리가 들고 있다. 넘어가는 것은 upNextOf 가 정한다.
+     */
+    private fun exoRepeatMode(): Int =
+        if (repeatMode == RepeatMode.ONE) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
 
     /** 대기열이 바뀌면 앞·뒤 영상을 다시 계산한다. 버튼이 그 자리에서 생기고 사라진다. */
     private fun refreshQueue() {
@@ -518,11 +543,7 @@ class PlayerViewModel(
      * 영상으로 자동으로 넘어가는 경로도 그래서 같이 멈춘다 — 반복을 켠 사람이
      * 바라는 동작이다.
      */
-    fun toggleRepeat() {
-        val next = !_uiState.value.repeatEnabled
-        player.repeatMode = if (next) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
-        _uiState.update { it.copy(repeatEnabled = next) }
-    }
+
 
     /**
      * 그 자리로 옮긴다. 재생 여부는 건드리지 않는다.
