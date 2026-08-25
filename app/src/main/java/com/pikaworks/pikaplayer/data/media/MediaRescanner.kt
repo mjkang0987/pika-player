@@ -2,13 +2,10 @@ package com.pikaworks.pikaplayer.data.media
 
 import android.content.Context
 import android.media.MediaScannerConnection
-import android.os.Build
 import android.os.Environment
-import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import java.io.File
 import kotlin.coroutines.resume
 
 /**
@@ -55,17 +52,14 @@ class MediaRescanner(private val context: Context) {
         }
     }
 
-    private suspend fun scan(path: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // 이 호출은 훑기가 끝나야 돌아온다. 이미 IO 문맥이다.
-            MediaStore.scanFile(context.contentResolver, File(path))
-            return
-        }
-        // API 28 이하에는 위 API 가 없다. 서비스에 붙어서 콜백을 기다린다.
-        suspendCancellableCoroutine<Unit> { cont ->
-            MediaScannerConnection.scanFile(context, arrayOf(path), null) { _, _ ->
-                if (cont.isActive) cont.resume(Unit)
-            }
+    /**
+     * MediaStore.scanFile 은 공개 API 가 아니다(@hide). 이쪽이 모든 버전에서
+     * 쓸 수 있는 유일한 길이고, 최신 안드로이드에서는 내부적으로 같은 곳으로
+     * 이어진다.
+     */
+    private suspend fun scan(path: String) = suspendCancellableCoroutine<Unit> { cont ->
+        MediaScannerConnection.scanFile(context, arrayOf(path), null) { _, _ ->
+            if (cont.isActive) cont.resume(Unit)
         }
     }
 }
