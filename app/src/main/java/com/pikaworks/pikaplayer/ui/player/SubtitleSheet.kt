@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
-import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
 
 /**
  * 자막 설정 시트(S4).
@@ -48,7 +48,8 @@ fun SubtitleSheet(
     onResetOffset: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val colors = PikaTheme.colors
+    // 재생 화면은 테마와 무관하게 늘 검은 바탕이다. 이 시트도 거기 맞춘다.
+    val colors = PikaDarkColors
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -136,7 +137,7 @@ private fun formatOffset(ms: Long): String {
 
 @Composable
 private fun SectionHeader(title: String) {
-    val colors = PikaTheme.colors
+    val colors = PikaDarkColors
     Text(
         title,
         fontSize = 11.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.8.sp, color = colors.key,
@@ -146,7 +147,7 @@ private fun SectionHeader(title: String) {
 
 @Composable
 private fun TrackRow(name: String, subtitle: String?, selected: Boolean, onClick: () -> Unit) {
-    val colors = PikaTheme.colors
+    val colors = PikaDarkColors
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,7 +176,7 @@ private fun TrackRow(name: String, subtitle: String?, selected: Boolean, onClick
 
 @Composable
 private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
-    val colors = PikaTheme.colors
+    val colors = PikaDarkColors
     Box(
         modifier = Modifier
             .height(32.dp)
@@ -200,7 +201,7 @@ private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun OffsetButton(label: String, onClick: () -> Unit) {
-    val colors = PikaTheme.colors
+    val colors = PikaDarkColors
     Box(
         modifier = Modifier
             .size(width = 52.dp, height = 40.dp)

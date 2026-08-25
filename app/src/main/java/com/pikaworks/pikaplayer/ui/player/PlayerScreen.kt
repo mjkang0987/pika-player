@@ -134,6 +134,7 @@ fun PlayerScreen(
             selected = state.speed,
             onSelect = onSelectSpeed,
             onDismiss = { speedSheetVisible = false },
+            onMedia = true,
         )
     }
 

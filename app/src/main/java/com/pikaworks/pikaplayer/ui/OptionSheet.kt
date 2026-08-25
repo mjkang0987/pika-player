@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /** 값 하나를 고르는 시트. 설정 화면의 선택형 항목이 모두 이걸 쓴다. */
@@ -30,8 +31,15 @@ fun <T> OptionSheet(
     selected: T,
     onSelect: (T) -> Unit,
     onDismiss: () -> Unit,
+    /**
+     * 재생 화면 위에 뜨는가.
+     *
+     * 재생 화면은 테마와 무관하게 늘 검은 바탕이다. 거기 뜨는 시트만 테마를
+     * 따라가면 라이트에서 흰 상자가 튀어나온 것처럼 보인다.
+     */
+    onMedia: Boolean = false,
 ) {
-    val colors = PikaTheme.colors
+    val colors = if (onMedia) PikaDarkColors else PikaTheme.colors
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
