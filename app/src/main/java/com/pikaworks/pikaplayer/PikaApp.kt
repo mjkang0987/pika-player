@@ -66,14 +66,17 @@ class PikaApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         database = Room.databaseBuilder(this, PikaDatabase::class.java, "pika.db")
-            // 아직 출시 전이라 기기에 남은 DB 는 개발용뿐이다. 스키마가 계속 바뀌는
-            // 동안 마이그레이션을 손으로 쓰는 것보다 다시 만드는 편이 안전하다.
-            // 출시 시점에는 반드시 실제 마이그레이션으로 바꿔야 한다.
+            // 1·2 는 출시 전 개발 빌드에만 있던 버전이다. 그 기기의 DB 는 버려도
+            // 되고, 실제로 어떤 모양이었는지 남은 기록도 없어서 옮겨 적을 수가 없다.
             //
-            // dropAllTables = true: 스키마가 안 맞으면 테이블을 전부 지우고 새로 만든다.
-            // false 면 Room 이 아는 테이블만 지워서, 손으로 만든 테이블이 남는 경우를
-            // 위한 값이다 — 여기는 전부 Room 이 만든 것이라 true 가 맞다.
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            // 여기에 3 을 넣지 않는 것이 요점이다. 전에는 버전을 가리지 않고 지우게
+            // 두어서, 스키마를 한 줄만 고쳐도 사용자의 이어보기 기록·재생목록·
+            // 비공개 폴더 목록이 조용히 사라졌다. 이제 3 부터는 맞는 마이그레이션이
+            // 없으면 앱이 열리다 죽는다 — 데이터를 지우고 계속 도는 것보다, 내보내기
+            // 전에 내가 알아차리는 편이 낫다.
+            // 첫 인자는 dropAllTables — 지울 때 Room 이 아는 테이블만이 아니라
+            // 전부 지운다. 여기 테이블은 모두 Room 이 만든 것이라 이 값이 맞다.
+            .fallbackToDestructiveMigrationFrom(true, 1, 2)
             .build()
         mediaStore = MediaStoreSource(this)
         settings = SettingsStore(this)

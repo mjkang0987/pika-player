@@ -40,6 +40,15 @@ android {
 
 // jvmTarget 은 위 compileOptions 를 AGP 내장 Kotlin 이 따라간다. 따로 지정하지 않는다.
 
+// Room 스키마를 파일로 남긴다.
+//
+// 다음 버전의 마이그레이션을 쓰려면 지금 스키마가 무엇이었는지 알아야 한다.
+// 코드만 보고 손으로 옮겨 적으면 컬럼 하나를 빠뜨려도 알아채지 못한다.
+// 빌드하면 app/schemas/<버전>.json 이 생기고, 이 파일은 저장소에 넣는다.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(project(":subtitle"))
     implementation(project(":vault"))

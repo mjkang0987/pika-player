@@ -75,8 +75,7 @@ class MediaStoreSource(private val context: Context) {
         }.onFailure {
             Log.w(TAG, "MediaStore 조회 실패", it)
         }.getOrNull()?.use { c ->
-            Log.i(TAG, "MediaStore 조회: ${c.count}건")
-            val idCol = c.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val idCol = c.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
             val nameCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
             val durCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
             val sizeCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
@@ -112,7 +111,6 @@ class MediaStoreSource(private val context: Context) {
                 )
             }
         }
-        Log.i(TAG, "읽어들인 영상: ${items.size}건")
         items
     }
 

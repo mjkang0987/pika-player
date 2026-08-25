@@ -29,7 +29,7 @@ class LockoutPolicyTest {
     }
 
     @Test
-    fun `틀릴수록 대기가 길어지고 마지막 값에서 멈춘다`() {
+    fun `초과분마다 정해진 대기가 붙고 마지막 값에서 멈춘다`() {
         var s = LockoutState()
         repeat(LockoutPolicy.FREE_ATTEMPTS) { s = LockoutPolicy.onFailure(s, now) }
         LockoutPolicy.BACKOFF_MS.forEach { expected ->

@@ -50,7 +50,10 @@ interface PlaybackPositionDao {
 @Database(
     entities = [PlaybackPosition::class, SafMetadata::class, Playlist::class, PlaylistItem::class],
     version = 3,
-    exportSchema = false,
+    // 스키마를 app/schemas/3.json 으로 남긴다. 다음 버전의 마이그레이션은
+    // 이 파일을 기준으로 쓴다 — 코드를 보고 손으로 옮겨 적으면 컬럼 하나를
+    // 빠뜨려도 알아챌 방법이 없다.
+    exportSchema = true,
 )
 abstract class PikaDatabase : RoomDatabase() {
     abstract fun playbackPositionDao(): PlaybackPositionDao

@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -329,11 +328,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                LaunchedEffect(granted, folderUri, resumed) {
-                    // 목록이 비었을 때 어느 경로를 탔는지 밖에서 알 수 있어야 한다.
-                    Log.i("PikaMedia", "미디어 권한=$granted, 선택한 폴더=${folderUri != null}")
-                    refreshAll()
-                }
+                LaunchedEffect(granted, folderUri, resumed) { refreshAll() }
 
                 pendingMenu?.let { target ->
                     VideoActionSheet(
