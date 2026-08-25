@@ -104,6 +104,9 @@ object AppIcons {
     /** 더보기. 점 세 개는 획이 아니라 아주 짧은 선분으로 그린다(둥근 끝 = 점). */
     val More = stroke("M12 5.6v.1", "M12 12v.1", "M12 18.4v.1", width = 2.6f)
 
+    /** 끌어서 옮기기 손잡이. 가로줄 두 개는 '잡는 곳' 으로 널리 읽힌다. */
+    val DragHandle = stroke("M5 9.5h14", "M5 14.5h14")
+
     val Trash = stroke(
         "M4.5 7h15",
         "M9.5 7V5.2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V7",

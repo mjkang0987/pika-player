@@ -206,6 +206,8 @@ fun PlayerScreen(
                     isPlaying = state.isPlaying,
                     onTogglePlay = onTogglePlay,
                     onSkip = onSkip,
+                    onPrevious = state.previous?.let { { onPlayVideo(it) } },
+                    onNext = state.upNext.firstOrNull()?.let { { onPlayVideo(it) } },
                     modifier = Modifier.align(Alignment.Center),
                 )
 
@@ -478,14 +480,22 @@ private fun TransportControls(
     isPlaying: Boolean,
     onTogglePlay: () -> Unit,
     onSkip: (Long) -> Unit,
+    /** 이전 영상이 있을 때만. 없으면 버튼을 만들지 않는다. */
+    onPrevious: (() -> Unit)?,
+    /** 다음 영상이 있을 때만. */
+    onNext: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        // 갈 곳이 없으면 버튼 자체를 만들지 않는다. 눌러도 아무 일이 없는
+        // 버튼을 흐리게 두는 것보다, 없는 편이 헷갈리지 않는다.
+        onPrevious?.let { TrackButton(AppIcons.PreviousTrack, "이전 영상", it) }
+
         SkipButton(AppIcons.Replay10, "10초 뒤로") { onSkip(-10_000) }
 
         Box(
@@ -506,6 +516,19 @@ private fun TransportControls(
         }
 
         SkipButton(AppIcons.Forward10, "10초 앞으로") { onSkip(10_000) }
+
+        onNext?.let { TrackButton(AppIcons.NextTrack, "다음 영상", it) }
+    }
+}
+
+/** 이전·다음 영상. 10초 이동보다 한 단계 작게 둔다 — 자주 쓰는 쪽은 가운데다. */
+@Composable
+private fun TrackButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier.size(40.dp).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, label, tint = Color.White, modifier = Modifier.size(21.dp))
     }
 }
 

@@ -115,14 +115,14 @@ interface PlaylistDao {
     suspend fun setPosition(playlistId: Long, uri: String, position: Int)
 
     /**
-     * 이웃한 둘의 자리를 맞바꾼다.
+     * 넘겨받은 차례대로 자리를 다시 매긴다.
      *
-     * 끌어서 옮기는 대신 위·아래 버튼을 쓴다. 목록에서 끌어 옮기는 것은
-     * 스크롤과 부딪혀 다루기 까다롭고, 만들 것도 훨씬 많다.
+     * 두 줄만 맞바꾸는 것으로는 모자란다. 끌어서 옮기면 여러 칸을 건너뛰고,
+     * 그 사이 줄들도 한 칸씩 밀려야 하기 때문이다. 화면이 정한 최종 순서를
+     * 그대로 받아 적는 편이 단순하고 어긋날 여지도 없다.
      */
     @Transaction
-    suspend fun swap(playlistId: Long, a: PlaylistItem, b: PlaylistItem) {
-        setPosition(playlistId, a.uri, b.position)
-        setPosition(playlistId, b.uri, a.position)
+    suspend fun renumber(playlistId: Long, urisInOrder: List<String>) {
+        urisInOrder.forEachIndexed { index, uri -> setPosition(playlistId, uri, index) }
     }
 }

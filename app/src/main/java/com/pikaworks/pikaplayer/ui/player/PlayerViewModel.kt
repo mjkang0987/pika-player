@@ -50,6 +50,8 @@ data class PlayerUiState(
     val resizeMode: Int = 0,
     /** 같은 폴더에서 이 영상 뒤에 오는 것들. 하단 목록과 자동 재생이 함께 쓴다. */
     val upNext: List<VideoItem> = emptyList(),
+    /** 대기열에서 이 영상 앞에 오는 것. 없으면 이전 버튼을 만들지 않는다. */
+    val previous: VideoItem? = null,
     /** 한 편 반복. 켜면 끝나도 넘어가지 않고 처음부터 다시 튼다. */
     val repeatEnabled: Boolean = false,
     /** 구간 반복의 시작점. 찍기 전에는 null. */
@@ -92,6 +94,16 @@ class PlayerViewModel(
     private var currentVideo: VideoItem? = null
     private var matches: List<SubtitleMatcher.Match> = emptyList()
     private var queue: List<VideoItem> = emptyList()
+    /**
+     * 대기열을 사용자가 직접 정했는가(재생목록).
+     *
+     * 보관함에서 튼 경우의 대기열은 "기기의 모든 영상" 이라 그대로 쓰면 다음
+     * 영상이 엉뚱한 폴더로 넘어간다. 그래서 폴더로 한 번 거른다. 재생목록은
+     * 반대다 — 여러 폴더에서 모은 것이 곧 사용자의 뜻이므로 거르면 안 된다.
+     */
+    private var explicitQueue: Boolean = false
+    /** 마지막까지 가면 처음으로 돌아간다. 재생목록에서만 켠다. */
+    private var loopQueue: Boolean = false
     private var autoPlayNext: Boolean = true
     private var resumePlayback: Boolean = true
     /** 지금 연 영상에 딸린 작업(이어보기 탐색·자막 찾기). 영상을 바꾸면 끊는다. */
@@ -147,8 +159,14 @@ class PlayerViewModel(
         speed: Float = 1.0f,
         charset: String = SubtitleEncoding.AUTO,
         queue: List<VideoItem> = emptyList(),
+        /** 재생목록처럼 사용자가 직접 세운 대기열인가. 폴더로 거르지 않는다. */
+        explicitQueue: Boolean = false,
+        /** 마지막까지 가면 처음으로 돌아갈지. */
+        loopQueue: Boolean = false,
     ) {
         this.queue = queue
+        this.explicitQueue = explicitQueue
+        this.loopQueue = loopQueue
         if (currentVideo?.uri == video.uri) return
 
         // 앞 영상의 자막 읽기나 이어보기 탐색이 남아 있으면 새 영상에 끼어든다.
@@ -167,6 +185,7 @@ class PlayerViewModel(
             speed = speed,
             subtitleCharset = charset,
             upNext = upNextOf(video),
+            previous = previousOf(video),
             // 첫 프레임이 오기 전에도 알아야 한다. MediaStore 가 준 값으로 먼저
             // 채우고, onVideoSizeChanged 가 오면 그 값으로 바로잡는다.
             videoAspect = if (video.width > 0 && video.height > 0) {
@@ -217,10 +236,31 @@ class PlayerViewModel(
      * 집으면 관계없는 폴더로 건너뛴다 — 기획서 7.2 는 같은 폴더로 못박았다.
      * SAF 로 연 파일은 folderName 이 없는데, 그때는 고른 폴더 하나뿐이라 맞다.
      */
+    /** 지금 영상 기준으로 대기열을 다시 세운다. 폴더 거르기와 목록 반복이 여기 걸린다. */
+    private fun poolFor(video: VideoItem): List<VideoItem> =
+        if (explicitQueue) queue else queue.filter { it.folderName == video.folderName }
+
     private fun upNextOf(video: VideoItem): List<VideoItem> {
-        val sameFolder = queue.filter { it.folderName == video.folderName }
-        val index = sameFolder.indexOfFirst { it.uri == video.uri }
-        return if (index < 0) emptyList() else sameFolder.drop(index + 1).take(UP_NEXT_LIMIT)
+        val pool = poolFor(video)
+        val index = pool.indexOfFirst { it.uri == video.uri }
+        if (index < 0) return emptyList()
+        val after = pool.drop(index + 1)
+        // 목록 반복이면 끝에서 처음으로 이어 붙인다. 자기 자신은 넣지 않는다 —
+        // 한 편 반복은 따로 있고, 여기서 겹치면 "다음 영상" 에 지금 것이 뜬다.
+        val chained = if (loopQueue) after + pool.take(index) else after
+        return chained.take(UP_NEXT_LIMIT)
+    }
+
+    private fun previousOf(video: VideoItem): VideoItem? {
+        val pool = poolFor(video)
+        val index = pool.indexOfFirst { it.uri == video.uri }
+        if (index < 0) return null
+        return pool.getOrNull(index - 1) ?: if (loopQueue) pool.lastOrNull()?.takeIf { it.uri != video.uri } else null
+    }
+
+    /** 이전 영상으로. 없으면 아무 일도 하지 않는다. */
+    fun playPrevious() {
+        _uiState.value.previous?.let(::playNext)
     }
 
     /** 목록에서 고르거나 자동 재생으로 넘어갈 때. 재생속도·인코딩은 이어받는다. */
@@ -232,6 +272,8 @@ class PlayerViewModel(
             speed = current.speed,
             charset = current.subtitleCharset,
             queue = queue,
+            explicitQueue = explicitQueue,
+            loopQueue = loopQueue,
         )
     }
 

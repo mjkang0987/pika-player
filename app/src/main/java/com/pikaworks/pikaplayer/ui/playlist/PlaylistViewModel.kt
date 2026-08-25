@@ -83,12 +83,9 @@ class PlaylistViewModel(private val dao: PlaylistDao) : ViewModel() {
         viewModelScope.launch { dao.removeItem(playlistId, uri) }
     }
 
-    /** [delta] 는 -1(위) 또는 1(아래). 끝을 넘어가면 아무 일도 하지 않는다. */
-    fun move(playlistId: Long, index: Int, delta: Int) {
-        val items = openItems.value
-        val other = index + delta
-        if (index !in items.indices || other !in items.indices) return
-        viewModelScope.launch { dao.swap(playlistId, items[index], items[other]) }
+    /** 화면이 정한 최종 순서를 그대로 저장한다. 끌기가 끝났을 때 한 번 부른다. */
+    fun reorder(playlistId: Long, urisInOrder: List<String>) {
+        viewModelScope.launch { dao.renumber(playlistId, urisInOrder) }
     }
 
     class Factory(private val dao: PlaylistDao) : ViewModelProvider.Factory {

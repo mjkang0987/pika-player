@@ -54,6 +54,8 @@ import com.pikaworks.pikaplayer.ui.library.LibraryViewModel
 import com.pikaworks.pikaplayer.ui.permission.PermissionScreen
 import com.pikaworks.pikaplayer.ui.playlist.AddToPlaylistSheet
 import com.pikaworks.pikaplayer.ui.playlist.NameDialog
+import com.pikaworks.pikaplayer.ui.playlist.PickVideosSheet
+import com.pikaworks.pikaplayer.ui.playlist.PlayMode
 import com.pikaworks.pikaplayer.ui.playlist.PlaylistDetailScreen
 import com.pikaworks.pikaplayer.ui.playlist.PlaylistRow
 import com.pikaworks.pikaplayer.ui.playlist.PlaylistScreen
@@ -174,8 +176,19 @@ class MainActivity : ComponentActivity() {
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
-                val play = { video: VideoItem, from: List<VideoItem> ->
+                // 재생목록에서 튼 것인지, 끝에서 처음으로 돌아갈지를 함께 넘긴다.
+                // 람다로는 기본값을 줄 수 없어 지역 함수로 둔다.
+                var queueIsPlaylist by remember { mutableStateOf(false) }
+                var queueLoops by remember { mutableStateOf(false) }
+                fun play(
+                    video: VideoItem,
+                    from: List<VideoItem>,
+                    fromPlaylist: Boolean = false,
+                    loop: Boolean = false,
+                ) {
                     queue = from
+                    queueIsPlaylist = fromPlaylist
+                    queueLoops = loop
                     playing = video
                 }
 
@@ -227,6 +240,10 @@ class MainActivity : ComponentActivity() {
 
                 // 이름을 받는 창. 만들기와 이름 바꾸기가 같은 창을 쓴다.
                 var naming by remember { mutableStateOf<Naming?>(null) }
+                // 재생목록에 영상을 고르는 시트를 열었는가.
+                var picking by remember { mutableStateOf(false) }
+                // 이번 재생에 쓸 방식. 목록마다 기억하지는 않는다.
+                var playMode by remember { mutableStateOf(PlayMode()) }
 
                 // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
                 LaunchedEffect(tab) {
@@ -395,6 +412,8 @@ class MainActivity : ComponentActivity() {
                         resumePlayback = settings?.resumePlayback ?: true,
                         followAutoRotate = settings?.followAutoRotate ?: true,
                         queue = queue,
+                        queueIsPlaylist = queueIsPlaylist,
+                        queueLoops = queueLoops,
                         autoPlayNext = settings?.autoPlayNext ?: true,
                         defaultSpeed = settings?.playbackSpeed ?: 1f,
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
@@ -473,17 +492,41 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.weight(1f),
                                         name = open.name,
                                         rows = rows,
+                                        playMode = playMode,
+                                        onPlayModeChange = { playMode = it },
                                         onPlay = { index ->
                                             // 대기열은 목록 순서 그대로. 찾을 수 없는 것은 뺀다.
-                                            val queue = rows.mapNotNull { it.video }
-                                            rows[index].video?.let { play(it, queue) }
+                                            val found = rows.mapNotNull { it.video }
+                                            rows[index].video?.let { picked ->
+                                                // 랜덤이면 고른 것만 앞에 두고 나머지를 섞는다.
+                                                // 고른 것부터 트는 것이 누른 사람의 뜻이다.
+                                                val queue = if (playMode.shuffle) {
+                                                    listOf(picked) + (found - picked).shuffled()
+                                                } else {
+                                                    found
+                                                }
+                                                play(picked, queue, fromPlaylist = true, loop = playMode.loop)
+                                            }
                                         },
-                                        onMove = { index, delta -> playlistVm.move(open.id, index, delta) },
+                                        onReorder = { uris -> playlistVm.reorder(open.id, uris) },
                                         onRemove = { uri -> playlistVm.remove(open.id, uri) },
+                                        onAdd = { picking = true },
                                         onRename = { naming = Naming.Rename(open.id, open.name) },
                                         onDelete = { playlistVm.delete(open.id) },
                                         onBack = { playlistVm.close() },
                                     )
+
+                                    if (picking) {
+                                        PickVideosSheet(
+                                            videos = libraryState.rows.map { it.video },
+                                            alreadyIn = openPlaylistItems.map { it.uri }.toSet(),
+                                            onPick = { video ->
+                                                playlistVm.add(open.id, video)
+                                                message = "${video.displayName} 을 담았습니다"
+                                            },
+                                            onDismiss = { picking = false },
+                                        )
+                                    }
                                 }
                             }
 
@@ -601,6 +644,10 @@ class MainActivity : ComponentActivity() {
         resumePlayback: Boolean,
         followAutoRotate: Boolean,
         queue: List<VideoItem>,
+        /** 재생목록에서 튼 대기열인가. 폴더로 거르지 않는다. */
+        queueIsPlaylist: Boolean,
+        /** 마지막까지 가면 처음으로 돌아갈지. */
+        queueLoops: Boolean,
         autoPlayNext: Boolean,
         defaultSpeed: Float,
         defaultCharset: String,
@@ -651,6 +698,8 @@ class MainActivity : ComponentActivity() {
                 speed = defaultSpeed,
                 charset = defaultCharset,
                 queue = queue,
+                explicitQueue = queueIsPlaylist,
+                loopQueue = queueLoops,
             )
         }
         LaunchedEffect(autoPlayNext) { playerVm.setAutoPlayNext(autoPlayNext) }
