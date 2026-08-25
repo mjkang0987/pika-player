@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
-import androidx.media3.common.VideoSize
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -82,13 +81,6 @@ data class PlayerUiState(
     val abStartMs: Long? = null,
     /** 구간 반복의 끝점. 둘 다 있어야 반복이 돈다. */
     val abEndMs: Long? = null,
-    /**
-     * 영상 자체의 가로/세로 비. 아직 모르면 null.
-     *
-     * 전체보기에서 화면을 돌릴지 말지를 이 값으로 가른다. 세로 영상을 돌리면
-     * 좌우가 다 검게 남아 오히려 작아진다.
-     */
-    val videoAspect: Float? = null,
 ) {
     val progress: Float
         get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -148,15 +140,6 @@ class PlayerViewModel(
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _uiState.update { it.copy(isPlaying = isPlaying) }
             if (!isPlaying) savePosition()
-        }
-
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            // 픽셀이 정사각형이 아닌 영상이 있다. 그 보정을 곱해야 실제로 보이는 비다.
-            val width = videoSize.width * videoSize.pixelWidthHeightRatio
-            val height = videoSize.height.toFloat()
-            _uiState.update {
-                it.copy(videoAspect = if (width > 0f && height > 0f) width / height else null)
-            }
         }
 
         override fun onPlaybackStateChanged(state: Int) {
@@ -245,11 +228,6 @@ class PlayerViewModel(
             loopQueueEnabled = loopQueue,
             shuffleEnabled = shuffle,
             autoPlayNextEnabled = autoPlayNext,
-            // 첫 프레임이 오기 전에도 알아야 한다. MediaStore 가 준 값으로 먼저
-            // 채우고, onVideoSizeChanged 가 오면 그 값으로 바로잡는다.
-            videoAspect = if (video.width > 0 && video.height > 0) {
-                video.width.toFloat() / video.height
-            } else null,
         )
 
         player.setPlaybackSpeed(speed)

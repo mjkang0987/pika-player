@@ -737,18 +737,18 @@ class MainActivity : ComponentActivity() {
         var forcedLandscape by remember { mutableStateOf<Boolean?>(null) }
 
         /**
-         * 세로로 둔 채 화면을 꽉 채우는 중인가.
+         * 전체화면 = 가로. 영상 비율과 상관없이 같다.
          *
-         * 전에는 전체보기와 가로가 한 덩어리였다. 그래서 세로로 찍은 영상에서
-         * 전체보기를 누르면 화면이 돌아가 좌우가 다 검게 남았다 — 세로일 때보다
-         * 오히려 작아진다. 둘을 떼어 놓는다.
+         * 한동안 영상 비율로 갈랐다. 세로 영상은 눕히면 높이가 폰의 짧은 쪽에
+         * 묶여서 실제로 작아지기 때문이다(1080×1920 영상이 1080×2400 화면에서
+         * 607×1080 이 된다). 그래서 세로 영상은 눕히지 않고 시스템 바만 감췄다.
+         *
+         * 그런데 그러면 같은 버튼이 영상마다 다른 일을 한다. 무엇이 일어날지
+         * 누르기 전에 알 수 없는 버튼은 크기 몇 백 픽셀보다 비싸다. 눕히는 쪽으로
+         * 통일하고, 세로 영상은 좌우에 검은 자리를 두고 본다 — 눕혀서 보고 싶은
+         * 사람이 스스로 고른 결과다.
          */
-        var portraitFullscreen by remember { mutableStateOf(false) }
-        // 가로일 때는 늘 전체보기다. 그 자세로 목록까지 보여 줄 이유가 없다.
-        val isFullscreen = isLandscape || portraitFullscreen
-
-        // 다른 영상으로 갈아타면 되돌린다. 앞 영상에서 켜 둔 것이 남으면 안 된다.
-        LaunchedEffect(video.uri) { portraitFullscreen = false }
+        val isFullscreen = isLandscape
 
         LaunchedEffect(resumePlayback) { playerVm.setResumePlayback(resumePlayback) }
         LaunchedEffect(video.uri) {
@@ -808,7 +808,10 @@ class MainActivity : ComponentActivity() {
                 childLock && playerState.locked -> Unit
                 // 전체보기에서는 먼저 거기서 빠져나온다. 한 번에 목록까지 나가면
                 // 화면을 채우려고 눌렀던 것이 앱을 벗어나는 일이 된다.
-                portraitFullscreen -> portraitFullscreen = false
+                //
+                // 손으로 눕힌 경우(forcedLandscape 가 null)는 세우지 않는다. 우리가
+                // 돌린 것이 아니면 되돌릴 것도 없다.
+                forcedLandscape == true -> forcedLandscape = false
                 else -> onExit()
             }
         }
@@ -904,18 +907,9 @@ class MainActivity : ComponentActivity() {
                 onMarkAb = playerVm::markAb,
                 onCycleResize = playerVm::cycleResizeMode,
                 onSelectSpeed = playerVm::setSpeed,
-                // 영상 비율을 보고 돌릴지 정한다. 가로 영상은 돌려야 커지고,
-                // 세로 영상은 돌리면 작아진다 — 세로 그대로 채우는 것이 전체보기다.
+                // 눕히거나 세우거나. 영상 비율은 보지 않는다 — 위 isFullscreen 참고.
                 onToggleFullscreen = {
-                    if (isFullscreen) {
-                        portraitFullscreen = false
-                        // 가로로 누워 있다면 세로로 돌려 세워야 빠져나온다.
-                        forcedLandscape = if (isLandscape) false else null
-                    } else if ((playerState.videoAspect ?: 16f / 9f) >= 1f) {
-                        forcedLandscape = true
-                    } else {
-                        portraitFullscreen = true
-                    }
+                    forcedLandscape = if (isFullscreen) false else true
                 },
                 onBrightnessDelta = systemControls::adjustBrightness,
                 onVolumeDelta = systemControls::adjustVolume,
