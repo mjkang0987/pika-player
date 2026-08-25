@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,12 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +36,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.IconTap
@@ -82,18 +77,12 @@ fun PlaylistDetailScreen(
     val colors = PikaTheme.colors
     var editing by remember { mutableStateOf(false) }
 
-    // 끄는 동안에는 이 목록만 바꾸고, 손을 뗄 때 저장한다.
-    var order by remember(rows) { mutableStateOf(rows) }
-    LaunchedEffect(rows) { order = rows }
-
-    val listState = rememberLazyListState()
-    val drag = rememberDragReorder(
-        listState = listState,
-        onSwap = { from, to ->
-            order = order.toMutableList().also { it.add(to, it.removeAt(from)) }
-        },
-        onCommit = { onReorder(order.map { it.item.uri }) },
-    )
+    /** 이웃과 자리를 맞바꾼 뒤 전체 순서를 저장한다. */
+    fun swap(from: Int, to: Int) {
+        if (from !in rows.indices || to !in rows.indices) return
+        val next = rows.toMutableList().also { it.add(to, it.removeAt(from)) }
+        onReorder(next.map { it.item.uri })
+    }
 
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
         ScreenHeader(name, onBack)
@@ -130,7 +119,7 @@ fun PlaylistDetailScreen(
             )
         }
 
-        if (order.isEmpty()) {
+        if (rows.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
                 contentAlignment = Alignment.Center,
@@ -142,22 +131,14 @@ fun PlaylistDetailScreen(
                 )
             }
         } else {
-            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                itemsIndexed(order, key = { _, row -> row.item.uri }) { index, row ->
-                    val dragging = drag.draggingIndex == index
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                itemsIndexed(rows, key = { _, row -> row.item.uri }) { index, row ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            // 끌고 있는 줄은 위로 올려야 이웃에 가리지 않는다.
-                            .zIndex(if (dragging) 1f else 0f)
-                            .offsetForDrag(dragging, drag.offsetY)
-                            .background(if (dragging) colors.surface else Color.Transparent)
-                            .then(
-                                if (editing) Modifier.dragReorderHandle(drag, index)
-                                else Modifier.combinedClickable(
-                                    onClick = { if (row.available) onPlay(index) },
-                                    onLongClick = { editing = true },
-                                )
+                            .combinedClickable(
+                                onClick = { if (!editing && row.available) onPlay(index) },
+                                onLongClick = { editing = true },
                             )
                             .heightIn(min = 62.dp)
                             .padding(start = 20.dp, end = if (editing) 8.dp else 20.dp, top = 7.dp, bottom = 7.dp),
@@ -180,18 +161,30 @@ fun PlaylistDetailScreen(
                             )
                         }
                         if (editing) {
+                            // 끝에 닿은 쪽은 글자를 낮춰 더 갈 곳이 없음을 알린다.
+                            IconTap(
+                                icon = AppIcons.ChevronUp,
+                                contentDescription = "위로",
+                                onClick = { swap(index, index - 1) },
+                                tint = if (index == 0) colors.divider else colors.textSecondary,
+                                iconSize = 16.dp,
+                                tapSize = 36.dp,
+                            )
+                            IconTap(
+                                icon = AppIcons.ChevronDown,
+                                contentDescription = "아래로",
+                                onClick = { swap(index, index + 1) },
+                                tint = if (index == rows.lastIndex) colors.divider else colors.textSecondary,
+                                iconSize = 16.dp,
+                                tapSize = 36.dp,
+                            )
                             IconTap(
                                 icon = AppIcons.Close,
                                 contentDescription = "빼기",
                                 onClick = { onRemove(row.item.uri) },
                                 tint = colors.textFaint,
                                 iconSize = 15.dp,
-                                tapSize = 40.dp,
-                            )
-                            Icon(
-                                AppIcons.DragHandle, "끌어서 옮기기",
-                                tint = colors.textFaint,
-                                modifier = Modifier.size(18.dp),
+                                tapSize = 36.dp,
                             )
                         }
                     }
@@ -201,14 +194,6 @@ fun PlaylistDetailScreen(
     }
 }
 
-/**
- * 끌고 있는 줄만 손가락을 따라 움직인다.
- *
- * 자리(레이아웃)는 그대로 두고 그리는 위치만 옮긴다. 자리까지 옮기면 목록
- * 전체가 매 프레임 다시 배치되어 무겁고, 이웃의 위치를 견주는 계산도 흔들린다.
- */
-private fun Modifier.offsetForDrag(dragging: Boolean, offsetY: Float): Modifier =
-    if (!dragging) this else this.graphicsLayer { translationY = offsetY }
 
 @Composable
 private fun Thumbnail(row: PlaylistRow, placeholder: Color) {
