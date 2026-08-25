@@ -50,7 +50,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.pikaworks.pikaplayer.data.media.VideoItem
-import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.IconTap
@@ -116,8 +115,6 @@ fun PlayerScreen(
     /** 설정 '더블탭 10초 이동' */
     doubleTapSeek: Boolean = true,
     subtitleScale: Float = 1f,
-    /** SubtitlePosition 값. 레터박스면 영상 프레임 아래 검은 띠에 그린다. */
-    subtitlePosition: String = SubtitlePosition.IN_VIDEO,
     /** PiP 창 안에서는 영상만 그린다. 좁은 창에 컨트롤을 얹으면 영상이 안 보인다. */
     pipMode: Boolean = false,
     modifier: Modifier = Modifier,
@@ -343,39 +340,28 @@ fun PlayerScreen(
                 }
             }
 
-            // 전체화면에는 레터박스 영역이 없으므로 항상 영상 안에 그린다.
-            val insideVideo = isFullscreen || subtitlePosition == SubtitlePosition.IN_VIDEO
-            if (insideVideo) {
-                state.cue?.let { cue ->
-                    SubtitleText(
-                        text = cue.text,
-                        scale = subtitleScale,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            // 컨트롤이 뜰 때 비켜서게 해 봤는데, 자막이 화면 한가운데
-                            // 까지 뛰어올랐다가 3초 뒤에 도로 내려온다. 겹쳐서 한
-                            // 줄 못 읽는 것보다 눈이 따라가야 하는 쪽이 더 거슬린다.
-                            // 자리를 고정하고, 겹치는 것은 컨트롤이 걷힐 때까지다.
-                            .padding(start = 26.dp, end = 26.dp, bottom = 28.dp),
-                    )
-                }
+            // 자막은 늘 영상 위에 얹는다.
+            //
+            // 영상 아래에 띠를 만들어 거기 그리는 선택지가 있었다. 영상을 가리지
+            // 않는 대신 띠 높이만큼 영상이 작아졌는데, 영상이 화면을 다 쓰게 된
+            // 지금은 그 대가가 그대로 손해다. 게다가 가로 영상은 이미 위아래가
+            // 검게 남아서, 아래에 얹은 자막이 대개 그 검은 자리에 놓인다.
+            //
+            // 자리는 고정한다. 컨트롤이 뜰 때 비켜서게 해 봤는데, 자막이 화면
+            // 한가운데까지 뛰어올랐다가 3초 뒤에 도로 내려온다. 겹쳐서 한 줄 못
+            // 읽는 것보다 눈이 자막을 따라다녀야 하는 쪽이 더 거슬린다.
+            state.cue?.let { cue ->
+                SubtitleText(
+                    text = cue.text,
+                    scale = subtitleScale,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(start = 26.dp, end = 26.dp, bottom = 28.dp),
+                )
             }
 
             feedback?.let { GestureIndicator(it, state.positionMs, Modifier.align(Alignment.Center)) }
-        }
-
-        if (!isFullscreen && subtitlePosition == SubtitlePosition.LETTERBOX) {
-            // 영상 아래 띠에 그린다. 자막이 영상을 가리지 않는다.
-            Box(modifier = Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
-                state.cue?.let { cue ->
-                    SubtitleText(
-                        text = cue.text,
-                        scale = subtitleScale,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 26.dp),
-                    )
-                }
-            }
         }
 
     }

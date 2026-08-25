@@ -37,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
-import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import androidx.activity.result.IntentSenderRequest
 import com.pikaworks.pikaplayer.data.media.MediaDeleter
@@ -439,7 +438,6 @@ class MainActivity : ComponentActivity() {
                         defaultSpeed = settings?.playbackSpeed ?: 1f,
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
                         subtitleScale = settings?.subtitleScale ?: 1f,
-                        subtitlePosition = settings?.subtitlePosition ?: SubtitlePosition.IN_VIDEO,
                         pipMode = pip,
                         autoPip = settings?.autoPip ?: false,
                         // PIN 이 없으면 물을 것이 없다. 설정만 켜 두고 PIN 을 지운
@@ -660,7 +658,6 @@ class MainActivity : ComponentActivity() {
                                     onPlaybackSpeedChange = { scope.launch { app.settings.setPlaybackSpeed(it) } },
                                     onSubtitleEncodingChange = { scope.launch { app.settings.setSubtitleEncoding(it) } },
                                     onSubtitleScaleChange = { scope.launch { app.settings.setSubtitleScale(it) } },
-                                    onSubtitlePositionChange = { scope.launch { app.settings.setSubtitlePosition(it) } },
                                     onThemeChange = { scope.launch { app.settings.setTheme(it) } },
                                     onOpenLicenses = { showLicenses = true },
                                     onAutoPipChange = { scope.launch { app.settings.setAutoPip(it) } },
@@ -716,7 +713,6 @@ class MainActivity : ComponentActivity() {
         defaultSpeed: Float,
         defaultCharset: String,
         subtitleScale: Float,
-        subtitlePosition: String,
         pipMode: Boolean,
         autoPip: Boolean,
         /** 어린이 잠금. 잠금을 풀 때 PIN 을 묻고, 잠긴 동안에는 나갈 수 없다. */
@@ -937,7 +933,6 @@ class MainActivity : ComponentActivity() {
                 brightnessVolumeGestures = brightnessVolumeGestures,
                 doubleTapSeek = doubleTapSeek,
                 subtitleScale = subtitleScale,
-                subtitlePosition = subtitlePosition,
                 pipMode = pipMode,
             )
 

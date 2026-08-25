@@ -30,7 +30,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.pikaworks.pikaplayer.data.prefs.Settings
-import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.SubtitleScale
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
@@ -57,7 +56,6 @@ fun SettingsScreen(
     onPlaybackSpeedChange: (Float) -> Unit,
     onSubtitleEncodingChange: (String) -> Unit,
     onSubtitleScaleChange: (Float) -> Unit,
-    onSubtitlePositionChange: (String) -> Unit,
     onThemeChange: (String) -> Unit,
     onOpenLicenses: () -> Unit,
     onAutoPipChange: (Boolean) -> Unit,
@@ -92,13 +90,6 @@ fun SettingsScreen(
             options = SCALES,
             selected = settings.subtitleScale,
             onSelect = onSubtitleScaleChange,
-            onDismiss = { openPicker = null },
-        )
-        Picker.SUBTITLE_POSITION -> OptionSheet(
-            title = "자막 표시 위치",
-            options = POSITIONS,
-            selected = settings.subtitlePosition,
-            onSelect = onSubtitlePositionChange,
             onDismiss = { openPicker = null },
         )
         Picker.THEME -> OptionSheet(
@@ -165,7 +156,6 @@ fun SettingsScreen(
             item { SectionHeader("자막") }
             item { ValueRow("기본 인코딩", label(ENCODING_OPTIONS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
             item { ValueRow("글자 크기", label(SCALES, settings.subtitleScale)) { openPicker = Picker.SUBTITLE_SCALE } }
-            item { ValueRow("표시 위치", label(POSITIONS, settings.subtitlePosition)) { openPicker = Picker.SUBTITLE_POSITION } }
 
             item { SectionHeader("제스처") }
             item { SwitchRow("밝기 · 볼륨 스와이프", settings.gesturesEnabled, onGesturesChange) }
@@ -183,13 +173,10 @@ fun SettingsScreen(
     }
 }
 
-private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, SUBTITLE_POSITION, THEME }
+private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, THEME }
 
 private val SCALES = listOf(
     SubtitleScale.SMALL to "작게", SubtitleScale.NORMAL to "보통", SubtitleScale.LARGE to "크게",
-)
-private val POSITIONS = listOf(
-    SubtitlePosition.IN_VIDEO to "영상 하단", SubtitlePosition.LETTERBOX to "레터박스",
 )
 private val THEMES = listOf(
     ThemeMode.SYSTEM to "시스템 설정", ThemeMode.DARK to "다크", ThemeMode.LIGHT to "라이트",

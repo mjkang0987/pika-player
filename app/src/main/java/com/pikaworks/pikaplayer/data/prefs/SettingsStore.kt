@@ -25,7 +25,6 @@ class SettingsStore(private val context: Context) {
         /** 사용자가 SAF 로 고른 폴더. 권한을 거부했을 때의 경로. */
         val FOLDER_TREE_URI = stringPreferencesKey("folder_tree_uri")
         val SUBTITLE_SCALE = floatPreferencesKey("subtitle_scale")
-        val SUBTITLE_POSITION = stringPreferencesKey("subtitle_position")
         val THEME = stringPreferencesKey("theme")
         val LIBRARY_SORT = stringPreferencesKey("library_sort")
         val AUTO_PIP = booleanPreferencesKey("auto_pip")
@@ -43,7 +42,6 @@ class SettingsStore(private val context: Context) {
             followAutoRotate = p[Keys.FOLLOW_AUTO_ROTATE] ?: true,
             folderTreeUri = p[Keys.FOLDER_TREE_URI],
             subtitleScale = p[Keys.SUBTITLE_SCALE] ?: SubtitleScale.NORMAL,
-            subtitlePosition = p[Keys.SUBTITLE_POSITION] ?: SubtitlePosition.IN_VIDEO,
             theme = p[Keys.THEME] ?: ThemeMode.SYSTEM,
             librarySort = p[Keys.LIBRARY_SORT] ?: SortOrder.DATE_DESC,
             autoPip = p[Keys.AUTO_PIP] ?: false,
@@ -78,9 +76,6 @@ class SettingsStore(private val context: Context) {
     suspend fun setSubtitleScale(value: Float) =
         context.dataStore.edit { it[Keys.SUBTITLE_SCALE] = value }
 
-    suspend fun setSubtitlePosition(value: String) =
-        context.dataStore.edit { it[Keys.SUBTITLE_POSITION] = value }
-
     suspend fun setTheme(value: String) =
         context.dataStore.edit { it[Keys.THEME] = value }
 
@@ -98,15 +93,6 @@ object SubtitleScale {
     const val SMALL = 0.85f
     const val NORMAL = 1.0f
     const val LARGE = 1.25f
-}
-
-/**
- * 자막을 영상 프레임 안에 그릴지, 아래 레터박스 영역으로 내릴지.
- * 시네마스코프 영상에서 화면을 가리지 않으려는 수요가 있다 — 기획서 7.2.
- */
-object SubtitlePosition {
-    const val IN_VIDEO = "in_video"
-    const val LETTERBOX = "letterbox"
 }
 
 /**
@@ -145,7 +131,6 @@ data class Settings(
     val followAutoRotate: Boolean,
     val folderTreeUri: String? = null,
     val subtitleScale: Float = SubtitleScale.NORMAL,
-    val subtitlePosition: String = SubtitlePosition.IN_VIDEO,
     val theme: String = ThemeMode.SYSTEM,
     val librarySort: String = SortOrder.DATE_DESC,
     /**
