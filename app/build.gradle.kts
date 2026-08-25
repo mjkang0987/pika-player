@@ -20,7 +20,18 @@ val keystoreProperties = Properties().apply {
     val file = rootProject.file("keystore.properties")
     if (file.exists()) file.inputStream().use(::load)
 }
-val keystorePath: String? = keystoreProperties.getProperty("storeFile")
+
+/**
+ * .jks 파일. 지정하지 않았으면 null.
+ *
+ * `~` 를 손으로 풀어 준다. 셸이 아니라 Java 가 읽는 파일이라 물결표가 글자
+ * 그대로 경로에 들어가고, 그러면 프로젝트 폴더 아래 `~` 라는 디렉터리를 찾는다.
+ */
+val keystoreFile = keystoreProperties.getProperty("storeFile")
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+    ?.let { if (it.startsWith("~/")) System.getProperty("user.home") + it.drop(1) else it }
+    ?.let { rootProject.file(it) }
 
 android {
     namespace = "com.pikaworks.pikaplayer"
@@ -38,8 +49,17 @@ android {
     // buildTypes 보다 먼저 와야 한다. 아래에서 이름으로 찾아 쓴다.
     signingConfigs {
         create("release") {
-            if (keystorePath != null) {
-                storeFile = file(keystorePath)
+            keystoreFile?.let { keystore ->
+                // 경로가 틀리면 Gradle 은 "not found" 만 말하고 끝난다. 어디를
+                // 고쳐야 하는지 여기서 함께 알려 준다 — keystore.properties 는
+                // 저장소에 없어서, 무엇이 빠졌는지 알 방법이 그것뿐이다.
+                if (!keystore.exists()) {
+                    throw GradleException(
+                        "서명 키를 찾을 수 없습니다: ${keystore.absolutePath}\n" +
+                            "keystore.properties 의 storeFile 을 .jks 의 절대 경로로 고치세요."
+                    )
+                }
+                storeFile = keystore
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
@@ -49,7 +69,7 @@ android {
 
     buildTypes {
         release {
-            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
+            if (keystoreFile != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
