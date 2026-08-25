@@ -224,6 +224,7 @@ fun PlayerScreen(
                         Spacer(Modifier.height(2.dp))
                         SecondaryControls(
                             state = state,
+                            isFullscreen = isFullscreen,
                             onOpenSubtitleSheet = { subtitleSheetVisible = true },
                             onCycleResize = onCycleResize,
                             onOpenSpeedSheet = { speedSheetVisible = true },
@@ -279,6 +280,7 @@ fun PlayerScreen(
             SecondaryControls(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 state = state,
+                isFullscreen = isFullscreen,
                 onOpenSubtitleSheet = { subtitleSheetVisible = true },
                 onCycleResize = onCycleResize,
                 onOpenSpeedSheet = { speedSheetVisible = true },
@@ -634,6 +636,7 @@ private fun AbButton(state: PlayerUiState, onClick: () -> Unit) {
 private fun SecondaryControls(
     modifier: Modifier = Modifier,
     state: PlayerUiState,
+    isFullscreen: Boolean,
     onOpenSubtitleSheet: () -> Unit,
     onCycleResize: () -> Unit,
     onOpenSpeedSheet: () -> Unit,
@@ -655,7 +658,15 @@ private fun SecondaryControls(
             modifier = Modifier.weight(1f),
         )
         IconItem(AppIcons.Repeat, "반복", state.repeatEnabled, onToggleRepeat, Modifier.weight(1f))
-        IconItem(AppIcons.Fullscreen, "전체화면", false, onToggleFullscreen, Modifier.weight(1f))
+        // 지금 상태가 아니라 누르면 무엇이 되는지를 보여 준다. 전체화면인데
+        // 들어가는 아이콘이 그대로면 눌러도 안 먹은 것처럼 읽힌다.
+        IconItem(
+            icon = if (isFullscreen) AppIcons.FullscreenExit else AppIcons.Fullscreen,
+            label = if (isFullscreen) "나가기" else "전체화면",
+            active = isFullscreen,
+            onClick = onToggleFullscreen,
+            modifier = Modifier.weight(1f),
+        )
         // 지원하지 않는 기기에서는 자리를 만들지 않는다. 눌러도 아무 일이 없는
         // 버튼을 두면 고장으로 읽힌다.
         onEnterPip?.let { IconItem(AppIcons.Pip, "작은 창", false, it, Modifier.weight(1f)) }
