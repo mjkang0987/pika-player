@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -239,14 +238,11 @@ fun PlayerScreen(
 
         if (!isFullscreen) TopBar(title = state.title, onBack = onBack)
 
-        // 세로에서는 영상과 컨트롤 덩어리를 화면 가운데 둔다. 위에 붙여 두면
-        // 아래로 남는 검은 자리가 화면이 잘린 것처럼 보인다. 위아래로 같은
-        // 몫을 주면 덩어리가 가운데로 온다.
-        if (!isFullscreen) Spacer(Modifier.weight(1f))
-
+        // 세로에서도 남는 높이를 다 쓴다. 16:9 로 잘라 두면 컨트롤이 화면 한가운데
+        // 걸리고, 방향을 바꿀 때마다 버튼이 다른 데 가 있다. 영상은 이 안에서
+        // 비율대로 맞춰지므로 보이는 크기는 그대로고 위아래만 검게 남는다.
         Box(
-            modifier = (if (isFullscreen) Modifier.weight(1f).fillMaxWidth()
-                        else Modifier.fillMaxWidth().aspectRatio(16f / 9f))
+            modifier = Modifier.weight(1f).fillMaxWidth()
                 // '채움' 은 넘치는 부분을 잘라내는 게 목적이다. 잘리지 않으면
                 // 영상이 아래 버튼 줄 위로 흘러나온다.
                 .clipToBounds()
@@ -325,6 +321,14 @@ fun PlayerScreen(
                                 .align(Alignment.BottomCenter)
                                 .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
                         ) {
+                            // 시크바 위에 둔다. 아래에 두면 속도·자막 줄이 화면
+                            // 맨 아래에서 밀려난다 — 늘 같은 자리에 있어야 손이
+                            // 기억한다.
+                            UpNextButton(
+                                count = state.upNext.size,
+                                onClick = { upNextSheetVisible = true },
+                            )
+                            Spacer(Modifier.height(10.dp))
                             SeekBar(state = state, onSeek = seek, onMarkAb = onMarkAb)
                             Spacer(Modifier.height(2.dp))
                             SecondaryControls(
@@ -354,11 +358,12 @@ fun PlayerScreen(
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                             // 컨트롤이 떠 있는 동안에는 그 위로 올라간다. 자막과
-                            // 시크바가 겹치면 둘 다 못 읽는다.
+                            // 시크바가 겹치면 둘 다 못 읽는다. 150dp 는 다음 영상
+                            // 버튼부터 보조 버튼 줄까지의 높이다.
                             .padding(
                                 start = 26.dp,
                                 end = 26.dp,
-                                bottom = if (state.controlsVisible && !state.locked) 96.dp else 10.dp,
+                                bottom = if (state.controlsVisible && !state.locked) 150.dp else 10.dp,
                             ),
                     )
                 }
@@ -380,21 +385,6 @@ fun PlayerScreen(
             }
         }
 
-        if (!isFullscreen) {
-            Spacer(Modifier.height(16.dp))
-            // 목록을 펼쳐 두면 남는 높이만큼만 보여서, 화면이 좁으면 한 줄도
-            // 안 나오고 넓으면 영상을 위로 밀어 올린다. 자리를 차지하지 않는
-            // 버튼 하나로 두고 목록은 시트에서 편다.
-            //
-            // 이것만 영상 밖에 남긴다. 컨트롤과 달리 재생을 보는 동안 가릴 이유가
-            // 없고, 영상 위에 또 하나 얹으면 걷어야 할 것이 늘어난다.
-            UpNextButton(
-                count = state.upNext.size,
-                onClick = { upNextSheetVisible = true },
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
-            Spacer(Modifier.weight(1f))
-        }
     }
 }
 
