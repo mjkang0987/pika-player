@@ -1,5 +1,9 @@
 package com.pikaworks.pikaplayer
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.Manifest
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -484,10 +488,39 @@ class MainActivity : ComponentActivity() {
             autoPipAction = if (!canAutoPip) null else {
                 {
                     val size = playerVm.player.videoSize
-                    pipController.enter(size.width, size.height)
+                    pipController.enter(size.width, size.height, playerVm.player.isPlaying)
                 }
             }
             onDispose { autoPipAction = null }
+        }
+
+        // PiP 창의 재생/일시정지. 창 안에는 우리 화면이 없어서 시스템이 그려 주는
+        // 버튼뿐이고, 눌리면 방송으로 돌아온다.
+        //
+        // 앱 안에서만 도는 방송이라 NOT_EXPORTED 로 등록한다. API 33 이하에서는
+        // 이 값이 무시되지만, 보내는 쪽이 패키지를 박아 두어 밖에서 닿지 않는다.
+        DisposableEffect(pipController) {
+            val receiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent?.action == PipController.ACTION_TOGGLE_PLAY) playerVm.togglePlay()
+                }
+            }
+            ContextCompat.registerReceiver(
+                this@MainActivity,
+                receiver,
+                IntentFilter(PipController.ACTION_TOGGLE_PLAY),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            onDispose { unregisterReceiver(receiver) }
+        }
+
+        // 버튼 모양은 재생 상태를 따라가야 한다. 갈아끼우지 않으면 영상이 멈춘
+        // 뒤에도 일시정지 아이콘이 남아, 눌러도 안 바뀌는 것처럼 보인다.
+        LaunchedEffect(pipMode, playerState.isPlaying) {
+            if (pipMode) {
+                val size = playerVm.player.videoSize
+                pipController.update(size.width, size.height, playerState.isPlaying)
+            }
         }
 
         PlayerScreen(
@@ -514,7 +547,7 @@ class MainActivity : ComponentActivity() {
             onEnterPip = if (!pipController.isSupported) null else {
                 {
                     val video = playerVm.player.videoSize
-                    pipController.enter(video.width, video.height)
+                    pipController.enter(video.width, video.height, playerState.isPlaying)
                 }
             },
             onBack = onExit,
