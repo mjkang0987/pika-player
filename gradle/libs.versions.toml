@@ -24,12 +24,6 @@ media3 = "1.11.0"           # 확인함
 room = "2.8.4"              # 확인함. 2.7+ 라야 KSP2 를 쓴다
 datastore = "1.2.1"         # 확인함
 coil = "2.7.0"
-# 결제. 최신은 9.1.0 이지만 일부러 7.1.1 에 둔다.
-# Billing 8.0 에서 queryProductDetailsAsync 의 콜백이 List<ProductDetails> 에서
-# QueryProductDetailsResult 로 바뀌었다. BillingRepository 는 7.x API 로 쓰여 있고
-# 이 환경에서는 어느 쪽도 컴파일해 볼 수 없다. 빌드가 한 번 통과한 뒤에 올리면
-# 컴파일러가 무엇을 고쳐야 하는지 정확히 알려준다 — 그 순서가 안전하다.
-# (Play 는 언젠가 8+ 를 요구하므로 출시 전에는 반드시 올려야 한다)
 # KSP2 부터 Kotlin 버전과 분리됐다. 예전 형식(2.2.21-2.0.5)은 2.2.x 까지만 있고,
 # 그 뒤로는 독립 번호를 쓴다. Maven Central 에서 확인함.
 ksp = "2.3.11"

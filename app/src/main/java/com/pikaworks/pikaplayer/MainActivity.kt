@@ -144,10 +144,6 @@ class MainActivity : ComponentActivity() {
                 var showLicenses by remember { mutableStateOf(false) }
                 var showVault by remember { mutableStateOf(false) }
                 val pip by inPip
-                // 게이트를 여기서 만든다. `app` 에 두면 등급이 바뀌어도 화면이
-                // 다시 그려지지 않는다 — 산 직후에도 잠긴 채로 남는다.
-                // 화면으로 돌아올 때마다 다시 확인한다. 환불·해지가 반영되는 지점이다.
-                // 상품 이름·가격은 바뀌지 않는다. 한 번만 받아 둔다.
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
