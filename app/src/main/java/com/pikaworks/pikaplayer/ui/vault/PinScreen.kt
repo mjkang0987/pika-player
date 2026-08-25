@@ -111,8 +111,9 @@ fun PinScreen(
             // 자리를 꽉 채우지 않는다. 남긴 만큼이 숫자판 위아래 여백이 된다
             // (가운데 정렬이라 절반씩 나뉜다). 딱 맞추면 하단 네비게이션에
             // 붙어 보인다.
-            val breathing = 36.dp
-            val keySize = ((maxHeight - gaps - breathing) / 4).coerceIn(46.dp, 72.dp)
+            val breathing = 56.dp
+            // 아래 한계는 44dp. 손가락으로 겨눌 수 있는 최소 크기라 더 줄이지 않는다.
+            val keySize = ((maxHeight - gaps - breathing) / 4).coerceIn(44.dp, 72.dp)
             Keypad(
                 keySize = keySize,
                 enabled = !locked,
