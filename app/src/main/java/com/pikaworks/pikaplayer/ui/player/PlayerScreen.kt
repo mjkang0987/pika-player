@@ -264,7 +264,6 @@ fun PlayerScreen(
  */
 @Composable
 private fun UpNext(videos: List<VideoItem>, onClick: (VideoItem) -> Unit, modifier: Modifier = Modifier) {
-    if (videos.isEmpty()) return
     val colors = PikaTheme.colors
     Column(modifier = modifier) {
         Text(
@@ -275,9 +274,21 @@ private fun UpNext(videos: List<VideoItem>, onClick: (VideoItem) -> Unit, modifi
             color = colors.onMediaKey,
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 18.dp, bottom = 6.dp),
         )
-        LazyColumn {
-            items(videos, key = { it.uri.toString() }) { video ->
-                UpNextRow(video = video, onClick = { onClick(video) })
+        // 비었다고 통째로 빼면 아래가 검게 남아 화면이 잘린 것처럼 보인다.
+        // 자리는 그대로 두고 왜 비었는지만 말한다.
+        if (videos.isEmpty()) {
+            Text(
+                "이 폴더의 마지막 영상입니다",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Light,
+                color = colors.onMediaTextFaint,
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp),
+            )
+        } else {
+            LazyColumn {
+                items(videos, key = { it.uri.toString() }) { video ->
+                    UpNextRow(video = video, onClick = { onClick(video) })
+                }
             }
         }
     }

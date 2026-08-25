@@ -248,8 +248,9 @@ private fun LibraryTabs(state: LibraryUiState, onSelect: (String) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(22.dp),
+            // 탭 사이 간격은 Arrangement 가 아니라 탭이 각자 갖는다. 간격에는
+            // 누름 영역이 없어서, 탭 사이 빈틈을 누르면 아무 일도 안 일어났다.
+            .padding(horizontal = 9.dp),
     ) {
         LibraryFilter.ORDER.forEach { filter ->
             val selected = filter == state.filter
@@ -263,6 +264,9 @@ private fun LibraryTabs(state: LibraryUiState, onSelect: (String) -> Unit) {
                 color = if (selected) colors.key else colors.textSecondary,
                 modifier = Modifier
                     .clickable { onSelect(filter) }
+                    // 가로 여백은 밑줄보다 바깥에 둔다. 밑줄은 글자 너비만큼만
+                    // 그어야 하는데, 안쪽에 두면 여백까지 함께 그어진다.
+                    .padding(horizontal = 11.dp)
                     .drawBehind {
                         if (!selected) return@drawBehind
                         val thickness = 2.dp.toPx()
@@ -275,7 +279,7 @@ private fun LibraryTabs(state: LibraryUiState, onSelect: (String) -> Unit) {
                     // 위 여백도 탭 안쪽에 둔다. 스트립이 갖고 있으면 눌린 배경이
                     // 글자에만 붙어 잘려 보인다. 아래 여백은 고르지 않았을 때도
                     // 밑줄 자리를 비워 두는 몫이다 — 줄 높이가 흔들리지 않는다.
-                    .padding(top = 24.dp, bottom = 12.dp),
+                    .padding(top = 14.dp, bottom = 10.dp),
             )
         }
     }
