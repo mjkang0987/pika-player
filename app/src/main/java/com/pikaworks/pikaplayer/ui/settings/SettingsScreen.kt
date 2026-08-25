@@ -37,6 +37,7 @@ import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
 import com.pikaworks.pikaplayer.ui.OptionSheet
 import com.pikaworks.pikaplayer.ui.SPEED_OPTIONS
 import com.pikaworks.pikaplayer.ui.ScreenHeader
+import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /**
@@ -253,6 +254,7 @@ private fun SettingRow(
                     fontWeight = FontWeight.Light,
                     lineHeight = 15.sp,
                     color = colors.textMeta,
+                    style = KoreanWrap,
                 )
             }
         }

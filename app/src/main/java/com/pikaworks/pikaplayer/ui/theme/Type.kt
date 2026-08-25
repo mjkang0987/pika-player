@@ -2,6 +2,7 @@ package com.pikaworks.pikaplayer.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -41,3 +42,12 @@ val PikaTypography = Typography(
         fontSize = 9.sp,
     ),
 )
+
+/**
+ * 문장으로 읽는 한글 글에 쓰는 줄바꿈.
+ *
+ * 기본값은 글자 단위로 끊어서 "지워야" 가 "지워 / 야" 로 갈라진다. Paragraph 는
+ * 낱말 경계를 보고 끊는다. 계산이 무거우므로 안내문처럼 문장인 글에만 쓰고,
+ * 목록의 제목이나 한두 낱말짜리 라벨에는 걸지 않는다.
+ */
+val KoreanWrap = TextStyle(lineBreak = LineBreak.Paragraph)

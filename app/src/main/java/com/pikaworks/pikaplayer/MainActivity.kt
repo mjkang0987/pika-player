@@ -353,6 +353,8 @@ class MainActivity : ComponentActivity() {
                                     onDigit = { vaultVm.onDigit(it, System.currentTimeMillis()) },
                                     onBackspace = vaultVm::onBackspace,
                                     onBack = { vaultVm.cancel() },
+                                    // 새로 정하는 중에는 되돌릴 것이 없다.
+                                    recoverable = vaultState.mode == PinMode.UNLOCK,
                                 )
                             } else if (showVault) {
                                 BackHandler { showVault = false }
@@ -639,6 +641,7 @@ class MainActivity : ComponentActivity() {
                     onDigit = { vaultVm.onDigit(it, System.currentTimeMillis()) },
                     onBackspace = vaultVm::onBackspace,
                     onBack = { vaultVm.cancel() },
+                    recoverable = true,
                 )
             }
         }

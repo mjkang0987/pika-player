@@ -17,9 +17,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.ScreenHeader
+import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
 /** PIN 길이. 짧으면 외우기 쉽고 길면 대입이 어렵다. 4는 너무 얕다. */
@@ -54,10 +62,17 @@ fun PinScreen(
     onDigit: (Char) -> Unit,
     onBackspace: () -> Unit,
     onBack: () -> Unit,
+    /** 잠금을 푸는 화면인가. 새로 정하는 중에는 되돌릴 것이 없다. */
+    recoverable: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
     val locked = lockedForMs > 0
+    var recoveryVisible by remember { mutableStateOf(false) }
+
+    if (recoveryVisible) {
+        RecoverySheet(onDismiss = { recoveryVisible = false })
+    }
 
     Column(
         // 아래 여백은 따로 잡는다. 숫자판은 가운데 정렬이라 남는 자리를 위아래로
@@ -76,6 +91,7 @@ fun PinScreen(
             subtitle,
             fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textSecondary,
             textAlign = TextAlign.Center,
+            style = KoreanWrap,
             modifier = Modifier.padding(horizontal = 32.dp),
         )
 
@@ -98,28 +114,12 @@ fun PinScreen(
             modifier = Modifier.heightIn(min = 20.dp).padding(horizontal = 28.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val message = when {
-                    locked -> "너무 많이 틀렸습니다 · ${formatWait(lockedForMs)} 후에 다시"
-                    error != null -> error
-                    else -> ""
-                }
-                Text(message, fontSize = 12.sp, color = colors.textMeta, textAlign = TextAlign.Center)
-
-                // 여러 번 틀려 잠긴 참이면 잊었을 가능성이 높다. 그때만 길을
-                // 알려 준다 — 늘 띄우면 잠금이 약해 보이고 자리도 차지한다.
-                if (locked) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        RECOVERY_HINT,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Light,
-                        lineHeight = 16.sp,
-                        color = colors.textFaint,
-                        textAlign = TextAlign.Center,
-                    )
-                }
+            val message = when {
+                locked -> "너무 많이 틀렸습니다 · ${formatWait(lockedForMs)} 후에 다시"
+                error != null -> error
+                else -> ""
             }
+            Text(message, fontSize = 12.sp, color = colors.textMeta, textAlign = TextAlign.Center)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -146,26 +146,26 @@ fun PinScreen(
                 onBackspace = onBackspace,
             )
         }
+
+        // 안내를 화면에 펼쳐 두면 숫자판이 밀리고 잠금 화면이 설명문처럼 보인다.
+        // 필요한 사람만 열어 보게 한 줄로 줄인다.
+        if (recoverable) {
+            Text(
+                "PIN 을 잊었다면?",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Light,
+                color = colors.textMeta,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable { recoveryVisible = true }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        }
     }
 }
 
 /** 숫자 사이 간격. 키 크기를 계산할 때도 쓴다. */
 private val KEY_GAP = 10.dp
-/**
- * PIN 을 잊었을 때 알려 줄 길. 되돌릴 방법이 이것뿐이다.
- *
- * PIN 은 기기 안에 해시와 소금으로만 남고 서버도 계정도 없어서, 만든 사람도
- * 되돌릴 수 없다. 앱에 뒷문을 심으면 APK 를 뜯어 누구나 쓸 수 있으므로 그것도
- * 답이 아니다.
- *
- * 영상 파일이 안전하다는 말을 같이 둔다 — 비공개 폴더는 감출 뿐 지우거나
- * 암호화하지 않는데, 그걸 모르면 무서워서 데이터 삭제를 못 누른다.
- *
- * 줄바꿈을 직접 넣지 않는다. 넣었더니 자동 줄바꿈과 부딪혀 낱말이 잘렸다.
- */
-private const val RECOVERY_HINT =
-    "PIN 을 잊었다면 기기 설정에서 이 앱의 저장공간 데이터를 지워야 풀립니다. " +
-        "영상 파일은 그대로 남습니다."
 
 /** 남은 시간을 사람이 읽는 단위로. 초 단위까지 보여주면 계속 다시 그려야 한다. */
 private fun formatWait(ms: Long): String {
@@ -216,4 +216,54 @@ private fun Key(label: String, size: Dp, enabled: Boolean, onClick: () -> Unit) 
             color = if (enabled) colors.textPrimary else colors.textFaint,
         )
     }
+}
+
+/**
+ * PIN 을 잊었을 때 알려 줄 길. 되돌릴 방법이 이것뿐이다.
+ *
+ * PIN 은 기기 안에 해시와 소금으로만 남고 서버도 계정도 없어서, 만든 사람도
+ * 되돌릴 수 없다. 앱에 뒷문을 심으면 APK 를 뜯어 누구나 쓸 수 있으므로 그것도
+ * 답이 아니다.
+ *
+ * 잃는 것을 숨기지 않는다. 데이터를 지우면 이어보기 기록과 설정도 함께 사라진다.
+ * 반대로 영상 파일은 멀쩡하다는 것도 말해야 한다 — 그걸 모르면 무서워서 못 지운다.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecoverySheet(onDismiss: () -> Unit) {
+    val colors = PikaTheme.colors
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = colors.surface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, bottom = 36.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                "PIN 을 잊었다면",
+                fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
+            )
+            Paragraph("되돌릴 방법이 없습니다. PIN 은 이 기기 안에만 남고 서버도 계정도 " +
+                "없어서, 만든 사람도 확인할 수 없습니다.")
+            Paragraph("풀려면 기기 설정 → 앱 → Pika Player → 저장공간 에서 데이터를 지워야 합니다.")
+            Paragraph("영상 파일은 지워지지 않습니다. 비공개 폴더는 목록에서 감출 뿐 파일을 " +
+                "지우거나 암호화하지 않습니다. 다만 이어보기 기록과 앱 설정은 함께 사라집니다.")
+        }
+    }
+}
+
+@Composable
+private fun Paragraph(text: String) {
+    Text(
+        text,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Light,
+        lineHeight = 20.sp,
+        color = PikaTheme.colors.textSecondary,
+        style = KoreanWrap,
+    )
 }
