@@ -3,6 +3,7 @@ package com.pikaworks.pikaplayer.ui.player
 import android.view.LayoutInflater
 import android.view.View
 import androidx.annotation.OptIn
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -36,6 +37,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -84,6 +87,7 @@ fun PlayerScreen(
     onResetSubtitleOffset: () -> Unit,
     onToggleLock: () -> Unit,
     onToggleRepeat: () -> Unit,
+    onMarkAb: () -> Unit,
     onCycleResize: () -> Unit,
     onCycleSpeed: () -> Unit,
     onToggleFullscreen: () -> Unit,
@@ -201,7 +205,7 @@ fun PlayerScreen(
                             .align(Alignment.BottomCenter)
                             .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
                     ) {
-                        SeekBar(state = state, onSeek = onSeek)
+                        SeekBar(state = state, onSeek = onSeek, onMarkAb = onMarkAb)
                         Spacer(Modifier.height(2.dp))
                         SecondaryControls(
                             state = state,
@@ -250,7 +254,12 @@ fun PlayerScreen(
 
         if (!isFullscreen) {
             Spacer(Modifier.height(20.dp))
-            SeekBar(state = state, onSeek = onSeek, modifier = Modifier.padding(horizontal = 24.dp))
+            SeekBar(
+                state = state,
+                onSeek = onSeek,
+                onMarkAb = onMarkAb,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            )
             Spacer(Modifier.height(12.dp))
             SecondaryControls(
                 modifier = Modifier.padding(horizontal = 24.dp),
@@ -496,7 +505,12 @@ private fun SkipButton(icon: ImageVector, label: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit, modifier: Modifier = Modifier) {
+private fun SeekBar(
+    state: PlayerUiState,
+    onSeek: (Long) -> Unit,
+    onMarkAb: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = PikaTheme.colors
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -529,17 +543,72 @@ private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit, modifier: Modi
                         .background(colors.onMediaKey)
                 )
             }
+
+            // 구간 표시. 3dp 막대 안에 그리면 보이지 않아 위아래로 넘치게 긋는다.
+            val marks = listOfNotNull(state.abStartMs, state.abEndMs)
+            if (marks.isNotEmpty() && state.durationMs > 0) {
+                val markColor = colors.onMediaText
+                Canvas(modifier = Modifier.fillMaxWidth().height(11.dp)) {
+                    val thickness = 2.dp.toPx()
+                    marks.forEach { ms ->
+                        val x = size.width * (ms.toFloat() / state.durationMs).coerceIn(0f, 1f)
+                        drawRect(
+                            color = markColor,
+                            // 막대보다 눈금이 두꺼운 극단적인 경우에 coerceIn 이
+                            // 터지지 않도록 위쪽 한계를 먼저 깎는다.
+                            topLeft = Offset(
+                                (x - thickness / 2).coerceIn(0f, (size.width - thickness).coerceAtLeast(0f)),
+                                0f,
+                            ),
+                            size = Size(thickness, size.height),
+                        )
+                    }
+                }
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(formatDuration(state.positionMs), fontSize = 11.sp,
                 fontWeight = FontWeight.Light, color = colors.onMediaTextMuted)
+            AbButton(state = state, onClick = onMarkAb)
             Text("-" + formatDuration(state.durationMs - state.positionMs), fontSize = 11.sp,
                 fontWeight = FontWeight.Light, color = colors.onMediaTextMuted)
         }
     }
+}
+
+/**
+ * 구간 반복 버튼. 누를 때마다 A → B → 해제.
+ *
+ * 아래 아이콘 줄이 아니라 시간 줄에 두었다. 다루는 것이 '재생 위치' 라서
+ * 시간·시크바 옆이 제자리이고, 아이콘 줄은 이미 일곱 개다.
+ *
+ * 찍은 지점을 글자로 보여 준다. 시크바의 눈금만으로는 어디였는지 읽기 어렵고,
+ * 반복 연습은 몇 초 구간인지가 곧 목적이기 때문이다.
+ */
+@Composable
+private fun AbButton(state: PlayerUiState, onClick: () -> Unit) {
+    val colors = PikaTheme.colors
+    val start = state.abStartMs
+    val end = state.abEndMs
+    val label = when {
+        start == null -> "A-B"
+        end == null -> "A " + formatDuration(start)
+        else -> formatDuration(start) + " ~ " + formatDuration(end)
+    }
+    Text(
+        label,
+        fontSize = 11.sp,
+        fontWeight = if (start == null) FontWeight.Light else FontWeight.Medium,
+        color = if (start == null) colors.onMediaTextFaint else colors.onMediaKey,
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 3.dp),
+    )
 }
 
 @Composable

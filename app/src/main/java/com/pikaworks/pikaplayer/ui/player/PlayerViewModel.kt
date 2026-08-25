@@ -51,6 +51,10 @@ data class PlayerUiState(
     val upNext: List<VideoItem> = emptyList(),
     /** 한 편 반복. 켜면 끝나도 넘어가지 않고 처음부터 다시 튼다. */
     val repeatEnabled: Boolean = false,
+    /** 구간 반복의 시작점. 찍기 전에는 null. */
+    val abStartMs: Long? = null,
+    /** 구간 반복의 끝점. 둘 다 있어야 반복이 돈다. */
+    val abEndMs: Long? = null,
 ) {
     val progress: Float
         get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -302,6 +306,20 @@ class PlayerViewModel(
                 // 조건을 걸지 않는다. 일시정지 중에 탐색하면 자막도 따라와야 하고,
                 // 값이 그대로면 StateFlow 가 알아서 흘리지 않는다(데이터 클래스 동등성).
                 val pos = player.currentPosition.coerceAtLeast(0L)
+
+                // 구간 반복. 재생을 멈추지 않고 되감기만 한다.
+                //
+                // 여기서 처리하는 이유: ExoPlayer 에는 구간을 지정하는 기능이 없고,
+                // ClippingMediaSource 로 자르면 구간 밖으로 나갈 수 없어서 해제할 때
+                // 미디어를 다시 만들어야 한다. 200ms 마다 도는 이 고리에서 보면
+                // 최대 200ms 넘어갔다가 돌아온다 — 연습 용도로는 그 정도면 된다.
+                val snapshot = _uiState.value
+                val abStart = snapshot.abStartMs
+                val abEnd = snapshot.abEndMs
+                if (abStart != null && abEnd != null && pos >= abEnd) {
+                    player.seekTo(abStart)
+                }
+
                 _uiState.update { state ->
                     state.copy(
                         positionMs = pos,
@@ -322,6 +340,25 @@ class PlayerViewModel(
             player.play()
         }
         else -> player.play()
+    }
+
+    /**
+     * 구간 반복 지점을 차례로 찍는다. A → B → 해제.
+     *
+     * B 가 A 보다 앞이면 순서가 뒤집힌 것이다. 오류를 내는 것보다 방금 찍은 곳을
+     * 새 A 로 삼는 편이 손이 덜 간다 — 되감아서 다시 찍으려던 참일 테니.
+     */
+    fun markAb() {
+        val now = player.currentPosition.coerceAtLeast(0L)
+        _uiState.update { s ->
+            val start = s.abStartMs
+            when {
+                start == null -> s.copy(abStartMs = now)
+                s.abEndMs != null -> s.copy(abStartMs = null, abEndMs = null)
+                now > start -> s.copy(abEndMs = now)
+                else -> s.copy(abStartMs = now)
+            }
+        }
     }
 
     /**
