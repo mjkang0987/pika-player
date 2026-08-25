@@ -9,6 +9,10 @@ import androidx.compose.ui.graphics.Color
  * 키컬러는 초록 쪽으로 튼 시안(hue 약 170°)이고, 중성색도 같은 방향으로
  * 미세하게 틀어 톤을 맞춘다. 라이트 키컬러는 흰 배경 대비 확보를 위해
  * 더 어두운 값을 쓴다(5.6:1).
+ *
+ * 라이트 표면은 기획서의 #f5fbf9(채도 43%, 색상 160°)에서 #eafbf8(채도 68%,
+ * 색상 169°)로 올렸다. 흰 배경 위에서 층이 거의 안 보였다. 색상도 함께 옮겨
+ * 키컬러의 170° 에 맞췄다 — 전 값은 10° 어긋나 있었다.
  */
 @Immutable
 data class PikaColors(
@@ -49,7 +53,7 @@ val PikaDarkColors = PikaColors(
 
 val PikaLightColors = PikaColors(
     background = Color(0xFFFFFFFF),
-    surface = Color(0xFFF5FBF9),
+    surface = Color(0xFFEAFBF8),
     textPrimary = Color(0xFF0F1614),
     textSecondary = Color(0xFF5A6E69),
     textMeta = Color(0xFF647A75),
