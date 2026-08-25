@@ -96,7 +96,6 @@ fun PlayerScreen(
     onToggleLock: () -> Unit,
     onSetRepeatMode: (String) -> Unit,
     onToggleShuffle: () -> Unit,
-    onSetAutoPlayNext: (Boolean) -> Unit,
     onMarkAb: () -> Unit,
     onCycleResize: () -> Unit,
     onSelectSpeed: (Float) -> Unit,
@@ -168,11 +167,8 @@ fun PlayerScreen(
         PlaybackSheet(
             repeatMode = state.repeatMode,
             onRepeatModeChange = onSetRepeatMode,
-            queueControls = state.explicitQueue,
             shuffle = state.shuffleEnabled,
             onShuffleChange = onToggleShuffle,
-            autoPlayNext = state.autoPlayNextEnabled,
-            onAutoPlayNextChange = onSetAutoPlayNext,
             onDismiss = { playbackSheetVisible = false },
         )
     }

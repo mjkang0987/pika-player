@@ -162,7 +162,12 @@ class PlayerViewModel(
             }
             if (state == Player.STATE_ENDED) {
                 savePosition() // 끝까지 본 위치를 남겨야 '최근'에 뜬다
-                if (autoPlayNext) _uiState.value.upNext.firstOrNull()?.let(::playNext)
+                // 목록 반복을 고른 것은 "이 목록을 계속 돌려라" 는 말이다. 자동
+                // 재생이 꺼져 있다고 거기서 멈추면, 골라 놓고 아무 일도 일어나지
+                // 않는 상태가 된다.
+                if (autoPlayNext || repeatMode == RepeatMode.ALL) {
+                    _uiState.value.upNext.firstOrNull()?.let(::playNext)
+                }
             }
         }
     }

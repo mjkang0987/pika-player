@@ -28,32 +28,27 @@ import com.pikaworks.pikaplayer.ui.player.RepeatMode
 import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
 
 /**
- * 이 영상이 끝나면 무엇이 일어나는가.
+ * 지금 이 재생을 어떤 순서로 볼 것인가.
  *
- * 네 가지가 한 시트에 있는 이유는 모두 그 한 가지 질문의 답이기 때문이다.
- * 흩어 놓으면 서로 어떻게 맞물리는지 알기 어렵다.
+ * 여기 있는 것은 전부 이번 재생에만 걸린다. 다음에 다른 영상을 틀면 처음으로
+ * 돌아간다. '다음 영상 자동 재생' 처럼 한 번 정해 두고 잊는 값은 설정에 있다 —
+ * 성격이 다른 것을 섞어 두면 어느 것이 남고 어느 것이 사라지는지 알 수 없다.
  *
- * 반복은 셋 중 하나를 고르는 것이라 동그라미로, 랜덤과 자동 재생은 따로 켜고
- * 끄는 것이라 체크로 그린다. 생김새가 다르면 "이걸 켜면 저건 꺼지나" 를 눌러
- * 보지 않고도 알 수 있다.
+ * 반복은 셋 중 하나를 고르는 것이라 동그라미로, 랜덤은 따로 켜고 끄는 것이라
+ * 체크로 그린다. 생김새가 다르면 "이걸 켜면 저건 꺼지나" 를 눌러 보지 않고도
+ * 알 수 있다.
+ *
+ * 여기서 말하는 '목록' 은 지금 틀고 있는 대기열이다. 재생목록·폴더에서 튼 것은
+ * 그 목록이고, 보관함에서 한 편을 누른 것은 그 영상이 든 폴더다. 어느 쪽이든
+ * 섞을 것도 돌 것도 있으므로 가리지 않고 보여 준다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaybackSheet(
     repeatMode: String,
     onRepeatModeChange: (String) -> Unit,
-    /**
-     * 목록을 통째로 튼 경우인가(재생목록·폴더 등).
-     *
-     * 목록 반복과 랜덤은 그럴 때만 뜻이 있다. 보관함에서 한 편을 누른 대기열은
-     * 기기의 모든 영상이라, 거기서 섞는 것은 순서를 흐트러뜨리는 것이 아니라
-     * 그냥 아무 영상이나 트는 것이 된다.
-     */
-    queueControls: Boolean,
     shuffle: Boolean,
     onShuffleChange: () -> Unit,
-    autoPlayNext: Boolean,
-    onAutoPlayNextChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = PikaDarkColors
@@ -82,29 +77,19 @@ fun PlaybackSheet(
                 selected = repeatMode == RepeatMode.ONE,
                 onSelect = { onRepeatModeChange(RepeatMode.ONE) },
             )
-            if (queueControls) {
-                Choice(
-                    label = "목록 반복",
-                    description = "마지막 영상 다음에 목록의 처음으로 돌아갑니다.",
-                    selected = repeatMode == RepeatMode.ALL,
-                    onSelect = { onRepeatModeChange(RepeatMode.ALL) },
-                )
-            }
+            Choice(
+                label = "목록 반복",
+                description = "마지막 영상 다음에 목록의 처음으로 돌아갑니다.",
+                selected = repeatMode == RepeatMode.ALL,
+                onSelect = { onRepeatModeChange(RepeatMode.ALL) },
+            )
 
-            GroupLabel("그 밖")
-            if (queueControls) {
-                Toggle(
-                    label = "랜덤",
-                    description = "지금 영상 뒤의 순서를 섞습니다.",
-                    on = shuffle,
-                    onToggle = onShuffleChange,
-                )
-            }
+            GroupLabel("순서")
             Toggle(
-                label = "자동 재생",
-                description = "끝나면 다음 영상으로 넘어갑니다. 이미 끝까지 본 영상은 처음부터 틉니다.",
-                on = autoPlayNext,
-                onToggle = { onAutoPlayNextChange(!autoPlayNext) },
+                label = "랜덤",
+                description = "지금 영상 뒤의 순서를 섞습니다.",
+                on = shuffle,
+                onToggle = onShuffleChange,
             )
         }
     }
