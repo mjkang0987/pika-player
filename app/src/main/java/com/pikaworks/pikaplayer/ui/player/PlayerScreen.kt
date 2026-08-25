@@ -407,12 +407,12 @@ private fun TopBar(title: String, onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = colors.textPrimary, iconSize = 24.dp)
+        IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = colors.onMediaText, iconSize = 24.dp)
         Text(
             title,
             fontSize = 14.sp,
             fontWeight = FontWeight.Light,
-            color = colors.textSecondary,
+            color = colors.onMediaTextMuted,
             maxLines = 1,
         )
     }
@@ -438,7 +438,7 @@ private fun TransportControls(
                 .size(54.dp)
                 .clip(RoundedCornerShape(27.dp))
                 // 반투명이라 뒤 영상이 비친다. 아이콘은 흰색 불투명으로 또렷하게.
-                .background(colors.key.copy(alpha = 0.45f))
+                .background(colors.onMediaKey.copy(alpha = 0.45f))
                 .clickable(onClick = onTogglePlay),
             contentAlignment = Alignment.Center,
         ) {
@@ -498,7 +498,7 @@ private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit, modifier: Modi
                         .fillMaxWidth(state.progress)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(2.dp))
-                        .background(colors.key)
+                        .background(colors.onMediaKey)
                 )
             }
         }
@@ -507,9 +507,9 @@ private fun SeekBar(state: PlayerUiState, onSeek: (Long) -> Unit, modifier: Modi
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(formatDuration(state.positionMs), fontSize = 11.sp,
-                fontWeight = FontWeight.Light, color = colors.textSecondary)
+                fontWeight = FontWeight.Light, color = colors.onMediaTextMuted)
             Text("-" + formatDuration(state.durationMs - state.positionMs), fontSize = 11.sp,
-                fontWeight = FontWeight.Light, color = colors.textSecondary)
+                fontWeight = FontWeight.Light, color = colors.onMediaTextMuted)
         }
     }
 }
@@ -557,9 +557,11 @@ private fun SpeedItem(speed: Float, onClick: () -> Unit, modifier: Modifier = Mo
             .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("${speed}×", fontSize = 13.sp, color = colors.key)
+        // 아이콘(19dp)과 같은 줄 높이를 준다. 기본 줄 높이는 24sp 라 이 글자만
+        // 칸이 커져서 아래 라벨이 다른 버튼보다 내려가 있었다.
+        Text("${speed}×", fontSize = 13.sp, lineHeight = 19.sp, color = colors.onMediaKey)
         Spacer(Modifier.height(7.dp))
-        Text("속도", fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.textFaint)
+        Text("속도", fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.onMediaTextFaint)
     }
 }
 
@@ -572,7 +574,7 @@ private fun IconItem(
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
-    val tint = if (active) colors.key else colors.textSecondary
+    val tint = if (active) colors.onMediaKey else colors.onMediaTextMuted
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
@@ -583,7 +585,7 @@ private fun IconItem(
         Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
         Spacer(Modifier.height(7.dp))
         Text(label, fontSize = 10.sp, fontWeight = FontWeight.Light,
-            color = if (active) colors.key else colors.textFaint)
+            color = if (active) colors.onMediaKey else colors.onMediaTextFaint)
     }
 }
 
@@ -605,8 +607,8 @@ private fun GestureIndicator(feedback: GestureFeedback, positionMs: Long, modifi
                     fontSize = 15.sp, color = Color.White,
                 )
             }
-            is GestureFeedback.Brightness -> Bar(AppIcons.Brightness, "밝기", feedback.value, colors.key)
-            is GestureFeedback.Volume -> Bar(AppIcons.Volume, "볼륨", feedback.value, colors.key)
+            is GestureFeedback.Brightness -> Bar(AppIcons.Brightness, "밝기", feedback.value, colors.onMediaKey)
+            is GestureFeedback.Volume -> Bar(AppIcons.Volume, "볼륨", feedback.value, colors.onMediaKey)
         }
     }
 }

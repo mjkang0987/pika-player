@@ -34,6 +34,10 @@ data class PikaColors(
      */
     val onMediaKey: Color get() = Color(0xFF5CC7B4)
     val onMediaText: Color get() = Color.White
+    /** 영상 위 보조 아이콘·시간. 흰색을 그대로 쓰면 제목과 위계가 안 갈린다. */
+    val onMediaTextMuted: Color get() = Color.White.copy(alpha = 0.78f)
+    /** 영상 위 작은 라벨. 위 둘보다 한 단계 더 물러난다. */
+    val onMediaTextFaint: Color get() = Color.White.copy(alpha = 0.60f)
     val onMediaTrack: Color get() = Color.White.copy(alpha = 0.20f)
 }
 

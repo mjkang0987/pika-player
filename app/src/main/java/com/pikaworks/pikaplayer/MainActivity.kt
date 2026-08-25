@@ -314,6 +314,11 @@ class MainActivity : ComponentActivity() {
                                 onVideoClick = { row ->
                                     play(row.video, libraryState.visibleRows.map { it.video })
                                 },
+                                // 이어보기는 그 줄에 보이는 것들을 대기열로 삼는다.
+                                // 거르기 탭에 걸려 목록에서 빠진 영상도 여기서는 눌린다.
+                                onContinueClick = { item ->
+                                    play(item.video, libraryState.continueWatching.map { it.video })
+                                },
                                 onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 onFilterChange = libraryVm::setFilter,
                                 onQueryChange = libraryVm::setQuery,

@@ -58,6 +58,7 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 fun LibraryScreen(
     state: LibraryUiState,
     onVideoClick: (LibraryRow) -> Unit,
+    onContinueClick: (ContinueItem) -> Unit,
     onSortChange: (String) -> Unit,
     onFilterChange: (String) -> Unit,
     onQueryChange: (String) -> Unit,
@@ -94,7 +95,7 @@ fun LibraryScreen(
 
         if (state.continueWatching.isNotEmpty()) {
             item { SectionTitle("이어보기", state.continueWatching.size) }
-            item { ContinueRow(state.continueWatching) }
+            item { ContinueRow(state.continueWatching, onContinueClick) }
         }
 
         item { LibraryTabs(state = state, onSelect = onFilterChange) }
@@ -184,14 +185,19 @@ private fun SectionTitle(title: String, count: Int) {
 }
 
 @Composable
-private fun ContinueRow(items: List<ContinueItem>) {
+private fun ContinueRow(items: List<ContinueItem>, onClick: (ContinueItem) -> Unit) {
     val colors = PikaTheme.colors
     LazyRow(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         items(items, key = { it.video.id }) { item ->
-            Column(modifier = Modifier.width(152.dp)) {
+            Column(
+                modifier = Modifier
+                    .width(152.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable { onClick(item) },
+            ) {
                 Box(
                     modifier = Modifier
                         .width(152.dp).height(86.dp)
