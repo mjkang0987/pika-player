@@ -46,7 +46,7 @@ fun AddToPlaylistSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = colors.surface,
+        containerColor = colors.elevated,
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
             Text(

@@ -55,7 +55,7 @@ fun SubtitleSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = colors.surface,
+        containerColor = colors.elevated,
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
 

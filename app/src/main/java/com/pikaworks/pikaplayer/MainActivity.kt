@@ -84,6 +84,19 @@ private sealed interface Naming {
     data class Rename(val id: Long, val current: String) : Naming
 }
 
+/**
+ * 되돌릴 수 없는 동작을 한 번 더 묻기 위해 들고 있는 것.
+ *
+ * 동작마다 상태 변수를 따로 두면 새 삭제 버튼이 생길 때마다 묻는 것을 잊는다.
+ * 한 곳으로 모아 두면 "여기에 넣지 않으면 창이 안 뜬다" 가 규칙이 된다.
+ */
+private data class Confirm(
+    val title: String,
+    val body: String,
+    val confirmLabel: String,
+    val onConfirm: () -> Unit,
+)
+
 class MainActivity : ComponentActivity() {
 
     private val mediaPermission: String
@@ -221,6 +234,8 @@ class MainActivity : ComponentActivity() {
                 var pendingMenu by remember { mutableStateOf<VideoItem?>(null) }
                 // 지울지 물어보는 중인 영상.
                 var pendingDelete by remember { mutableStateOf<VideoItem?>(null) }
+                // 되돌릴 수 없는 동작은 모두 이걸 거쳐 간다. Confirm 의 주석 참고.
+                var confirming by remember { mutableStateOf<Confirm?>(null) }
                 // 방금 무슨 일이 있었는지 알리는 한 줄. 스스로 사라진다.
                 var message by remember { mutableStateOf<String?>(null) }
 
@@ -348,6 +363,16 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onDismiss = { pendingDelete = null },
+                    )
+                }
+
+                confirming?.let { ask ->
+                    ConfirmDialog(
+                        title = ask.title,
+                        body = ask.body,
+                        confirmLabel = ask.confirmLabel,
+                        onConfirm = ask.onConfirm,
+                        onDismiss = { confirming = null },
                     )
                 }
 
@@ -502,10 +527,28 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         onReorder = { uris -> playlistVm.reorder(open.id, uris) },
-                                        onRemove = { uri -> playlistVm.remove(open.id, uri) },
+                                        onRemove = { uri ->
+                                            val label = rows.firstOrNull { it.item.uri == uri }
+                                                ?.item?.displayName?.substringBeforeLast('.')
+                                                ?: "이 영상"
+                                            confirming = Confirm(
+                                                title = "목록에서 빼기",
+                                                // 파일이 지워지는 줄 알고 못 누르는 일이 없게 한다.
+                                                body = "$label\n\n목록에서만 빠집니다. 영상 파일은 그대로 남습니다.",
+                                                confirmLabel = "빼기",
+                                                onConfirm = { playlistVm.remove(open.id, uri) },
+                                            )
+                                        },
                                         onAdd = { picking = true },
                                         onRename = { naming = Naming.Rename(open.id, open.name) },
-                                        onDelete = { playlistVm.delete(open.id) },
+                                        onDelete = {
+                                            confirming = Confirm(
+                                                title = "재생목록 삭제",
+                                                body = "${open.name}\n\n목록만 지워집니다. 담아 둔 영상 파일은 그대로 남습니다.",
+                                                confirmLabel = "삭제",
+                                                onConfirm = { playlistVm.delete(open.id) },
+                                            )
+                                        },
                                         onBack = { playlistVm.close() },
                                     )
 
@@ -566,8 +609,16 @@ class MainActivity : ComponentActivity() {
                                     onToggle = vaultVm::setHidden,
                                     onChangePin = { vaultVm.startSet() },
                                     onDisable = {
-                                        vaultVm.disable()
-                                        showVault = false
+                                        confirming = Confirm(
+                                            title = "비공개 폴더 끄기",
+                                            body = "PIN 과 감춰 둔 폴더 목록이 지워집니다. " +
+                                                "감춰 뒀던 폴더는 다시 보관함에 나타납니다.",
+                                            confirmLabel = "끄기",
+                                            onConfirm = {
+                                                vaultVm.disable()
+                                                showVault = false
+                                            },
+                                        )
                                     },
                                     onBack = { showVault = false },
                                 )

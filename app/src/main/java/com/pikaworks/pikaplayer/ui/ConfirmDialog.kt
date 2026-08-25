@@ -42,7 +42,7 @@ fun ConfirmDialog(
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(14.dp))
-                .background(colors.surface)
+                .background(colors.elevated)
                 .padding(20.dp),
         ) {
             Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)

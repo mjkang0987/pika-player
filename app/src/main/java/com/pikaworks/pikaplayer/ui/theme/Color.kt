@@ -39,6 +39,18 @@ data class PikaColors(
     /** 영상 위 작은 라벨. 위 둘보다 한 단계 더 물러난다. */
     val onMediaTextFaint: Color get() = Color.White.copy(alpha = 0.60f)
     val onMediaTrack: Color get() = Color.White.copy(alpha = 0.20f)
+
+    /**
+     * 다이얼로그·바텀시트처럼 화면 위에 **떠 있는** 면.
+     *
+     * 라이트에서 [surface] 를 쓰면 안 된다. 그 값은 하단 네비게이션처럼 화면에
+     * 깔리는 띠가 흰 배경과 갈리도록 채도를 올려 둔 민트다. 떠 있는 상자에
+     * 칠하면 상자 전체가 초록으로 보인다. 떠 있는 것은 흰 종이가 맞다.
+     *
+     * 다크는 반대다. 배경이 이미 거의 검정이라 배경색을 그대로 쓰면 층이
+     * 사라진다. 그래서 [surface] 를 그대로 쓴다.
+     */
+    val elevated: Color get() = if (isDark) surface else Color.White
 }
 
 val PikaDarkColors = PikaColors(

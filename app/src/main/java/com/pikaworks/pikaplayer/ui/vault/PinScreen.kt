@@ -235,7 +235,7 @@ private fun RecoverySheet(onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = colors.surface,
+        containerColor = colors.elevated,
     ) {
         Column(
             modifier = Modifier
