@@ -65,7 +65,7 @@ fun PinScreen(
     ) {
         ScreenHeader(title, onBack)
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(22.dp))
         Text(
             subtitle,
             fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textSecondary,
@@ -73,7 +73,7 @@ fun PinScreen(
             modifier = Modifier.padding(horizontal = 32.dp),
         )
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(22.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             repeat(PIN_LENGTH) { index ->
                 val filled = index < entered.length
@@ -86,7 +86,7 @@ fun PinScreen(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
         // 안내 자리를 늘 비워 둔다. 오류가 났을 때만 나타나면 숫자판이 위아래로 뛴다.
         Box(modifier = Modifier.heightIn(min = 20.dp), contentAlignment = Alignment.Center) {
             val message = when {
@@ -108,8 +108,11 @@ fun PinScreen(
             contentAlignment = Alignment.Center,
         ) {
             val gaps = KEY_GAP * 3
-            // 아래쪽에 조금 남겨 둔다. 딱 맞추면 붙어 보인다.
-            val keySize = ((maxHeight - gaps - 12.dp) / 4).coerceIn(48.dp, 72.dp)
+            // 자리를 꽉 채우지 않는다. 남긴 만큼이 숫자판 위아래 여백이 된다
+            // (가운데 정렬이라 절반씩 나뉜다). 딱 맞추면 하단 네비게이션에
+            // 붙어 보인다.
+            val breathing = 36.dp
+            val keySize = ((maxHeight - gaps - breathing) / 4).coerceIn(46.dp, 72.dp)
             Keypad(
                 keySize = keySize,
                 enabled = !locked,
