@@ -57,7 +57,7 @@ import androidx.compose.material3.Icon
 /**
  * 라이브러리(S1).
  *
- * 구성: 헤더 → 이어보기 가로 캐러셀(최대 10) → 상단 탭 → 정렬·용량 → 목록
+ * 구성: 헤더 → 최근 가로 캐러셀(최대 10) → 상단 탭 → 정렬·용량 → 목록
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +69,7 @@ fun LibraryScreen(
     /** 줄 오른쪽 더보기(⋯). */
     onVideoMenu: (LibraryRow) -> Unit,
     onContinueClick: (ContinueItem) -> Unit,
-    /** 이어보기 줄에서 뺀다. 지우는 것은 저장된 재생 위치뿐이다. */
+    /** 최근 줄에서 뺀다. 지우는 것은 저장된 재생 위치뿐이다. */
     onContinueRemove: (ContinueItem) -> Unit,
     onSortChange: (String) -> Unit,
     onFilterChange: (String) -> Unit,
@@ -112,7 +112,7 @@ fun LibraryScreen(
             }
 
             if (state.continueWatching.isNotEmpty()) {
-                item { SectionTitle("이어보기", state.continueWatching.size) }
+                item { SectionTitle("최근", state.continueWatching.size) }
                 item { ContinueRow(state.continueWatching, onContinueClick, onContinueRemove) }
             }
 
@@ -262,7 +262,7 @@ private fun ContinueRow(
                     ) {
                         Icon(
                             AppIcons.Close,
-                            "이어보기에서 빼기",
+                            "최근에서 빼기",
                             tint = colors.onMediaText,
                             modifier = Modifier.size(12.dp),
                         )
