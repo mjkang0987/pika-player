@@ -48,8 +48,18 @@ data class PlayerUiState(
     val locked: Boolean = false,
     /** AspectRatioFrameLayout 의 resize mode. 화면비 버튼이 순환시킨다. */
     val resizeMode: Int = 0,
-    /** 같은 폴더에서 이 영상 뒤에 오는 것들. 하단 목록과 자동 재생이 함께 쓴다. */
+    /** 같은 폴더에서 이 영상 뒤에 오는 것들. 다음 버튼과 자동 재생이 함께 쓴다. */
     val upNext: List<VideoItem> = emptyList(),
+    /**
+     * 지금 틀고 있는 목록 전체. 재생목록 시트가 이걸 그린다.
+     *
+     * [upNext] 와 따로 두는 이유: 시트는 지나온 것까지 보여 주고 그 안에서 지금
+     * 어디쯤인지 짚어 준다. 뒤에 남은 것만 보여 주면 목록의 마지막에 왔을 때
+     * 빈 시트가 뜬다 — 무엇을 보고 있었는지조차 사라진다.
+     */
+    val queue: List<VideoItem> = emptyList(),
+    /** 목록에서 지금 것을 짚기 위한 값. */
+    val playingUri: String? = null,
     /** 대기열에서 이 영상 앞에 오는 것. 없으면 이전 버튼을 만들지 않는다. */
     val previous: VideoItem? = null,
     /** 한 편 반복. 켜면 끝나도 넘어가지 않고 처음부터 다시 튼다. */
@@ -228,6 +238,8 @@ class PlayerViewModel(
             speed = speed,
             subtitleCharset = charset,
             upNext = upNextOf(video),
+            queue = poolFor(video),
+            playingUri = video.uri.toString(),
             previous = previousOf(video),
             explicitQueue = explicitQueue,
             loopQueueEnabled = loopQueue,
@@ -362,7 +374,14 @@ class PlayerViewModel(
     /** 대기열이 바뀌면 앞·뒤 영상을 다시 계산한다. 버튼이 그 자리에서 생기고 사라진다. */
     private fun refreshQueue() {
         val video = currentVideo ?: return
-        _uiState.update { it.copy(upNext = upNextOf(video), previous = previousOf(video)) }
+        _uiState.update {
+            it.copy(
+                upNext = upNextOf(video),
+                queue = poolFor(video),
+                playingUri = video.uri.toString(),
+                previous = previousOf(video),
+            )
+        }
     }
 
     /** 설정에서 온 값들. 상태를 갈아끼우는 [open] 과 무관하게 유지돼야 한다. */

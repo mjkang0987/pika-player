@@ -159,7 +159,8 @@ fun PlayerScreen(
 
     if (upNextSheetVisible) {
         UpNextSheet(
-            videos = state.upNext,
+            videos = state.queue,
+            playingUri = state.playingUri,
             onClick = {
                 upNextSheetVisible = false
                 onPlayVideo(it)
@@ -309,10 +310,7 @@ fun PlayerScreen(
                             onBack = onBack,
                             modifier = Modifier.align(Alignment.TopStart),
                             trailing = {
-                                UpNextButton(
-                                    count = state.upNext.size,
-                                    onClick = { upNextSheetVisible = true },
-                                )
+                                UpNextButton(onClick = { upNextSheetVisible = true })
                             },
                         )
 
@@ -386,38 +384,26 @@ fun PlayerScreen(
 /**
  * 지금 틀고 있는 목록을 여는 문.
  *
- * 이름은 '재생목록'. 코드에서는 upNext(이 영상 뒤에 오는 것들)로 부르는데,
- * 화면에서는 그것이 곧 지금 재생 중인 목록이라 그렇게 읽는 편이 자연스럽다.
- *
- * 뒤에 남은 것이 없어도 자리를 지우지 않고 왜 비었는지 말한다 — 있었다가
- * 사라지면 버튼이 있었는지조차 알 수 없다. 대신 누를 수 없게 두어 손이 헛돌지
- * 않는다.
+ * 글자가 늘 같다. 개수나 남은 편수를 달아 두면 영상이 넘어갈 때마다 폭이 변해서,
+ * 제목이 잘리는 자리가 계속 달라진다. 목록의 마지막에 와 있어도 그대로 둔다 —
+ * 지금 무엇을 틀고 있는지는 여기서 여전히 볼 수 있다.
  */
 @Composable
-private fun UpNextButton(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun UpNextButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = PikaTheme.colors
     val shape = RoundedCornerShape(14.dp)
-    val has = count > 0
-    Row(
+    Text(
+        "재생목록",
+        fontSize = 12.sp,
+        color = colors.onMediaText,
         // 폭을 채우지 않는다. 제목 줄 오른쪽 끝에 매달리는 것이라 글자만큼만
         // 차지해야 제목에 줄 폭이 남는다.
         modifier = modifier
             .clip(shape)
-            .border(1.dp, Color.White.copy(alpha = if (has) 0.22f else 0.10f), shape)
-            .then(if (has) Modifier.clickable(onClick = onClick) else Modifier)
+            .border(1.dp, Color.White.copy(alpha = 0.22f), shape)
+            .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
-    ) {
-        Text(
-            if (has) "재생목록" else "마지막 영상입니다",
-            fontSize = 12.sp,
-            color = if (has) colors.onMediaText else colors.onMediaTextFaint,
-        )
-        if (has) {
-            Text("$count", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = colors.onMediaKey)
-        }
-    }
+    )
 }
 
 /**
@@ -516,9 +502,9 @@ private fun TransportControls(
     isPlaying: Boolean,
     onTogglePlay: () -> Unit,
     onSkip: (Long) -> Unit,
-    /** 이전 영상이 있을 때만. 없으면 버튼을 만들지 않는다. */
+    /** 이전 영상이 없으면 null. 자리는 남기고 누를 수 없게 둔다. */
     onPrevious: (() -> Unit)?,
-    /** 다음 영상이 있을 때만. */
+    /** 다음 영상이 없으면 null. */
     onNext: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -528,9 +514,10 @@ private fun TransportControls(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // 갈 곳이 없으면 버튼 자체를 만들지 않는다. 눌러도 아무 일이 없는
-        // 버튼을 흐리게 두는 것보다, 없는 편이 헷갈리지 않는다.
-        onPrevious?.let { TrackButton(AppIcons.PreviousTrack, "이전 영상", it) }
+        // 갈 곳이 없어도 자리는 남긴다. 없앴더니 목록의 처음과 끝에서 줄이
+        // 좁아지면서 재생 버튼이 좌우로 움직였다 — 눈 감고도 닿아야 하는
+        // 버튼이라 자리가 흔들리는 쪽이 흐린 버튼보다 나쁘다.
+        TrackButton(AppIcons.PreviousTrack, "이전 영상", onPrevious)
 
         SkipButton(AppIcons.Replay10, "10초 뒤로") { onSkip(-10_000) }
 
@@ -553,18 +540,27 @@ private fun TransportControls(
 
         SkipButton(AppIcons.Forward10, "10초 앞으로") { onSkip(10_000) }
 
-        onNext?.let { TrackButton(AppIcons.NextTrack, "다음 영상", it) }
+        TrackButton(AppIcons.NextTrack, "다음 영상", onNext)
     }
 }
 
 /** 이전·다음 영상. 10초 이동보다 한 단계 작게 둔다 — 자주 쓰는 쪽은 가운데다. */
 @Composable
-private fun TrackButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+private fun TrackButton(icon: ImageVector, label: String, onClick: (() -> Unit)?) {
     Box(
-        modifier = Modifier.size(40.dp).clickable(onClick = onClick),
+        modifier = Modifier
+            .size(40.dp)
+            .then(if (onClick == null) Modifier else Modifier.clickable(onClick = onClick)),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, label, tint = Color.White, modifier = Modifier.size(21.dp))
+        // 갈 곳이 없으면 글자를 낮춰 알린다. 눌러도 아무 일이 없다는 것을
+        // 눌러 보기 전에 알 수 있어야 한다.
+        Icon(
+            icon,
+            label,
+            tint = Color.White.copy(alpha = if (onClick == null) 0.25f else 1f),
+            modifier = Modifier.size(21.dp),
+        )
     }
 }
 

@@ -41,6 +41,8 @@ import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
 @Composable
 fun UpNextSheet(
     videos: List<VideoItem>,
+    /** 지금 틀고 있는 것. 목록 안에서 어디쯤인지 짚어 준다. */
+    playingUri: String?,
     onClick: (VideoItem) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -57,14 +59,19 @@ fun UpNextSheet(
         )
         LazyColumn(modifier = Modifier.padding(bottom = 28.dp)) {
             items(videos, key = { it.uri.toString() }) { video ->
-                UpNextRow(video = video, onClick = { onClick(video) })
+                UpNextRow(
+                    video = video,
+                    playing = video.uri.toString() == playingUri,
+                    onClick = { onClick(video) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun UpNextRow(video: VideoItem, onClick: () -> Unit) {
+private fun UpNextRow(video: VideoItem, playing: Boolean, onClick: () -> Unit) {
+    val colors = PikaDarkColors
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -89,16 +96,18 @@ private fun UpNextRow(video: VideoItem, onClick: () -> Unit) {
         Text(
             video.displayName,
             fontSize = 12.sp,
-            color = Color.White,
+            // 지금 것만 키컬러로. 아이콘을 하나 더 두는 것보다 조용하고,
+            // 목록을 훑을 때 눈이 먼저 닿는다.
+            color = if (playing) colors.onMediaKey else Color.White,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         Text(
-            formatDuration(video.durationMs),
+            if (playing) "재생 중" else formatDuration(video.durationMs),
             fontSize = 10.sp,
             fontWeight = FontWeight.Light,
-            color = Color.White.copy(alpha = 0.55f),
+            color = if (playing) colors.onMediaKey else Color.White.copy(alpha = 0.55f),
         )
     }
 }
