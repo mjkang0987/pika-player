@@ -54,6 +54,8 @@ fun FolderScreen(
     onNavigateTo: (Int) -> Unit,
     onRefresh: () -> Unit,
     onVideoClick: (VideoItem) -> Unit,
+    /** 지금 단계의 영상을 처음부터 이어서 튼다. 대기열은 넘겨준 순서 그대로다. */
+    onPlayAll: (List<VideoItem>) -> Unit,
     /** 길게 누르면 재생목록에 담는다. */
     onVideoLongClick: (VideoItem) -> Unit,
     /** 줄 오른쪽 더보기(⋯). */
@@ -102,17 +104,34 @@ fun FolderScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(
-                // 여백을 버튼 안으로. 바깥에 두면 눌린 배경이 글자에만 붙는다.
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable { sortSheetVisible = true }
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(sortLabel(state.sort), fontSize = 12.sp, color = colors.textPrimary)
-                Text("▾", fontSize = 11.sp, color = colors.textFaint)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    // 여백을 버튼 안으로. 바깥에 두면 눌린 배경이 글자에만 붙는다.
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { sortSheetVisible = true }
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(sortLabel(state.sort), fontSize = 12.sp, color = colors.textPrimary)
+                    Text("▾", fontSize = 11.sp, color = colors.textFaint)
+                }
+                // 이 단계에 영상이 없으면 만들지 않는다. 폴더만 있는 자리에서
+                // 눌러도 아무 일이 없는 버튼은 고장으로 읽힌다.
+                if (visibleVideos.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable { onPlayAll(visibleVideos) }
+                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(AppIcons.Play, null, tint = colors.key, modifier = Modifier.size(13.dp))
+                        Text("전체 재생", fontSize = 12.sp, color = colors.key)
+                    }
+                }
             }
             Text(
                 summaryLabel(visibleFolders, visibleVideos.size),

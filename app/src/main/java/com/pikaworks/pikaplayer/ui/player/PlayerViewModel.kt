@@ -55,13 +55,13 @@ data class PlayerUiState(
     /** 한 편 반복. 켜면 끝나도 넘어가지 않고 처음부터 다시 튼다. */
     val repeatEnabled: Boolean = false,
     /**
-     * 재생목록에서 튼 것인가.
+     * 사용자가 목록 하나를 통째로 튼 것인가 — 재생목록, 또는 폴더.
      *
-     * 목록 반복과 랜덤은 사용자가 직접 세운 목록일 때만 뜻이 있다. 보관함에서
-     * 튼 대기열은 "같은 폴더의 나머지" 라서, 거기서 섞어 봐야 사용자가 정한
-     * 순서를 흐트러뜨리는 것이 아니라 그냥 아무 영상이나 튼 것이 된다.
+     * 목록 반복과 랜덤은 그럴 때만 뜻이 있다. 보관함에서 한 편을 누른 대기열은
+     * "기기의 모든 영상" 이라, 거기서 섞어 봐야 사용자가 정한 순서를 흐트러
+     * 뜨리는 것이 아니라 그냥 아무 영상이나 트는 것이 된다.
      */
-    val playlistPlayback: Boolean = false,
+    val explicitQueue: Boolean = false,
     /** 목록 반복. 마지막 영상 다음에 처음으로 돌아간다. */
     val loopQueueEnabled: Boolean = false,
     /** 랜덤. 지금 영상 뒤를 섞는다. */
@@ -197,7 +197,7 @@ class PlayerViewModel(
             // 그대로 켜져 보이지 않도록 상태만 맞춰 둔다.
             _uiState.update {
                 it.copy(
-                    playlistPlayback = explicitQueue,
+                    explicitQueue = explicitQueue,
                     loopQueueEnabled = false,
                     shuffleEnabled = false,
                 )
@@ -229,7 +229,7 @@ class PlayerViewModel(
             subtitleCharset = charset,
             upNext = upNextOf(video),
             previous = previousOf(video),
-            playlistPlayback = explicitQueue,
+            explicitQueue = explicitQueue,
             loopQueueEnabled = loopQueue,
             shuffleEnabled = shuffle,
             autoPlayNextEnabled = autoPlayNext,

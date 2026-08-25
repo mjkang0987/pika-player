@@ -145,19 +145,19 @@ fun PlayerScreen(
                     description = "지금 영상이 끝나면 처음부터 다시 틉니다.",
                     onToggle = onToggleRepeat,
                 ),
-                // 재생목록으로 튼 것이 아니면 뒤에 올 목록 자체가 없다.
+                // 목록을 통째로 튼 것이 아니면(보관함에서 한 편) 뒤에 올 목록 자체가 없다.
                 SheetToggle(
                     label = "목록 반복",
                     on = state.loopQueueEnabled,
                     description = "마지막 영상 다음에 목록의 처음으로 돌아갑니다.",
                     onToggle = onToggleLoopQueue,
-                ).takeIf { state.playlistPlayback },
+                ).takeIf { state.explicitQueue },
                 SheetToggle(
                     label = "랜덤",
                     on = state.shuffleEnabled,
                     description = "지금 영상 뒤의 순서를 섞습니다.",
                     onToggle = onToggleShuffle,
-                ).takeIf { state.playlistPlayback },
+                ).takeIf { state.explicitQueue },
                 SheetToggle(
                     label = "자동 재생",
                     on = state.autoPlayNextEnabled,

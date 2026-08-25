@@ -188,17 +188,17 @@ class MainActivity : ComponentActivity() {
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
-                // 재생목록에서 튼 것인지를 함께 넘긴다. 반복·랜덤은 재생 화면에서
-                // 켜므로 여기서는 정하지 않는다.
+                // 목록을 통째로 튼 것인지(재생목록·폴더) 함께 넘긴다. 목록 반복과
+                // 랜덤은 그럴 때만 뜻이 있고, 켜고 끄는 것은 재생 화면에서 한다.
                 // 람다로는 기본값을 줄 수 없어 지역 함수로 둔다.
-                var queueIsPlaylist by remember { mutableStateOf(false) }
+                var queueIsExplicit by remember { mutableStateOf(false) }
                 fun play(
                     video: VideoItem,
                     from: List<VideoItem>,
-                    fromPlaylist: Boolean = false,
+                    explicitQueue: Boolean = false,
                 ) {
                     queue = from
-                    queueIsPlaylist = fromPlaylist
+                    queueIsExplicit = explicitQueue
                     playing = video
                 }
 
@@ -438,7 +438,7 @@ class MainActivity : ComponentActivity() {
                         resumePlayback = settings?.resumePlayback ?: true,
                         followAutoRotate = settings?.followAutoRotate ?: true,
                         queue = queue,
-                        queueIsPlaylist = queueIsPlaylist,
+                        queueIsExplicit = queueIsExplicit,
                         autoPlayNext = settings?.autoPlayNext ?: true,
                         onAutoPlayNextChange = { scope.launch { app.settings.setAutoPlayNext(it) } },
                         defaultSpeed = settings?.playbackSpeed ?: 1f,
@@ -491,7 +491,13 @@ class MainActivity : ComponentActivity() {
                                     onOpenFolder = folderVm::open,
                                     onNavigateTo = folderVm::navigateTo,
                                     onRefresh = refreshAll,
-                                    onVideoClick = { play(it, folderState.videos) },
+                                    // 이 화면의 대기열은 지금 보고 있는 폴더 그 자체다.
+                                    // 보관함처럼 "기기의 모든 영상" 이 아니므로
+                                    // 목록 반복과 랜덤을 열어 준다.
+                                    onVideoClick = { play(it, folderState.videos, explicitQueue = true) },
+                                    onPlayAll = { videos ->
+                                        videos.firstOrNull()?.let { play(it, videos, explicitQueue = true) }
+                                    },
                                     onVideoLongClick = { pendingAdd = it },
                                     onVideoMenu = { pendingMenu = it },
                                     onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
@@ -523,7 +529,7 @@ class MainActivity : ComponentActivity() {
                                             // 반복이나 랜덤은 재생 화면에서 켠다.
                                             val found = rows.mapNotNull { it.video }
                                             rows[index].video?.let { picked ->
-                                                play(picked, found, fromPlaylist = true)
+                                                play(picked, found, explicitQueue = true)
                                             }
                                         },
                                         onReorder = { uris -> playlistVm.reorder(open.id, uris) },
@@ -688,8 +694,8 @@ class MainActivity : ComponentActivity() {
         resumePlayback: Boolean,
         followAutoRotate: Boolean,
         queue: List<VideoItem>,
-        /** 재생목록에서 튼 대기열인가. 폴더로 거르지 않는다. */
-        queueIsPlaylist: Boolean,
+        /** 목록 하나를 통째로 튼 것인가(재생목록·폴더). 폴더로 거르지 않는다. */
+        queueIsExplicit: Boolean,
         autoPlayNext: Boolean,
         /** 재생 화면에서 자동 재생을 껐다 켜면 설정에도 남긴다. */
         onAutoPlayNextChange: (Boolean) -> Unit,
@@ -742,7 +748,7 @@ class MainActivity : ComponentActivity() {
                 speed = defaultSpeed,
                 charset = defaultCharset,
                 queue = queue,
-                explicitQueue = queueIsPlaylist,
+                explicitQueue = queueIsExplicit,
             )
         }
         LaunchedEffect(autoPlayNext) { playerVm.setAutoPlayNext(autoPlayNext) }
