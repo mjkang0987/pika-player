@@ -2,7 +2,8 @@ package com.pikaworks.pikaplayer.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,11 +37,14 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
  * 썸네일 위 진행 바는 높이를 모서리 반경과 같게(4dp) 유지해야 한다.
  * 바가 반경보다 얇으면 클리핑 곡선이 바를 대각선으로 잘라 끝이 쐐기가 된다.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VideoListRow(
     video: VideoItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** 길게 눌렀을 때. 없으면 길게 눌러도 아무 일이 없다. */
+    onLongClick: (() -> Unit)? = null,
     /** 0f..1f. 재생 이력이 없으면 null */
     progress: Float? = null,
     subtitleFormat: String? = null,
@@ -49,7 +53,9 @@ fun VideoListRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            // 짧게·길게를 한 곳에서 다뤄야 한다. clickable 과 따로 걸면 둘이
+            // 서로의 몸짓을 가로챈다.
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 20.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

@@ -61,6 +61,8 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 fun LibraryScreen(
     state: LibraryUiState,
     onVideoClick: (LibraryRow) -> Unit,
+    /** 길게 누르면 재생목록에 담는다. */
+    onVideoLongClick: (LibraryRow) -> Unit,
     onContinueClick: (ContinueItem) -> Unit,
     onSortChange: (String) -> Unit,
     onFilterChange: (String) -> Unit,
@@ -126,6 +128,7 @@ fun LibraryScreen(
                 VideoListRow(
                     video = row.video,
                     onClick = { onVideoClick(row) },
+                    onLongClick = { onVideoLongClick(row) },
                     progress = row.progress,
                     subtitleFormat = row.subtitleFormat,
                 )

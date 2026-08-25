@@ -32,6 +32,8 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 fun RecentScreen(
     rows: List<LibraryRow>,
     onVideoClick: (LibraryRow) -> Unit,
+    /** 길게 누르면 재생목록에 담는다. */
+    onVideoLongClick: (LibraryRow) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -76,6 +78,7 @@ fun RecentScreen(
                 VideoListRow(
                     video = row.video,
                     onClick = { onVideoClick(row) },
+                    onLongClick = { onVideoLongClick(row) },
                     progress = row.progress,
                     subtitleFormat = row.subtitleFormat,
                 )

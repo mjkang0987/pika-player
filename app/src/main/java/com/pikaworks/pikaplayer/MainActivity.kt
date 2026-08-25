@@ -46,6 +46,12 @@ import com.pikaworks.pikaplayer.ui.folder.FolderViewModel
 import com.pikaworks.pikaplayer.ui.library.LibraryScreen
 import com.pikaworks.pikaplayer.ui.library.LibraryViewModel
 import com.pikaworks.pikaplayer.ui.permission.PermissionScreen
+import com.pikaworks.pikaplayer.ui.playlist.AddToPlaylistSheet
+import com.pikaworks.pikaplayer.ui.playlist.NameDialog
+import com.pikaworks.pikaplayer.ui.playlist.PlaylistDetailScreen
+import com.pikaworks.pikaplayer.ui.playlist.PlaylistRow
+import com.pikaworks.pikaplayer.ui.playlist.PlaylistScreen
+import com.pikaworks.pikaplayer.ui.playlist.PlaylistViewModel
 import com.pikaworks.pikaplayer.ui.player.PipController
 import com.pikaworks.pikaplayer.ui.player.PlayerOrientation
 import com.pikaworks.pikaplayer.ui.player.PlayerScreen
@@ -63,6 +69,13 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+
+/** 이름을 받는 창이 무엇을 하려는 참인지. 만들기와 이름 바꾸기가 같은 창을 쓴다. */
+private sealed interface Naming {
+    /** [andAdd] 가 있으면 만들자마자 그 영상을 담는다. 담기 시트에서 온 경우다. */
+    data class Create(val andAdd: VideoItem? = null) : Naming
+    data class Rename(val id: Long, val current: String) : Naming
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -179,6 +192,17 @@ class MainActivity : ComponentActivity() {
                 val vaultVm: VaultViewModel = viewModel(factory = VaultViewModel.Factory(app.vault))
                 val vaultState by vaultVm.uiState.collectAsStateWithLifecycle()
 
+                val playlistVm: PlaylistViewModel = viewModel(
+                    factory = PlaylistViewModel.Factory(app.database.playlistDao())
+                )
+                val playlists by playlistVm.playlists.collectAsStateWithLifecycle()
+                val openPlaylistId by playlistVm.openId.collectAsStateWithLifecycle()
+                val openPlaylistItems by playlistVm.openItems.collectAsStateWithLifecycle()
+                // 길게 눌러 담을 영상. null 이면 시트를 띄우지 않는다.
+                var pendingAdd by remember { mutableStateOf<VideoItem?>(null) }
+                // 이름을 받는 창. 만들기와 이름 바꾸기가 같은 창을 쓴다.
+                var naming by remember { mutableStateOf<Naming?>(null) }
+
                 // 탭을 벗어나면 접는다. 안 그러면 설정으로 돌아왔을 때 라이선스가 떠 있다.
                 LaunchedEffect(tab) {
                     if (tab != Tab.SETTINGS) {
@@ -257,6 +281,34 @@ class MainActivity : ComponentActivity() {
                     refreshAll()
                 }
 
+                pendingAdd?.let { target ->
+                    AddToPlaylistSheet(
+                        videoName = target.displayName,
+                        playlists = playlists,
+                        onSelect = { playlistVm.add(it, target) },
+                        onCreate = { naming = Naming.Create(target) },
+                        onDismiss = { pendingAdd = null },
+                    )
+                }
+
+                when (val request = naming) {
+                    null -> Unit
+                    is Naming.Create -> NameDialog(
+                        title = "새 재생목록",
+                        initial = "",
+                        confirmLabel = "만들기",
+                        onConfirm = { playlistVm.create(it, request.andAdd) },
+                        onDismiss = { naming = null },
+                    )
+                    is Naming.Rename -> NameDialog(
+                        title = "이름 바꾸기",
+                        initial = request.current,
+                        confirmLabel = "저장",
+                        onConfirm = { playlistVm.rename(request.id, it) },
+                        onDismiss = { naming = null },
+                    )
+                }
+
                 val video = playing
                 when {
                     // 설정을 아직 못 읽었으면 고른 폴더가 있는지도 모른다. 그 상태로
@@ -315,6 +367,7 @@ class MainActivity : ComponentActivity() {
                                 onContinueClick = { item ->
                                     play(item.video, libraryState.continueWatching.map { it.video })
                                 },
+                                onVideoLongClick = { row -> pendingAdd = row.video },
                                 onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 onFilterChange = libraryVm::setFilter,
                                 onQueryChange = libraryVm::setQuery,
@@ -329,10 +382,45 @@ class MainActivity : ComponentActivity() {
                                     state = folderState,
                                     onOpenFolder = folderVm::open,
                                     onNavigateTo = folderVm::navigateTo,
-                                onRefresh = refreshAll,
+                                    onRefresh = refreshAll,
                                     onVideoClick = { play(it, folderState.videos) },
+                                    onVideoLongClick = { pendingAdd = it },
                                     onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 )
+                            }
+
+                            Tab.PLAYLIST -> {
+                                val open = playlists.firstOrNull { it.id == openPlaylistId }
+                                if (open == null) {
+                                    PlaylistScreen(
+                                        modifier = Modifier.weight(1f),
+                                        playlists = playlists,
+                                        onOpen = playlistVm::open,
+                                        onCreate = { naming = Naming.Create() },
+                                    )
+                                } else {
+                                    BackHandler { playlistVm.close() }
+                                    // 담을 때 저장해 둔 이름과 지금 기기에 있는 영상을 잇는다.
+                                    val byUri = libraryState.rows.associateBy { it.video.uri.toString() }
+                                    val rows = openPlaylistItems.map { item ->
+                                        PlaylistRow(item, byUri[item.uri]?.video)
+                                    }
+                                    PlaylistDetailScreen(
+                                        modifier = Modifier.weight(1f),
+                                        name = open.name,
+                                        rows = rows,
+                                        onPlay = { index ->
+                                            // 대기열은 목록 순서 그대로. 찾을 수 없는 것은 뺀다.
+                                            val queue = rows.mapNotNull { it.video }
+                                            rows[index].video?.let { play(it, queue) }
+                                        },
+                                        onMove = { index, delta -> playlistVm.move(open.id, index, delta) },
+                                        onRemove = { uri -> playlistVm.remove(open.id, uri) },
+                                        onRename = { naming = Naming.Rename(open.id, open.name) },
+                                        onDelete = { playlistVm.delete(open.id) },
+                                        onBack = { playlistVm.close() },
+                                    )
+                                }
                             }
 
                             Tab.RECENT -> RecentScreen(
@@ -340,6 +428,7 @@ class MainActivity : ComponentActivity() {
                                 rows = libraryState.recent,
                                 // 목록은 최근 순이지만 '다음 영상'은 폴더 안 순서를 따른다.
                                 onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
+                                onVideoLongClick = { row -> pendingAdd = row.video },
                                 onRefresh = refreshAll,
                             )
 

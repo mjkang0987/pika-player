@@ -92,6 +92,15 @@ object AppIcons {
         "M10 9.5v5l4-2.5z",
     )
     val NavFolder = stroke("M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z")
+    /** 재생목록. 줄 세 개에 재생 표시를 붙여 '순서가 있는 목록' 으로 읽히게 한다. */
+    val NavPlaylist = stroke(
+        "M4 7h11", "M4 12h11", "M4 17h6",
+        "M15.5 14.5v6l5-3z",
+    )
+
+    /** 만들기. */
+    val Plus = stroke("M12 5v14", "M5 12h14")
+
     val NavRecent = stroke("M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z", "M12 7.5V12l3 2")
     val NavSettings = stroke(
         "M4 7h8M17 7h3M4 12h3M12 12h8M4 17h8M17 17h3",
@@ -100,6 +109,8 @@ object AppIcons {
         "M14.5 14.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4z",
     )
     val ChevronRight = stroke("M9.5 6 15.5 12l-6 6")
+    val ChevronUp = stroke("M6 14.5 12 8.5l6 6")
+    val ChevronDown = stroke("M6 9.5 12 15.5l6 -6")
     val Search = stroke("M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z", "M16.2 16.2 21 21")
 
     /** 큰 화면 안에 작은 화면. 오른쪽 아래로 접히는 모습을 그린다. */

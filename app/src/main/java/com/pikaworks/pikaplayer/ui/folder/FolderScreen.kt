@@ -54,6 +54,8 @@ fun FolderScreen(
     onNavigateTo: (Int) -> Unit,
     onRefresh: () -> Unit,
     onVideoClick: (VideoItem) -> Unit,
+    /** 길게 누르면 재생목록에 담는다. */
+    onVideoLongClick: (VideoItem) -> Unit,
     onSortChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -129,7 +131,11 @@ fun FolderScreen(
                     FolderRow(folder = folder, onClick = { onOpenFolder(folder) })
                 }
                 items(visibleVideos, key = { "f:" + it.uri }) { video ->
-                    VideoListRow(video = video, onClick = { onVideoClick(video) })
+                    VideoListRow(
+                        video = video,
+                        onClick = { onVideoClick(video) },
+                        onLongClick = { onVideoLongClick(video) },
+                    )
                 }
             }
         }

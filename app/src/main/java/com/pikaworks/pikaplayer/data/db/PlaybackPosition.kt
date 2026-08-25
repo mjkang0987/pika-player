@@ -48,11 +48,12 @@ interface PlaybackPositionDao {
 }
 
 @Database(
-    entities = [PlaybackPosition::class, SafMetadata::class],
-    version = 2,
+    entities = [PlaybackPosition::class, SafMetadata::class, Playlist::class, PlaylistItem::class],
+    version = 3,
     exportSchema = false,
 )
 abstract class PikaDatabase : RoomDatabase() {
     abstract fun playbackPositionDao(): PlaybackPositionDao
     abstract fun safMetadataDao(): SafMetadataDao
+    abstract fun playlistDao(): PlaylistDao
 }

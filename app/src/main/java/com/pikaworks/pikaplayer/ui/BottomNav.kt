@@ -2,7 +2,6 @@ package com.pikaworks.pikaplayer.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -29,6 +27,7 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 enum class Tab(val label: String, val icon: ImageVector) {
     LIBRARY("보관함", AppIcons.NavLibrary),
     FOLDER("폴더", AppIcons.NavFolder),
+    PLAYLIST("재생목록", AppIcons.NavPlaylist),
     RECENT("최근", AppIcons.NavRecent),
     SETTINGS("설정", AppIcons.NavSettings),
 }
@@ -48,14 +47,15 @@ fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifi
             .fillMaxWidth()
             .background(colors.surface)
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 30.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            // 탭이 다섯이면 고정 폭으로는 좁은 화면을 넘친다. 남는 폭을 고르게
+            // 나눠 갖게 해서 개수와 화면 크기에 관계없이 들어맞게 한다.
+            .padding(horizontal = 12.dp),
     ) {
         Tab.entries.forEach { tab ->
             val active = tab == current
             Column(
                 modifier = Modifier
-                    .widthIn(min = 56.dp)
+                    .weight(1f)
                     .heightIn(min = 44.dp)
                     .clickable { onSelect(tab) }
                     // 여백은 버튼 안쪽에 둔다. 바깥에 두면 눌렀을 때 칠해지는
