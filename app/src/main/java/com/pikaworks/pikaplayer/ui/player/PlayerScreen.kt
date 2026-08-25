@@ -71,6 +71,7 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.draw.alpha
 import androidx.compose.animation.core.animateFloatAsState
 import com.pikaworks.pikaplayer.ui.UpNextSheet
+import androidx.compose.ui.text.style.TextOverflow
 
 /**
  * 플레이어(S3, 세로).
@@ -289,30 +290,30 @@ fun PlayerScreen(
                     Box(Modifier.fillMaxSize().alpha(controlsAlpha)) {
                         // 밝은 장면에서 흰 아이콘이 묻히지 않도록 스크림을 깐다.
                         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.30f)))
-                        // 재생과 다음 영상은 화면 한가운데. 엄지가 가장 쉽게 닿는
-                        // 자리이고, 아래 줄과 달리 보는 도중에 자주 쓴다.
-                        Column(
+                        // 가운데에는 재생 묶음만 둔다. 다른 것을 같이 세우면 그
+                        // 있고 없음에 따라 재생 버튼이 위아래로 움직인다 — 눈 감고도
+                        // 닿아야 하는 버튼이다.
+                        TransportControls(
+                            isPlaying = state.isPlaying,
+                            onTogglePlay = onTogglePlay,
+                            onSkip = { nudge++; onSkip(it) },
+                            onPrevious = state.previous?.let { { onPlayVideo(it) } },
+                            onNext = state.upNext.firstOrNull()?.let { { onPlayVideo(it) } },
                             modifier = Modifier.align(Alignment.Center),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            TransportControls(
-                                isPlaying = state.isPlaying,
-                                onTogglePlay = onTogglePlay,
-                                onSkip = { nudge++; onSkip(it) },
-                                onPrevious = state.previous?.let { { onPlayVideo(it) } },
-                                onNext = state.upNext.firstOrNull()?.let { { onPlayVideo(it) } },
-                            )
-                            Spacer(Modifier.height(20.dp))
-                            UpNextButton(
-                                count = state.upNext.size,
-                                onClick = { upNextSheetVisible = true },
-                            )
-                        }
+                        )
 
+                        // 재생목록은 제목 줄 오른쪽 끝에 붙인다. 글자 수가 바뀌어도
+                        // 오른쪽에 매달려 있어 자리가 흔들리지 않는다.
                         PlayerTopBar(
                             title = state.title,
                             onBack = onBack,
                             modifier = Modifier.align(Alignment.TopStart),
+                            trailing = {
+                                UpNextButton(
+                                    count = state.upNext.size,
+                                    onClick = { upNextSheetVisible = true },
+                                )
+                            },
                         )
 
                         // 세로든 가로든 컨트롤은 영상 위에 얹는다. 아래에 따로
@@ -398,13 +399,13 @@ private fun UpNextButton(count: Int, onClick: () -> Unit, modifier: Modifier = M
     val shape = RoundedCornerShape(14.dp)
     val has = count > 0
     Row(
-        // 폭을 채우지 않는다. 화면 한가운데에 놓이는 것이라 글자만큼만 있어야
-        // 재생 버튼 묶음과 한 덩어리로 읽힌다.
+        // 폭을 채우지 않는다. 제목 줄 오른쪽 끝에 매달리는 것이라 글자만큼만
+        // 차지해야 제목에 줄 폭이 남는다.
         modifier = modifier
             .clip(shape)
             .border(1.dp, Color.White.copy(alpha = if (has) 0.22f else 0.10f), shape)
             .then(if (has) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -443,7 +444,13 @@ private fun SubtitleText(text: String, scale: Float, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun PlayerTopBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun PlayerTopBar(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** 오른쪽 끝에 붙는 것. 지금은 재생목록 버튼. */
+    trailing: @Composable () -> Unit = {},
+) {
     Row(
         // 왼쪽·위아래 여백은 IconTap 이 아이콘보다 커진 만큼(가로 10dp, 세로 10dp)
         // 덜어낸 값이다. 아이콘이 놓이는 자리는 전과 같다.
@@ -455,7 +462,17 @@ private fun PlayerTopBar(title: String, onBack: () -> Unit, modifier: Modifier =
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = Color.White, iconSize = 24.dp)
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White, maxLines = 1)
+        // 남는 폭을 제목이 갖는다. 그러지 않으면 긴 제목이 오른쪽 버튼 밑으로 들어간다.
+        Text(
+            title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        trailing()
     }
 }
 
