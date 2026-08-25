@@ -1,5 +1,8 @@
 package com.pikaworks.pikaplayer.ui
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +21,12 @@ import com.pikaworks.pikaplayer.ui.theme.PikaTheme
  * 다섯 화면에 같은 Row 가 복사돼 있었다. 누름 영역을 고치려면 다섯 군데를
  * 똑같이 손봐야 했고, 그래서 한곳으로 모은다.
  *
- * 바깥 여백은 [IconTap] 이 아이콘보다 커진 만큼(왼쪽 10dp, 위아래 각 8dp)
- * 덜어낸 값이다. 아이콘과 제목이 놓이는 자리는 전과 같다.
+ * 위 여백은 상태바 높이를 받아서 쓴다. 전에는 60dp 를 박아 뒀는데, 그 값은
+ * 상태바가 24dp 인 기기를 가정한 것이었다. 상태바가 24dp 면 그 아래로 36dp 가
+ * 더 붙어 허전했고, 노치가 있어 48dp 인 기기에서는 반대로 좁았다.
+ *
+ * 왼쪽 여백은 [IconTap] 이 아이콘보다 커진 만큼(10dp) 덜어낸 값이다.
+ * 아이콘과 제목이 놓이는 가로 자리는 전과 같다.
  */
 @Composable
 fun ScreenHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -27,7 +34,8 @@ fun ScreenHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifie
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 10.dp, end = 20.dp, top = 52.dp, bottom = 2.dp),
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(start = 10.dp, end = 20.dp, top = 6.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {

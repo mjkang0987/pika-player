@@ -1,6 +1,9 @@
 package com.pikaworks.pikaplayer.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -50,8 +53,12 @@ fun SearchHeader(
     val focusRequester = remember { FocusRequester() }
 
     Row(
+        // 위 여백은 상태바 높이를 받아 쓴다. 박아 둔 값은 기기마다 어긋난다.
         // 오른쪽 여백은 IconTap 이 아이콘보다 커진 만큼(11dp) 덜어낸 값이다.
-        modifier = modifier.fillMaxWidth().padding(start = 20.dp, end = 9.dp, top = 56.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(start = 20.dp, end = 9.dp, top = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {

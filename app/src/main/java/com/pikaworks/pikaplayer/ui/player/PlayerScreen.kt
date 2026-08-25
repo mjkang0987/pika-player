@@ -5,6 +5,9 @@ import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -395,9 +398,11 @@ private fun TopBar(title: String, onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 22.dp, end = 22.dp, top = 62.dp, bottom = 10.dp),
+            .windowInsetsPadding(WindowInsets.statusBars)
+            // 가로 10dp·세로 10dp 는 IconTap 이 아이콘보다 커진 몫을 덜어낸 값이다.
+            .padding(start = 12.dp, end = 22.dp, top = 6.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = colors.textPrimary, iconSize = 24.dp)
         Text(
