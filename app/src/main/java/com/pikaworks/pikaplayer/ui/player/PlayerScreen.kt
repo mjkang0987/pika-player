@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Arrangement
@@ -125,7 +126,17 @@ fun PlayerScreen(
         )
     }
 
-    Column(modifier = modifier.fillMaxSize().background(Color.Black)) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            // 이 화면은 시스템 바 아래까지 그려진다. 이 인셋이 없으면 맨 아래
+            // 내용이 3버튼 내비게이션에 가린다. 배경은 인셋보다 먼저 칠하므로
+            // 검은 바탕은 그대로 화면 끝까지 간다.
+            //
+            // 전체화면에서는 시스템 바를 감춘 상태라 이 값이 0 이 되어 영향이 없다.
+            .windowInsetsPadding(WindowInsets.navigationBars),
+    ) {
 
         if (!isFullscreen) TopBar(title = state.title, onBack = onBack)
 
