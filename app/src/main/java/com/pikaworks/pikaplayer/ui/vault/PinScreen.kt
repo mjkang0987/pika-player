@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.AppIcons
@@ -95,10 +97,31 @@ fun PinScreen(
             Text(message, fontSize = 12.sp, color = colors.textMeta, textAlign = TextAlign.Center)
         }
 
-        Spacer(Modifier.height(20.dp))
-        Keypad(enabled = !locked, onDigit = onDigit, onBackspace = onBackspace)
+        Spacer(Modifier.height(16.dp))
+        // 숫자판은 남는 높이에 맞춘다.
+        //
+        // 72dp 로 못 박아 두었더니 4줄 + 여백이 318dp 였고, 작은 기기(≈558dp
+        // 높이)에서는 하단 네비게이션에 마지막 줄이 잘렸다. 숫자판은 스크롤할
+        // 것이 아니라 한눈에 다 보여야 하는 물건이라, 자리에 맞춰 줄인다.
+        BoxWithConstraints(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            val gaps = KEY_GAP * 3
+            // 아래쪽에 조금 남겨 둔다. 딱 맞추면 붙어 보인다.
+            val keySize = ((maxHeight - gaps - 12.dp) / 4).coerceIn(48.dp, 72.dp)
+            Keypad(
+                keySize = keySize,
+                enabled = !locked,
+                onDigit = onDigit,
+                onBackspace = onBackspace,
+            )
+        }
     }
 }
+
+/** 숫자 사이 간격. 키 크기를 계산할 때도 쓴다. */
+private val KEY_GAP = 10.dp
 
 /** 남은 시간을 사람이 읽는 단위로. 초 단위까지 보여주면 계속 다시 그려야 한다. */
 private fun formatWait(ms: Long): String {
@@ -107,31 +130,37 @@ private fun formatWait(ms: Long): String {
 }
 
 @Composable
-private fun Keypad(enabled: Boolean, onDigit: (Char) -> Unit, onBackspace: () -> Unit) {
+private fun Keypad(
+    keySize: Dp,
+    enabled: Boolean,
+    onDigit: (Char) -> Unit,
+    onBackspace: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(KEY_GAP),
     ) {
         listOf("123", "456", "789").forEach { line ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                line.forEach { digit -> Key(digit.toString(), enabled) { onDigit(digit) } }
+            Row(horizontalArrangement = Arrangement.spacedBy(KEY_GAP)) {
+                line.forEach { digit -> Key(digit.toString(), keySize, enabled) { onDigit(digit) } }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Spacer(Modifier.width(72.dp))
-            Key("0", enabled) { onDigit('0') }
-            Key("⌫", enabled, onClick = onBackspace)
+        Row(horizontalArrangement = Arrangement.spacedBy(KEY_GAP)) {
+            // 1·4·7 줄과 세로로 맞추려고 빈자리를 채운다.
+            Spacer(Modifier.width(keySize))
+            Key("0", keySize, enabled) { onDigit('0') }
+            Key("⌫", keySize, enabled, onClick = onBackspace)
         }
     }
 }
 
 @Composable
-private fun Key(label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun Key(label: String, size: Dp, enabled: Boolean, onClick: () -> Unit) {
     val colors = PikaTheme.colors
     Box(
         modifier = Modifier
-            .size(72.dp)
-            .clip(RoundedCornerShape(36.dp))
+            .size(size)
+            .clip(RoundedCornerShape(size / 2))
             .background(colors.surface)
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center,
