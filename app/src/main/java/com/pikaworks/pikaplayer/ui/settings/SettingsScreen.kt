@@ -119,16 +119,40 @@ fun SettingsScreen(
 
 
             item { SectionHeader("라이브러리") }
-            item { SwitchRow("자동 작은 창", settings.autoPip, onAutoPipChange) }
-            item { ValueRow("비공개 폴더", if (vaultEnabled) "켜짐" else "꺼짐", onOpenVault) }
+            item {
+                SwitchRow(
+                    "자동 작은 창",
+                    settings.autoPip,
+                    onAutoPipChange,
+                    description = "홈으로 나갈 때 영상이 작은 창으로 따라 나옵니다",
+                )
+            }
+            item {
+                ValueRow(
+                    "비공개 폴더",
+                    if (vaultEnabled) "켜짐" else "꺼짐",
+                    description = "고른 폴더를 목록에서 감춥니다",
+                    onClick = onOpenVault,
+                )
+            }
             // 어린이 잠금은 비공개 폴더와 같은 PIN 을 쓴다. PIN 이 없으면 켤 수 없으므로
             // 스위치 대신 PIN 을 정하러 가는 줄을 보여 준다 — 눌러도 안 켜지는 스위치는
             // 고장으로 읽힌다.
             item {
                 if (vaultEnabled) {
-                    SwitchRow("어린이 잠금", settings.childLock, onChildLockChange)
+                    SwitchRow(
+                    "어린이 잠금",
+                    settings.childLock,
+                    onChildLockChange,
+                    description = "잠금을 풀 때 PIN 을 묻고, 잠긴 동안 나갈 수 없습니다",
+                )
                 } else {
-                    ValueRow("어린이 잠금", "PIN 설정 필요", onOpenVault)
+                    ValueRow(
+                    "어린이 잠금",
+                    "PIN 설정 필요",
+                    description = "비공개 폴더와 같은 PIN 을 씁니다",
+                    onClick = onOpenVault,
+                )
                 }
             }
 
@@ -152,7 +176,7 @@ fun SettingsScreen(
 
             item { SectionHeader("정보") }
             item { InfoRow("버전", versionName) }
-            item { ValueRow("오픈소스 라이선스", "", onOpenLicenses) }
+            item { ValueRow("오픈소스 라이선스", "", onClick = onOpenLicenses) }
             item { Spacer(Modifier.height(32.dp)) }
         }
     }
@@ -200,7 +224,13 @@ private fun SettingRow(
     label: String,
     content: @Composable () -> Unit,
     onClick: (() -> Unit)? = null,
-    /** 잠긴 항목은 글자를 한 단계 낮춰 쓸 수 없다는 것을 색으로도 알린다. */
+    /**
+     * 이름만으로 무엇인지 안 읽히는 항목에만 붙인다.
+     *
+     * 모든 줄에 달면 목록이 두 배로 길어져 훑기 어려워진다. "이어보기" 처럼
+     * 이름이 곧 설명인 것에는 붙이지 않는다.
+     */
+    description: String? = null,
 ) {
     val colors = PikaTheme.colors
     Row(
@@ -208,19 +238,37 @@ private fun SettingRow(
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .heightIn(min = 50.dp)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label, fontSize = 14.sp, color = colors.textPrimary)
+        // 설명이 길면 오른쪽 스위치·값을 밀어내지 않고 여기서 줄바꿈한다.
+        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(label, fontSize = 14.sp, color = colors.textPrimary)
+            if (description != null) {
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    description,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Light,
+                    lineHeight = 15.sp,
+                    color = colors.textMeta,
+                )
+            }
+        }
         content()
     }
 }
 
 @Composable
-private fun ValueRow(label: String, value: String, onClick: () -> Unit) {
+private fun ValueRow(
+    label: String,
+    value: String,
+    description: String? = null,
+    onClick: () -> Unit,
+) {
     val colors = PikaTheme.colors
-    SettingRow(label, content = {
+    SettingRow(label, description = description, content = {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (value.isNotEmpty()) {
                 Text(value, fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textMeta)
@@ -240,8 +288,18 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    SettingRow(label, content = { PikaSwitch(checked) { onChange(!checked) } }, onClick = { onChange(!checked) })
+private fun SwitchRow(
+    label: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+    description: String? = null,
+) {
+    SettingRow(
+        label,
+        description = description,
+        content = { PikaSwitch(checked) { onChange(!checked) } },
+        onClick = { onChange(!checked) },
+    )
 }
 
 /**
