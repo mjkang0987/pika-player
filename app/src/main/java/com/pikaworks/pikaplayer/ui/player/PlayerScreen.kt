@@ -227,20 +227,15 @@ fun PlayerScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
-            // 이 화면은 시스템 바 아래까지 그려진다. 이 인셋이 없으면 맨 아래
-            // 내용이 3버튼 내비게이션에 가린다. 배경은 인셋보다 먼저 칠하므로
-            // 검은 바탕은 그대로 화면 끝까지 간다.
-            //
-            // 전체화면에서는 시스템 바를 감춘 상태라 이 값이 0 이 되어 영향이 없다.
-            .windowInsetsPadding(WindowInsets.navigationBars),
+            .background(Color.Black),
     ) {
 
-        if (!isFullscreen) TopBar(title = state.title, onBack = onBack)
-
-        // 세로에서도 남는 높이를 다 쓴다. 16:9 로 잘라 두면 컨트롤이 화면 한가운데
-        // 걸리고, 방향을 바꿀 때마다 버튼이 다른 데 가 있다. 영상은 이 안에서
-        // 비율대로 맞춰지므로 보이는 크기는 그대로고 위아래만 검게 남는다.
+        // 영상 자리는 화면 전체다. 제목 줄을 위에 쌓아 두면 그만큼 영상이 작아지는데,
+        // 세로 영상에서는 그 몫이 그대로 세로 크기다. 제목도 컨트롤과 함께 영상 위에
+        // 얹고 같이 걷히게 한다.
+        //
+        // 시스템 바 인셋은 얹히는 것들이 각자 갖는다. 여기서 한 번에 주면 영상까지
+        // 밀려 들어와 위아래로 검은 띠가 남는다.
         Box(
             modifier = Modifier.weight(1f).fillMaxWidth()
                 // '채움' 은 넘치는 부분을 잘라내는 게 목적이다. 잘리지 않으면
@@ -294,24 +289,31 @@ fun PlayerScreen(
                     Box(Modifier.fillMaxSize().alpha(controlsAlpha)) {
                         // 밝은 장면에서 흰 아이콘이 묻히지 않도록 스크림을 깐다.
                         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.30f)))
-                        TransportControls(
-                            isPlaying = state.isPlaying,
-                            onTogglePlay = onTogglePlay,
-                            onSkip = { nudge++; onSkip(it) },
-                            onPrevious = state.previous?.let { { onPlayVideo(it) } },
-                            onNext = state.upNext.firstOrNull()?.let { { onPlayVideo(it) } },
+                        // 재생과 다음 영상은 화면 한가운데. 엄지가 가장 쉽게 닿는
+                        // 자리이고, 아래 줄과 달리 보는 도중에 자주 쓴다.
+                        Column(
                             modifier = Modifier.align(Alignment.Center),
-                        )
-
-                        // 세로에는 제목 줄이 영상 위에 따로 있다. 가로에서만
-                        // 영상 위에 얹는다.
-                        if (isFullscreen) {
-                            FullscreenTopBar(
-                                title = state.title,
-                                onBack = onBack,
-                                modifier = Modifier.align(Alignment.TopStart),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            TransportControls(
+                                isPlaying = state.isPlaying,
+                                onTogglePlay = onTogglePlay,
+                                onSkip = { nudge++; onSkip(it) },
+                                onPrevious = state.previous?.let { { onPlayVideo(it) } },
+                                onNext = state.upNext.firstOrNull()?.let { { onPlayVideo(it) } },
+                            )
+                            Spacer(Modifier.height(20.dp))
+                            UpNextButton(
+                                count = state.upNext.size,
+                                onClick = { upNextSheetVisible = true },
                             )
                         }
+
+                        PlayerTopBar(
+                            title = state.title,
+                            onBack = onBack,
+                            modifier = Modifier.align(Alignment.TopStart),
+                        )
 
                         // 세로든 가로든 컨트롤은 영상 위에 얹는다. 아래에 따로
                         // 두면 그만큼 영상이 위로 밀려 올라가고, 컨트롤이 사라져도
@@ -319,16 +321,11 @@ fun PlayerScreen(
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
+                                // 3버튼 내비게이션에 가리지 않게. 전체화면에서는
+                                // 시스템 바를 감춘 상태라 이 값이 0 이 된다.
+                                .windowInsetsPadding(WindowInsets.navigationBars)
                                 .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
                         ) {
-                            // 시크바 위에 둔다. 아래에 두면 속도·자막 줄이 화면
-                            // 맨 아래에서 밀려난다 — 늘 같은 자리에 있어야 손이
-                            // 기억한다.
-                            UpNextButton(
-                                count = state.upNext.size,
-                                onClick = { upNextSheetVisible = true },
-                            )
-                            Spacer(Modifier.height(10.dp))
                             SeekBar(state = state, onSeek = seek, onMarkAb = onMarkAb)
                             Spacer(Modifier.height(2.dp))
                             SecondaryControls(
@@ -394,17 +391,18 @@ fun PlayerScreen(
 @Composable
 private fun UpNextButton(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = PikaTheme.colors
-    val shape = RoundedCornerShape(10.dp)
+    val shape = RoundedCornerShape(14.dp)
     val has = count > 0
     Row(
+        // 폭을 채우지 않는다. 화면 한가운데에 놓이는 것이라 글자만큼만 있어야
+        // 재생 버튼 묶음과 한 덩어리로 읽힌다.
         modifier = modifier
-            .fillMaxWidth()
             .clip(shape)
             .border(1.dp, Color.White.copy(alpha = if (has) 0.22f else 0.10f), shape)
             .then(if (has) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 14.dp, vertical = 11.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Text(
             if (has) "다음 영상" else "다음 영상이 없습니다",
@@ -441,11 +439,13 @@ private fun SubtitleText(text: String, scale: Float, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun FullscreenTopBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun PlayerTopBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         // 왼쪽·위아래 여백은 IconTap 이 아이콘보다 커진 만큼(가로 10dp, 세로 10dp)
         // 덜어낸 값이다. 아이콘이 놓이는 자리는 전과 같다.
         modifier = modifier.fillMaxWidth()
+            // 상태 표시줄에 가리지 않게. 전체화면에서는 0 이 된다.
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(start = 10.dp, end = 20.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -489,28 +489,6 @@ private val RESIZE_MODES = intArrayOf(
     AspectRatioFrameLayout.RESIZE_MODE_FILL,
 )
 
-@Composable
-private fun TopBar(title: String, onBack: () -> Unit) {
-    val colors = PikaTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
-            // 가로 10dp·세로 10dp 는 IconTap 이 아이콘보다 커진 몫을 덜어낸 값이다.
-            .padding(start = 12.dp, end = 22.dp, top = 6.dp, bottom = 0.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-    ) {
-        IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = colors.onMediaText, iconSize = 24.dp)
-        Text(
-            title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Light,
-            color = colors.onMediaTextMuted,
-            maxLines = 1,
-        )
-    }
-}
 
 @Composable
 private fun TransportControls(
