@@ -170,6 +170,30 @@ for p, s in files.items():
             if names & {'horizontal', 'vertical'} and names & {'start', 'top', 'end', 'bottom'}:
                 bad.append(f'{p}:{i}: padding({m.group(1)}) — 없는 조합')
 
+# 5) 딸린 접근자만 남은 프로퍼티
+#    `private set` 은 바로 위의 var 선언에 붙는 것이다. 프로퍼티를 지우면서
+#    이 줄을 남기면 위에 있던 다른 프로퍼티에 조용히 옮겨 붙는다. val 위로
+#    옮겨 붙으면 컴파일이 깨지고("A 'val' property cannot have a setter"),
+#    var 위로 옮겨 붙으면 컴파일은 되면서 원래 프로퍼티의 setter 만 열린다.
+#    뒤쪽이 더 위험하다 — 아무 신호 없이 캡슐화가 풀린다. 실제로 둘 다 났다.
+for p, s in files.items():
+    lines = s.split('\n')
+    for i, line in enumerate(lines):
+        if not re.fullmatch(r'\s*(?:private|internal|protected)\s+set\s*', line):
+            continue
+        # 위로 올라가며 이 접근자가 딸린 선언을 찾는다. 초기화식이 여러 줄에
+        # 걸치는 프로퍼티가 있어서 바로 윗줄만 봐서는 안 된다.
+        owner = ''
+        for j in range(i - 1, -1, -1):
+            t = lines[j].strip()
+            if not t or t.startswith('//'):
+                continue
+            if re.search(r'\b(?:val|var|fun|class|object|interface)\b', t):
+                owner = t
+                break
+        if owner and not re.search(r'\bvar\b', owner):
+            bad.append(f'{p}:{i + 1}: `{line.strip()}` — 딸린 선언이 var 가 아니다 ({owner[:50]})')
+
 # 선언보다 먼저 쓴 지역 변수(실제로 libraryVm·vaultVm 에서 두 번 났다)도 잡고 싶었지만
 # 넣지 않았다. 함수마다 같은 이름(colors 등)이 반복돼 정규식으로는 어느 함수의 것인지
 # 가릴 수 없고, 시험 삼아 넣었더니 오탐이 70개 났다. 늘 틀리는 검사는 무시하게 되고,

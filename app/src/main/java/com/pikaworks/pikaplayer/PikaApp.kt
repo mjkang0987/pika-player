@@ -34,6 +34,7 @@ class PikaApp : Application(), ImageLoaderFactory {
     lateinit var safFolders: SafFolderSource
         private set
     lateinit var deviceStorage: DeviceStorage
+        private set
     lateinit var mediaRescanner: MediaRescanner
         private set
 
@@ -46,7 +47,6 @@ class PikaApp : Application(), ImageLoaderFactory {
      */
     val persistScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-        private set
     lateinit var vault: VaultStore
         private set
 
