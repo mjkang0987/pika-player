@@ -30,7 +30,6 @@ coil = "2.7.0"
 # 이 환경에서는 어느 쪽도 컴파일해 볼 수 없다. 빌드가 한 번 통과한 뒤에 올리면
 # 컴파일러가 무엇을 고쳐야 하는지 정확히 알려준다 — 그 순서가 안전하다.
 # (Play 는 언젠가 8+ 를 요구하므로 출시 전에는 반드시 올려야 한다)
-billing = "7.1.1"           # 최신은 9.1.0. 아래 주석 참고
 # KSP2 부터 Kotlin 버전과 분리됐다. 예전 형식(2.2.21-2.0.5)은 2.2.x 까지만 있고,
 # 그 뒤로는 독립 번호를 쓴다. Maven Central 에서 확인함.
 ksp = "2.3.11"
@@ -61,7 +60,6 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-video = { group = "io.coil-kt", name = "coil-video", version.ref = "coil" }
-billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

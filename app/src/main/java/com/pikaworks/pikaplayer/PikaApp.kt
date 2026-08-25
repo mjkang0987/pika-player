@@ -8,8 +8,6 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
 import androidx.room.Room
-import com.pikaworks.pikaplayer.data.billing.BillingRepository
-import com.pikaworks.pikaplayer.data.billing.EntitlementStore
 import com.pikaworks.pikaplayer.data.db.PikaDatabase
 import com.pikaworks.pikaplayer.data.media.DeviceStorage
 import com.pikaworks.pikaplayer.data.media.MediaRescanner
@@ -48,7 +46,6 @@ class PikaApp : Application(), ImageLoaderFactory {
      */
     val persistScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    lateinit var billing: BillingRepository
         private set
     lateinit var vault: VaultStore
         private set
@@ -82,7 +79,5 @@ class PikaApp : Application(), ImageLoaderFactory {
         deviceStorage = DeviceStorage(this)
         mediaRescanner = MediaRescanner(this)
         vault = VaultStore(this)
-        billing = BillingRepository(this, persistScope, EntitlementStore(this))
-        billing.start()
     }
 }

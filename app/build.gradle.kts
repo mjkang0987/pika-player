@@ -42,7 +42,6 @@ android {
 
 dependencies {
     implementation(project(":subtitle"))
-    implementation(project(":entitlement"))
     implementation(project(":vault"))
 
     implementation(libs.androidx.core.ktx)
@@ -70,5 +69,4 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
     implementation(libs.coil.video)
-    implementation(libs.billing.ktx)
 }

@@ -31,9 +31,6 @@ import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
-import com.pikaworks.pikaplayer.entitlement.Feature
-import com.pikaworks.pikaplayer.entitlement.Tier
-import com.pikaworks.pikaplayer.entitlement.TierGate
 import com.pikaworks.pikaplayer.ui.BottomNav
 import com.pikaworks.pikaplayer.ui.Tab
 import com.pikaworks.pikaplayer.ui.folder.FolderScreen
@@ -41,7 +38,6 @@ import com.pikaworks.pikaplayer.ui.folder.FolderViewModel
 import com.pikaworks.pikaplayer.ui.library.LibraryScreen
 import com.pikaworks.pikaplayer.ui.library.LibraryViewModel
 import com.pikaworks.pikaplayer.ui.permission.PermissionScreen
-import com.pikaworks.pikaplayer.ui.pro.ProScreen
 import com.pikaworks.pikaplayer.ui.player.PipController
 import com.pikaworks.pikaplayer.ui.player.PlayerOrientation
 import com.pikaworks.pikaplayer.ui.player.PlayerScreen
@@ -146,18 +142,12 @@ class MainActivity : ComponentActivity() {
                 var denied by remember { mutableStateOf(false) }
                 var tab by remember { mutableStateOf(Tab.LIBRARY) }
                 var showLicenses by remember { mutableStateOf(false) }
-                var showPro by remember { mutableStateOf(false) }
                 var showVault by remember { mutableStateOf(false) }
                 val pip by inPip
-                val proTier by app.billing.tier.collectAsStateWithLifecycle()
                 // 게이트를 여기서 만든다. `app` 에 두면 등급이 바뀌어도 화면이
                 // 다시 그려지지 않는다 — 산 직후에도 잠긴 채로 남는다.
-                val gate = TierGate { proTier }
-                val proProducts by app.billing.products.collectAsStateWithLifecycle()
                 // 화면으로 돌아올 때마다 다시 확인한다. 환불·해지가 반영되는 지점이다.
-                LaunchedEffect(resumed) { app.billing.refresh() }
                 // 상품 이름·가격은 바뀌지 않는다. 한 번만 받아 둔다.
-                LaunchedEffect(Unit) { app.billing.loadProducts() }
                 var playing by remember { mutableStateOf<VideoItem?>(null) }
                 // 재생을 시작한 목록. 플레이어 하단의 '다음 영상'과 자동 재생이 여기서 나온다.
                 var queue by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
@@ -189,7 +179,6 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(tab) {
                     if (tab != Tab.SETTINGS) {
                         showLicenses = false
-                        showPro = false
                         showVault = false
                         // 설정을 벗어나면 다시 잠근다. 풀어둔 채로 폰을 넘기면
                         // 감춘 폴더가 그대로 보인다.
@@ -288,21 +277,15 @@ class MainActivity : ComponentActivity() {
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
                         subtitleScale = settings?.subtitleScale ?: 1f,
                         subtitlePosition = settings?.subtitlePosition ?: SubtitlePosition.IN_VIDEO,
-                        pipAllowed = gate.isAllowed(Feature.PICTURE_IN_PICTURE),
                         pipMode = pip,
                         autoPip = settings?.autoPip ?: false,
-                        onLockedFeature = {
-                            playing = null
-                            tab = Tab.SETTINGS
-                            showPro = true
-                        },
                         onExit = { playing = null },
                     )
 
                     else -> Column(modifier = Modifier.fillMaxSize()) {
                         // 다른 탭에서 뒤로가기는 보관함으로. 바로 앱이 꺼지면 당황한다.
                         BackHandler(
-                            enabled = tab != Tab.LIBRARY && !showLicenses && !showPro && !showVault &&
+                            enabled = tab != Tab.LIBRARY && !showLicenses && !showVault &&
                                 vaultState.mode == PinMode.NONE
                         ) {
                             tab = Tab.LIBRARY
@@ -378,16 +361,6 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onBack = { showVault = false },
                                 )
-                            } else if (showPro) {
-                                BackHandler { showPro = false }
-                                ProScreen(
-                                    modifier = Modifier.weight(1f),
-                                    tier = proTier,
-                                    products = proProducts,
-                                    onPurchase = { app.billing.purchase(this@MainActivity, it) },
-                                    onRestore = { app.billing.refresh() },
-                                    onBack = { showPro = false },
-                                )
                             } else if (showLicenses) {
                                 BackHandler { showLicenses = false }
                                 LicenseScreen(
@@ -409,11 +382,6 @@ class MainActivity : ComponentActivity() {
                                     onSubtitlePositionChange = { scope.launch { app.settings.setSubtitlePosition(it) } },
                                     onThemeChange = { scope.launch { app.settings.setTheme(it) } },
                                     onOpenLicenses = { showLicenses = true },
-                                    // 개별 기능이 아니라 "Pro 섹션이 열렸는가" 다.
-                                    // 기능 하나를 기준으로 삼으면 그 기능의 등급이
-                                    // 바뀔 때 관계없는 항목까지 같이 흔들린다.
-                                    proUnlocked = proTier.atLeast(Tier.PRO),
-                                    onOpenPro = { showPro = true },
                                     onAutoPipChange = { scope.launch { app.settings.setAutoPip(it) } },
                                     vaultEnabled = vaultState.settings.enabled,
                                     onOpenVault = {
@@ -454,10 +422,8 @@ class MainActivity : ComponentActivity() {
         defaultCharset: String,
         subtitleScale: Float,
         subtitlePosition: String,
-        pipAllowed: Boolean,
         pipMode: Boolean,
         autoPip: Boolean,
-        onLockedFeature: () -> Unit,
         onExit: () -> Unit,
     ) {
         val playerVm: PlayerViewModel = viewModel(
@@ -517,7 +483,7 @@ class MainActivity : ComponentActivity() {
 
         // 재생 중인지는 보지 않는다. 플레이어 화면에 있다는 것 자체가 보고 있다는
         // 뜻이고, 일시정지했다고 작은 창을 안 띄우면 오히려 예상과 어긋난다.
-        val canAutoPip = autoPip && pipAllowed && pipController.isSupported && !pipMode
+        val canAutoPip = autoPip && pipController.isSupported && !pipMode
         DisposableEffect(canAutoPip) {
             autoPipAction = if (!canAutoPip) null else {
                 {
@@ -547,16 +513,12 @@ class MainActivity : ComponentActivity() {
             onBrightnessDelta = systemControls::adjustBrightness,
             onVolumeDelta = systemControls::adjustVolume,
             onPlayVideo = playerVm::playNext,
-            // 지원하지 않는 기기에서는 버튼 자체를 만들지 않는다. Pro 가 아니면
-            // 버튼은 있고 누르면 안내 화면으로 보낸다 — 무엇을 사는지 보여야 한다.
+            // 지원하지 않는 기기에서는 버튼 자체를 만들지 않는다. 눌러도 아무
+            // 일이 없는 버튼을 두면 고장으로 읽힌다.
             onEnterPip = if (!pipController.isSupported) null else {
                 {
-                    if (pipAllowed) {
-                        val video = playerVm.player.videoSize
-                        pipController.enter(video.width, video.height)
-                    } else {
-                        onLockedFeature()
-                    }
+                    val video = playerVm.player.videoSize
+                    pipController.enter(video.width, video.height)
                 }
             },
             onBack = onExit,
