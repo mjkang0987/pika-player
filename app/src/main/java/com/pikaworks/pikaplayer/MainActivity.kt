@@ -484,8 +484,13 @@ class MainActivity : ComponentActivity() {
         // 재생 중인지는 보지 않는다. 플레이어 화면에 있다는 것 자체가 보고 있다는
         // 뜻이고, 일시정지했다고 작은 창을 안 띄우면 오히려 예상과 어긋난다.
         val canAutoPip = autoPip && pipController.isSupported && !pipMode
-        DisposableEffect(canAutoPip) {
-            autoPipAction = if (!canAutoPip) null else {
+
+        // API 31+ 는 시스템이 홈 제스처 도중에 알아서 넘겨 준다. onUserLeaveHint 는
+        // 제스처가 끝난 뒤에 오므로 화면이 한 번 끊겼다가 창이 뜬다. 시스템이
+        // 해 줄 수 있으면 우리는 손을 뗀다.
+        val needsManualAutoPip = canAutoPip && !pipController.supportsAutoEnter
+        DisposableEffect(needsManualAutoPip) {
+            autoPipAction = if (!needsManualAutoPip) null else {
                 {
                     val size = playerVm.player.videoSize
                     pipController.enter(size.width, size.height, playerVm.player.isPlaying)
@@ -514,13 +519,25 @@ class MainActivity : ComponentActivity() {
             onDispose { unregisterReceiver(receiver) }
         }
 
-        // 버튼 모양은 재생 상태를 따라가야 한다. 갈아끼우지 않으면 영상이 멈춘
-        // 뒤에도 일시정지 아이콘이 남아, 눌러도 안 바뀌는 것처럼 보인다.
-        LaunchedEffect(pipMode, playerState.isPlaying) {
-            if (pipMode) {
-                val size = playerVm.player.videoSize
-                pipController.update(size.width, size.height, playerState.isPlaying)
-            }
+        // 창에 들어가기 전에도 올려 둔다. 자동 전환은 홈 제스처가 시작되기 전에
+        // 켜져 있어야 하고, 버튼 모양은 재생 상태를 따라가야 한다.
+        //
+        // 영상 크기는 준비된 뒤에야 알 수 있다. isPlaying 이 처음 참이 되는 시점은
+        // 준비가 끝난 뒤라 그때 함께 올라간다.
+        LaunchedEffect(autoPip, pipMode, playerState.isPlaying) {
+            val size = playerVm.player.videoSize
+            pipController.sync(
+                videoWidth = size.width,
+                videoHeight = size.height,
+                isPlaying = playerState.isPlaying,
+                autoEnter = autoPip && pipController.isSupported,
+            )
+        }
+
+        // 재생 화면을 벗어나면 자동 전환을 되돌린다. 설정이 Activity 에 남기
+        // 때문에, 켜 둔 채로 나가면 보관함에서 홈을 눌러도 작은 창이 뜬다.
+        DisposableEffect(pipController) {
+            onDispose { pipController.clearAutoEnter() }
         }
 
         PlayerScreen(
