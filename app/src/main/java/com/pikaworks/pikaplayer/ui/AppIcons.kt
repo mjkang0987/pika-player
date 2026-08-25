@@ -39,6 +39,14 @@ object AppIcons {
     val PreviousTrack = stroke("M11 5 4 12l7 7", "M20 5v14")
     val NextTrack = stroke("M13 5l7 7-7 7", "M4 5v14")
 
+    /** 한 편 반복. 위아래 두 줄이 화살표로 이어져 고리를 이룬다. */
+    val Repeat = stroke(
+        "M4 11V9a3 3 0 0 1 3-3h10",
+        "M14 3l3 3-3 3",
+        "M20 13v2a3 3 0 0 1-3 3H7",
+        "M10 21l-3-3 3-3",
+    )
+
     val Play = fill("M9 6.5v11l9-5.5z")
     val Pause = fill("M7.6 4.6h3.8v14.8H7.6zM12.6 4.6h3.8v14.8h-3.8z")
 

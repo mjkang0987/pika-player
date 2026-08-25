@@ -79,6 +79,7 @@ fun PlayerScreen(
     onAdjustSubtitleOffset: (Long) -> Unit,
     onResetSubtitleOffset: () -> Unit,
     onToggleLock: () -> Unit,
+    onToggleRepeat: () -> Unit,
     onCycleResize: () -> Unit,
     onCycleSpeed: () -> Unit,
     onToggleFullscreen: () -> Unit,
@@ -192,6 +193,7 @@ fun PlayerScreen(
                             onCycleSpeed = onCycleSpeed,
                             onToggleFullscreen = onToggleFullscreen,
                             onToggleLock = onToggleLock,
+                            onToggleRepeat = onToggleRepeat,
                             onEnterPip = onEnterPip,
                         )
                     }
@@ -241,6 +243,7 @@ fun PlayerScreen(
                 onCycleSpeed = onCycleSpeed,
                 onToggleFullscreen = onToggleFullscreen,
                 onToggleLock = onToggleLock,
+                onToggleRepeat = onToggleRepeat,
                 onEnterPip = onEnterPip,
             )
             // 남는 세로 공간만 쓴다. 좁은 화면에서는 높이가 0이 되어 조용히 사라진다.
@@ -520,34 +523,35 @@ private fun SecondaryControls(
     onCycleSpeed: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onToggleLock: () -> Unit,
+    onToggleRepeat: () -> Unit,
     onEnterPip: (() -> Unit)?,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        SpeedItem(state.speed, onCycleSpeed)
-        IconItem(AppIcons.Subtitle, "자막", active = state.subtitleEnabled, onClick = onOpenSubtitleSheet)
+    Row(modifier = modifier.fillMaxWidth()) {
+        // 폭을 고정하면 버튼이 하나 늘 때마다 좁은 화면에서 넘친다. 남는 폭을
+        // 균등하게 나눠 갖게 해서 개수·화면 크기와 무관하게 들어맞게 한다.
+        SpeedItem(state.speed, onCycleSpeed, Modifier.weight(1f))
+        IconItem(AppIcons.Subtitle, "자막", state.subtitleEnabled, onOpenSubtitleSheet, Modifier.weight(1f))
         IconItem(
             AppIcons.AspectRatio,
             PlayerViewModel.RESIZE_MODE_LABELS[state.resizeMode.coerceIn(PlayerViewModel.RESIZE_MODE_LABELS.indices)],
             active = state.resizeMode != 0,
             onClick = onCycleResize,
+            modifier = Modifier.weight(1f),
         )
-        IconItem(AppIcons.Fullscreen, "전체화면", active = false, onClick = onToggleFullscreen)
+        IconItem(AppIcons.Repeat, "반복", state.repeatEnabled, onToggleRepeat, Modifier.weight(1f))
+        IconItem(AppIcons.Fullscreen, "전체화면", false, onToggleFullscreen, Modifier.weight(1f))
         // 지원하지 않는 기기에서는 자리를 만들지 않는다. 눌러도 아무 일이 없는
         // 버튼을 두면 고장으로 읽힌다.
-        onEnterPip?.let { IconItem(AppIcons.Pip, "작은 창", active = false, onClick = it) }
-        IconItem(AppIcons.Lock, "잠금", active = state.locked, onClick = onToggleLock)
+        onEnterPip?.let { IconItem(AppIcons.Pip, "작은 창", false, it, Modifier.weight(1f)) }
+        IconItem(AppIcons.Lock, "잠금", state.locked, onToggleLock, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun SpeedItem(speed: Float, onClick: () -> Unit) {
+private fun SpeedItem(speed: Float, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = PikaTheme.colors
     Column(
-        modifier = Modifier
-            .width(56.dp)
+        modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
@@ -560,12 +564,17 @@ private fun SpeedItem(speed: Float, onClick: () -> Unit) {
 }
 
 @Composable
-private fun IconItem(icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
+private fun IconItem(
+    icon: ImageVector,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = PikaTheme.colors
     val tint = if (active) colors.key else colors.textSecondary
     Column(
-        modifier = Modifier
-            .width(56.dp)
+        modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),

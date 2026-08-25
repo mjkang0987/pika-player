@@ -49,6 +49,8 @@ data class PlayerUiState(
     val resizeMode: Int = 0,
     /** 같은 폴더에서 이 영상 뒤에 오는 것들. 하단 목록과 자동 재생이 함께 쓴다. */
     val upNext: List<VideoItem> = emptyList(),
+    /** 한 편 반복. 켜면 끝나도 넘어가지 않고 처음부터 다시 튼다. */
+    val repeatEnabled: Boolean = false,
 ) {
     val progress: Float
         get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -147,6 +149,9 @@ class PlayerViewModel(
         )
 
         player.setPlaybackSpeed(speed)
+        // 화면비·잠금과 같은 결로 영상마다 초기화한다. 반복을 켠 채 다른 영상을
+        // 열었을 때 모르는 사이에 계속 돌고 있으면 곤란하다.
+        player.repeatMode = Player.REPEAT_MODE_OFF
         player.setMediaItem(MediaItem.fromUri(video.uri))
         player.prepare()
 
@@ -308,7 +313,29 @@ class PlayerViewModel(
         }
     }
 
-    fun togglePlay() = if (player.isPlaying) player.pause() else player.play()
+    fun togglePlay() = when {
+        player.isPlaying -> player.pause()
+        // 끝까지 본 영상은 처음부터 다시 튼다. 그냥 play() 를 부르면 끝 지점에
+        // 멈춰 있어 눌러도 아무 일이 없는 것처럼 보인다.
+        player.playbackState == Player.STATE_ENDED -> {
+            player.seekTo(0)
+            player.play()
+        }
+        else -> player.play()
+    }
+
+    /**
+     * 한 편 반복.
+     *
+     * 켜 두면 ExoPlayer 가 안에서 되감아 STATE_ENDED 에 닿지 않는다. 다음
+     * 영상으로 자동으로 넘어가는 경로도 그래서 같이 멈춘다 — 반복을 켠 사람이
+     * 바라는 동작이다.
+     */
+    fun toggleRepeat() {
+        val next = !_uiState.value.repeatEnabled
+        player.repeatMode = if (next) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+        _uiState.update { it.copy(repeatEnabled = next) }
+    }
 
     fun seekTo(ms: Long) {
         player.seekTo(ms.coerceIn(0L, player.duration.coerceAtLeast(0L)))

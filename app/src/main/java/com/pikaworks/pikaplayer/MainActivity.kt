@@ -535,6 +535,7 @@ class MainActivity : ComponentActivity() {
             onAdjustSubtitleOffset = playerVm::adjustSubtitleOffset,
             onResetSubtitleOffset = playerVm::resetSubtitleOffset,
             onToggleLock = playerVm::toggleLock,
+            onToggleRepeat = playerVm::toggleRepeat,
             onCycleResize = playerVm::cycleResizeMode,
             onCycleSpeed = playerVm::cycleSpeed,
             onToggleFullscreen = { forcedLandscape = !isLandscape },
