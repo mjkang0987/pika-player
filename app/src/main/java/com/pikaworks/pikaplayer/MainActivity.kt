@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.content.ContextCompat
@@ -39,6 +40,11 @@ import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
 import com.pikaworks.pikaplayer.data.prefs.SubtitlePosition
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
+import androidx.activity.result.IntentSenderRequest
+import com.pikaworks.pikaplayer.data.media.MediaDeleter
+import com.pikaworks.pikaplayer.ui.ConfirmDialog
+import com.pikaworks.pikaplayer.ui.MessageBar
+import com.pikaworks.pikaplayer.ui.VideoActionSheet
 import com.pikaworks.pikaplayer.ui.BottomNav
 import com.pikaworks.pikaplayer.ui.Tab
 import com.pikaworks.pikaplayer.ui.folder.FolderScreen
@@ -200,6 +206,25 @@ class MainActivity : ComponentActivity() {
                 val openPlaylistItems by playlistVm.openItems.collectAsStateWithLifecycle()
                 // 길게 눌러 담을 영상. null 이면 시트를 띄우지 않는다.
                 var pendingAdd by remember { mutableStateOf<VideoItem?>(null) }
+                // 더보기(⋯)를 누른 영상. null 이면 시트를 띄우지 않는다.
+                var pendingMenu by remember { mutableStateOf<VideoItem?>(null) }
+                // 지울지 물어보는 중인 영상.
+                var pendingDelete by remember { mutableStateOf<VideoItem?>(null) }
+                // 방금 무슨 일이 있었는지 알리는 한 줄. 스스로 사라진다.
+                var message by remember { mutableStateOf<String?>(null) }
+
+                // 안드로이드 11+ 는 시스템이 대신 물어본다. 그 창의 결과가 여기로 온다.
+                val deleteLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.StartIntentSenderForResult()
+                ) { result ->
+                    message = if (MediaDeleter.confirmed(result.resultCode)) {
+                        // 목록은 MediaStore 감시가 알아서 따라온다.
+                        "삭제했습니다"
+                    } else {
+                        "삭제하지 않았습니다"
+                    }
+                }
+
                 // 이름을 받는 창. 만들기와 이름 바꾸기가 같은 창을 쓴다.
                 var naming by remember { mutableStateOf<Naming?>(null) }
 
@@ -281,11 +306,45 @@ class MainActivity : ComponentActivity() {
                     refreshAll()
                 }
 
+                pendingMenu?.let { target ->
+                    VideoActionSheet(
+                        video = target,
+                        onAddToPlaylist = { pendingAdd = target },
+                        onDelete = { pendingDelete = target },
+                        onDismiss = { pendingMenu = null },
+                    )
+                }
+
+                pendingDelete?.let { target ->
+                    ConfirmDialog(
+                        title = "기기에서 삭제",
+                        // 무엇이 사라지는지 이름으로 말한다. "이 영상" 이라고만
+                        // 하면 잘못 고른 것을 알아챌 방법이 없다.
+                        body = "${target.displayName}\n\n파일이 기기에서 지워집니다. 되돌릴 수 없습니다.",
+                        confirmLabel = "삭제",
+                        onConfirm = {
+                            scope.launch {
+                                when (val outcome = app.mediaDeleter.delete(listOf(target.uri))) {
+                                    is MediaDeleter.Result.NeedsConfirm ->
+                                        deleteLauncher.launch(IntentSenderRequest.Builder(outcome.request).build())
+                                    MediaDeleter.Result.Deleted -> message = "삭제했습니다"
+                                    MediaDeleter.Result.Denied ->
+                                        message = "이 기기에서는 앱에서 지울 수 없습니다"
+                                }
+                            }
+                        },
+                        onDismiss = { pendingDelete = null },
+                    )
+                }
+
                 pendingAdd?.let { target ->
                     AddToPlaylistSheet(
                         videoName = target.displayName,
                         playlists = playlists,
-                        onSelect = { playlistVm.add(it, target) },
+                        onSelect = { id ->
+                            playlistVm.add(id, target)
+                            message = "${playlists.firstOrNull { it.id == id }?.name.orEmpty()} 에 담았습니다"
+                        },
                         onCreate = { naming = Naming.Create(target) },
                         onDismiss = { pendingAdd = null },
                     )
@@ -310,6 +369,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val video = playing
+                // 알림 띠는 무엇 위에든 떠야 한다. 화면 전체를 한 겹으로 감싸고
+                // 그 위에 얹는다.
+                Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     // 설정을 아직 못 읽었으면 고른 폴더가 있는지도 모른다. 그 상태로
                     // 권한 화면을 띄우면 SAF 사용자에게 한 프레임 깜빡인다.
@@ -368,6 +430,7 @@ class MainActivity : ComponentActivity() {
                                     play(item.video, libraryState.continueWatching.map { it.video })
                                 },
                                 onVideoLongClick = { row -> pendingAdd = row.video },
+                                onVideoMenu = { row -> pendingMenu = row.video },
                                 onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 onFilterChange = libraryVm::setFilter,
                                 onQueryChange = libraryVm::setQuery,
@@ -385,6 +448,7 @@ class MainActivity : ComponentActivity() {
                                     onRefresh = refreshAll,
                                     onVideoClick = { play(it, folderState.videos) },
                                     onVideoLongClick = { pendingAdd = it },
+                                    onVideoMenu = { pendingMenu = it },
                                     onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },
                                 )
                             }
@@ -429,6 +493,7 @@ class MainActivity : ComponentActivity() {
                                 // 목록은 최근 순이지만 '다음 영상'은 폴더 안 순서를 따른다.
                                 onVideoClick = { row -> play(row.video, libraryState.rows.map { it.video }) },
                                 onVideoLongClick = { row -> pendingAdd = row.video },
+                                onVideoMenu = { row -> pendingMenu = row.video },
                                 onRefresh = refreshAll,
                             )
 
@@ -509,6 +574,15 @@ class MainActivity : ComponentActivity() {
                         }
                         BottomNav(current = tab, onSelect = { tab = it })
                     }
+                }
+
+                MessageBar(
+                    message = message,
+                    onDone = { message = null },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .windowInsetsPadding(WindowInsets.navigationBars),
+                )
                 }
             }
         }

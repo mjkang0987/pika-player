@@ -10,6 +10,7 @@ import coil.decode.VideoFrameDecoder
 import androidx.room.Room
 import com.pikaworks.pikaplayer.data.db.PikaDatabase
 import com.pikaworks.pikaplayer.data.media.DeviceStorage
+import com.pikaworks.pikaplayer.data.media.MediaDeleter
 import com.pikaworks.pikaplayer.data.media.MediaRescanner
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
@@ -36,6 +37,8 @@ class PikaApp : Application(), ImageLoaderFactory {
     lateinit var deviceStorage: DeviceStorage
         private set
     lateinit var mediaRescanner: MediaRescanner
+        private set
+    lateinit var mediaDeleter: MediaDeleter
         private set
 
     /**
@@ -78,6 +81,7 @@ class PikaApp : Application(), ImageLoaderFactory {
         safFolders = SafFolderSource(this, database.safMetadataDao())
         deviceStorage = DeviceStorage(this)
         mediaRescanner = MediaRescanner(this)
+        mediaDeleter = MediaDeleter(this)
         vault = VaultStore(this)
     }
 }

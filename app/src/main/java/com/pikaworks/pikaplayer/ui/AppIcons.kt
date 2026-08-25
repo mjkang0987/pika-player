@@ -101,6 +101,15 @@ object AppIcons {
     /** 만들기. */
     val Plus = stroke("M12 5v14", "M5 12h14")
 
+    /** 더보기. 점 세 개는 획이 아니라 아주 짧은 선분으로 그린다(둥근 끝 = 점). */
+    val More = stroke("M12 5.6v.1", "M12 12v.1", "M12 18.4v.1", width = 2.6f)
+
+    val Trash = stroke(
+        "M4.5 7h15",
+        "M9.5 7V5.2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V7",
+        "M6.5 7l.8 11.4a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4L17.5 7",
+    )
+
     val NavRecent = stroke("M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z", "M12 7.5V12l3 2")
     val NavSettings = stroke(
         "M4 7h8M17 7h3M4 12h3M12 12h8M4 17h8M17 17h3",

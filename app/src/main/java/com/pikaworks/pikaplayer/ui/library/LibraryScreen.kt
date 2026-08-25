@@ -63,6 +63,8 @@ fun LibraryScreen(
     onVideoClick: (LibraryRow) -> Unit,
     /** 길게 누르면 재생목록에 담는다. */
     onVideoLongClick: (LibraryRow) -> Unit,
+    /** 줄 오른쪽 더보기(⋯). */
+    onVideoMenu: (LibraryRow) -> Unit,
     onContinueClick: (ContinueItem) -> Unit,
     onSortChange: (String) -> Unit,
     onFilterChange: (String) -> Unit,
@@ -129,6 +131,7 @@ fun LibraryScreen(
                     video = row.video,
                     onClick = { onVideoClick(row) },
                     onLongClick = { onVideoLongClick(row) },
+                    onMenu = { onVideoMenu(row) },
                     progress = row.progress,
                     subtitleFormat = row.subtitleFormat,
                 )

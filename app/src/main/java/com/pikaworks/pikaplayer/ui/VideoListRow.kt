@@ -45,6 +45,8 @@ fun VideoListRow(
     modifier: Modifier = Modifier,
     /** 길게 눌렀을 때. 없으면 길게 눌러도 아무 일이 없다. */
     onLongClick: (() -> Unit)? = null,
+    /** 줄 오른쪽 더보기(⋯) 버튼. 없으면 버튼 자체를 만들지 않는다. */
+    onMenu: (() -> Unit)? = null,
     /** 0f..1f. 재생 이력이 없으면 null */
     progress: Float? = null,
     subtitleFormat: String? = null,
@@ -56,7 +58,8 @@ fun VideoListRow(
             // 짧게·길게를 한 곳에서 다뤄야 한다. clickable 과 따로 걸면 둘이
             // 서로의 몸짓을 가로챈다.
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(horizontal = 20.dp, vertical = 9.dp),
+            // 더보기 버튼이 자기 여백을 갖고 있어 오른쪽은 덜어낸다.
+            .padding(start = 20.dp, end = if (onMenu == null) 20.dp else 9.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -116,6 +119,18 @@ fun VideoListRow(
                     subtitleFormat?.let { Chip(it, colors.textMeta, colors.chipBorder) }
                 }
             }
+        }
+
+        // 더보기는 줄 전체를 누르는 것과 겹치지 않게 자기 영역을 갖는다.
+        onMenu?.let {
+            IconTap(
+                icon = AppIcons.More,
+                contentDescription = "더보기",
+                onClick = it,
+                tint = colors.textFaint,
+                iconSize = 18.dp,
+                tapSize = 40.dp,
+            )
         }
     }
 }
