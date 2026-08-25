@@ -64,21 +64,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
-/**
- * PIN 을 잊었을 때 알려 줄 길.
- *
- * 되돌릴 방법이 이것뿐이다. PIN 은 기기 안에 해시와 소금으로만 남고 서버도
- * 계정도 없어서, 문의를 받아도 조회할 것이 없다. 앱에 뒷문을 심으면 APK 를
- * 뜯어 누구나 쓸 수 있으므로 그것도 답이 아니다.
- *
- * 영상 파일이 안전하다는 말을 같이 둔다 — 비공개 폴더는 감출 뿐 지우거나
- * 암호화하지 않는데, 그걸 모르면 데이터 삭제를 못 누른다.
- */
-private const val RECOVERY_HINT =
-    "PIN 을 잊었다면 기기 설정 → 앱 → Pika Player 에서\n" +
-        "저장공간 데이터를 지워야 풀립니다.\n" +
-        "영상 파일은 지워지지 않습니다."
-
 class MainActivity : ComponentActivity() {
 
     private val mediaPermission: String
@@ -355,17 +340,11 @@ class MainActivity : ComponentActivity() {
                                 PinScreen(
                                     modifier = Modifier.weight(1f),
                                     title = if (vaultState.mode == PinMode.UNLOCK) "잠금 해제" else "PIN 설정",
-                                    // 잊었을 때의 길을 미리 말해 준다. 이 PIN 은 기기
-                                    // 안에서 해시로만 남아 우리도 되돌릴 수 없다.
-                                    subtitle = when {
-                                        vaultState.mode == PinMode.SET ->
-                                            "숫자 ${PIN_LENGTH}자리를 정하세요\n잊으면 되돌릴 수 없습니다"
-                                        vaultState.mode == PinMode.CONFIRM ->
-                                            "확인을 위해 한 번 더 입력하세요"
-                                        // 여러 번 틀려 잠긴 참이면 잊었을 가능성이 높다.
-                                        // 그때만 탈출구를 알려 준다 — 늘 띄우면 잠금이
-                                        // 약해 보이고 자리도 차지한다.
-                                        vaultState.lockedForMs > 0 -> RECOVERY_HINT
+                                    subtitle = when (vaultState.mode) {
+                                        // 잊으면 못 되돌린다는 말은 정하는 자리에서 한다.
+                                        // 잠긴 뒤의 탈출구는 PinScreen 이 알아서 띄운다.
+                                        PinMode.SET -> "숫자 ${PIN_LENGTH}자리를 정하세요\n잊으면 되돌릴 수 없습니다"
+                                        PinMode.CONFIRM -> "확인을 위해 한 번 더 입력하세요"
                                         else -> "감춘 폴더를 보려면 PIN 을 입력하세요"
                                     },
                                     entered = vaultState.entered,
@@ -653,8 +632,7 @@ class MainActivity : ComponentActivity() {
                         .background(Color.Black)
                         .windowInsetsPadding(WindowInsets.navigationBars),
                     title = "잠금 해제",
-                    subtitle = if (vaultState.lockedForMs > 0) RECOVERY_HINT
-                               else "어린이 잠금이 켜져 있습니다",
+                    subtitle = "어린이 잠금이 켜져 있습니다",
                     entered = vaultState.entered,
                     lockedForMs = vaultState.lockedForMs,
                     error = vaultState.error,

@@ -94,13 +94,32 @@ fun PinScreen(
 
         Spacer(Modifier.height(14.dp))
         // 안내 자리를 늘 비워 둔다. 오류가 났을 때만 나타나면 숫자판이 위아래로 뛴다.
-        Box(modifier = Modifier.heightIn(min = 20.dp), contentAlignment = Alignment.Center) {
-            val message = when {
-                locked -> "너무 많이 틀렸습니다 · ${formatWait(lockedForMs)} 후에 다시"
-                error != null -> error
-                else -> ""
+        Box(
+            modifier = Modifier.heightIn(min = 20.dp).padding(horizontal = 28.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val message = when {
+                    locked -> "너무 많이 틀렸습니다 · ${formatWait(lockedForMs)} 후에 다시"
+                    error != null -> error
+                    else -> ""
+                }
+                Text(message, fontSize = 12.sp, color = colors.textMeta, textAlign = TextAlign.Center)
+
+                // 여러 번 틀려 잠긴 참이면 잊었을 가능성이 높다. 그때만 길을
+                // 알려 준다 — 늘 띄우면 잠금이 약해 보이고 자리도 차지한다.
+                if (locked) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        RECOVERY_HINT,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Light,
+                        lineHeight = 16.sp,
+                        color = colors.textFaint,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
-            Text(message, fontSize = 12.sp, color = colors.textMeta, textAlign = TextAlign.Center)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -132,6 +151,21 @@ fun PinScreen(
 
 /** 숫자 사이 간격. 키 크기를 계산할 때도 쓴다. */
 private val KEY_GAP = 10.dp
+/**
+ * PIN 을 잊었을 때 알려 줄 길. 되돌릴 방법이 이것뿐이다.
+ *
+ * PIN 은 기기 안에 해시와 소금으로만 남고 서버도 계정도 없어서, 만든 사람도
+ * 되돌릴 수 없다. 앱에 뒷문을 심으면 APK 를 뜯어 누구나 쓸 수 있으므로 그것도
+ * 답이 아니다.
+ *
+ * 영상 파일이 안전하다는 말을 같이 둔다 — 비공개 폴더는 감출 뿐 지우거나
+ * 암호화하지 않는데, 그걸 모르면 무서워서 데이터 삭제를 못 누른다.
+ *
+ * 줄바꿈을 직접 넣지 않는다. 넣었더니 자동 줄바꿈과 부딪혀 낱말이 잘렸다.
+ */
+private const val RECOVERY_HINT =
+    "PIN 을 잊었다면 기기 설정에서 이 앱의 저장공간 데이터를 지워야 풀립니다. " +
+        "영상 파일은 그대로 남습니다."
 
 /** 남은 시간을 사람이 읽는 단위로. 초 단위까지 보여주면 계속 다시 그려야 한다. */
 private fun formatWait(ms: Long): String {
