@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.content.ContextCompat
@@ -279,6 +280,10 @@ class MainActivity : ComponentActivity() {
                         subtitlePosition = settings?.subtitlePosition ?: SubtitlePosition.IN_VIDEO,
                         pipMode = pip,
                         autoPip = settings?.autoPip ?: false,
+                        // PIN 이 없으면 물을 것이 없다. 설정만 켜 두고 PIN 을 지운
+                        // 경우에도 잠긴 채로 갇히지 않는다.
+                        childLock = (settings?.childLock ?: false) && vaultState.settings.enabled,
+                        vaultVm = vaultVm,
                         onExit = { playing = null },
                     )
 
@@ -383,6 +388,7 @@ class MainActivity : ComponentActivity() {
                                     onThemeChange = { scope.launch { app.settings.setTheme(it) } },
                                     onOpenLicenses = { showLicenses = true },
                                     onAutoPipChange = { scope.launch { app.settings.setAutoPip(it) } },
+                                    onChildLockChange = { scope.launch { app.settings.setChildLock(it) } },
                                     vaultEnabled = vaultState.settings.enabled,
                                     onOpenVault = {
                                         // 아직 PIN 이 없으면 정하는 것부터. 있으면 확인 먼저.
@@ -424,6 +430,9 @@ class MainActivity : ComponentActivity() {
         subtitlePosition: String,
         pipMode: Boolean,
         autoPip: Boolean,
+        /** 어린이 잠금. 잠금을 풀 때 PIN 을 묻고, 잠긴 동안에는 나갈 수 없다. */
+        childLock: Boolean,
+        vaultVm: VaultViewModel,
         onExit: () -> Unit,
     ) {
         val playerVm: PlayerViewModel = viewModel(
@@ -478,8 +487,28 @@ class MainActivity : ComponentActivity() {
                 PlayerOrientation.apply(this@MainActivity, locked = false, followAutoRotate = true, forcedLandscape = null)
             }
         }
+        val vaultState by vaultVm.uiState.collectAsStateWithLifecycle()
+        val askingPin = vaultState.mode == PinMode.CHILD_UNLOCK
+
+        // PIN 이 맞으면 그때 잠금을 푼다. 신호는 한 번 쓰고 되돌린다.
+        LaunchedEffect(vaultState.childUnlocked) {
+            if (vaultState.childUnlocked) {
+                playerVm.toggleLock()
+                vaultVm.consumeChildUnlock()
+            }
+        }
+
         // PiP 중에는 뒤로가기가 오지 않는다. 창을 닫는 것은 시스템이 처리한다.
-        BackHandler(enabled = !pipMode, onBack = onExit)
+        //
+        // 어린이 잠금이 걸린 동안에는 뒤로가기를 삼킨다. 잠금 해제에 PIN 을 물어도
+        // 뒤로가기로 목록에 나갈 수 있으면 막는 의미가 없다.
+        BackHandler(enabled = !pipMode) {
+            when {
+                askingPin -> vaultVm.cancel()
+                childLock && playerState.locked -> Unit
+                else -> onExit()
+            }
+        }
 
         // 재생 중인지는 보지 않는다. 플레이어 화면에 있다는 것 자체가 보고 있다는
         // 뜻이고, 일시정지했다고 작은 창을 안 띄우면 오히려 예상과 어긋난다.
@@ -540,42 +569,68 @@ class MainActivity : ComponentActivity() {
             onDispose { pipController.clearAutoEnter() }
         }
 
-        PlayerScreen(
-            player = playerVm.player,
-            state = playerState,
-            onTogglePlay = playerVm::togglePlay,
-            onSkip = playerVm::skip,
-            onSeek = playerVm::seekTo,
-            onToggleControls = playerVm::toggleControls,
-            onSelectSubtitle = playerVm::selectSubtitle,
-            onSelectCharset = playerVm::setSubtitleCharset,
-            onAdjustSubtitleOffset = playerVm::adjustSubtitleOffset,
-            onResetSubtitleOffset = playerVm::resetSubtitleOffset,
-            onToggleLock = playerVm::toggleLock,
-            onToggleRepeat = playerVm::toggleRepeat,
-            onMarkAb = playerVm::markAb,
-            onCycleResize = playerVm::cycleResizeMode,
-            onCycleSpeed = playerVm::cycleSpeed,
-            onToggleFullscreen = { forcedLandscape = !isLandscape },
-            onBrightnessDelta = systemControls::adjustBrightness,
-            onVolumeDelta = systemControls::adjustVolume,
-            onPlayVideo = playerVm::playNext,
-            // 지원하지 않는 기기에서는 버튼 자체를 만들지 않는다. 눌러도 아무
-            // 일이 없는 버튼을 두면 고장으로 읽힌다.
-            onEnterPip = if (!pipController.isSupported) null else {
-                {
-                    val video = playerVm.player.videoSize
-                    pipController.enter(video.width, video.height, playerState.isPlaying)
-                }
-            },
-            onBack = onExit,
-            isFullscreen = isLandscape,
-            brightnessVolumeGestures = brightnessVolumeGestures,
-            doubleTapSeek = doubleTapSeek,
-            subtitleScale = subtitleScale,
-            subtitlePosition = subtitlePosition,
-            pipMode = pipMode,
-        )
+        // PIN 은 재생 화면을 **덮는다**. 대신 그리면 PlayerRoute 가 사라지면서
+        // onDispose 가 재생을 멈춘다 — 잠금을 푸는 동안 소리가 끊기면 안 된다.
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            PlayerScreen(
+                player = playerVm.player,
+                state = playerState,
+                onTogglePlay = playerVm::togglePlay,
+                onSkip = playerVm::skip,
+                onSeek = playerVm::seekTo,
+                onToggleControls = playerVm::toggleControls,
+                onSelectSubtitle = playerVm::selectSubtitle,
+                onSelectCharset = playerVm::setSubtitleCharset,
+                onAdjustSubtitleOffset = playerVm::adjustSubtitleOffset,
+                onResetSubtitleOffset = playerVm::resetSubtitleOffset,
+                // 잠긴 것을 풀 때만 PIN 을 묻는다. 잠그는 것은 아무나 해도 된다.
+                onToggleLock = {
+                    if (childLock && playerState.locked) {
+                        vaultVm.startChildUnlock(System.currentTimeMillis())
+                    } else {
+                        playerVm.toggleLock()
+                    }
+                },
+                onToggleRepeat = playerVm::toggleRepeat,
+                onMarkAb = playerVm::markAb,
+                onCycleResize = playerVm::cycleResizeMode,
+                onCycleSpeed = playerVm::cycleSpeed,
+                onToggleFullscreen = { forcedLandscape = !isLandscape },
+                onBrightnessDelta = systemControls::adjustBrightness,
+                onVolumeDelta = systemControls::adjustVolume,
+                onPlayVideo = playerVm::playNext,
+                // 지원하지 않는 기기에서는 버튼 자체를 만들지 않는다. 눌러도 아무
+                // 일이 없는 버튼을 두면 고장으로 읽힌다.
+                onEnterPip = if (!pipController.isSupported) null else {
+                    {
+                        val video = playerVm.player.videoSize
+                        pipController.enter(video.width, video.height, playerState.isPlaying)
+                    }
+                },
+                onBack = onExit,
+                isFullscreen = isLandscape,
+                brightnessVolumeGestures = brightnessVolumeGestures,
+                doubleTapSeek = doubleTapSeek,
+                subtitleScale = subtitleScale,
+                subtitlePosition = subtitlePosition,
+                pipMode = pipMode,
+            )
+
+            if (askingPin) {
+                PinScreen(
+                    modifier = Modifier.fillMaxSize().background(Color.Black),
+                    title = "잠금 해제",
+                    subtitle = "어린이 잠금이 켜져 있습니다",
+                    entered = vaultState.entered,
+                    lockedForMs = vaultState.lockedForMs,
+                    error = vaultState.error,
+                    onDigit = { vaultVm.onDigit(it, System.currentTimeMillis()) },
+                    onBackspace = vaultVm::onBackspace,
+                    onBack = { vaultVm.cancel() },
+                )
+            }
+        }
     }
 
     private fun hasMediaPermission(): Boolean =

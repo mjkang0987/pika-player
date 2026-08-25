@@ -12,7 +12,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /** PIN 화면이 지금 무엇을 하는 중인가. */
-enum class PinMode { NONE, SET, CONFIRM, UNLOCK }
+enum class PinMode {
+    NONE,
+    SET,
+    CONFIRM,
+
+    /** 감춘 폴더를 보려고 푸는 중. */
+    UNLOCK,
+
+    /**
+     * 재생 화면의 어린이 잠금을 푸는 중.
+     *
+     * 확인 절차는 [UNLOCK] 과 같지만 결과가 다르다 — 감춘 폴더까지 같이 열리면
+     * 아이에게 영상을 보여 주려고 잠금을 푼 것만으로 숨겨 둔 폴더가 드러난다.
+     */
+    CHILD_UNLOCK,
+}
 
 data class VaultUiState(
     val settings: VaultSettings = VaultSettings(),
@@ -27,6 +42,11 @@ data class VaultUiState(
      * 기기에 저장하지 않는다. 앱을 껐다 켜면 다시 잠기는 것이 이 기능의 요점이다.
      */
     val unlocked: Boolean = false,
+    /**
+     * 어린이 잠금을 방금 풀었다는 신호. 한 번 쓰고 [VaultViewModel.consumeChildUnlock]
+     * 으로 되돌린다. 남겨 두면 다음에 잠글 때 곧바로 다시 풀린다.
+     */
+    val childUnlocked: Boolean = false,
 ) {
     val hiddenFolders: Set<String> get() = settings.hiddenFolders
 
@@ -68,6 +88,20 @@ class VaultViewModel(private val store: VaultStore) : ViewModel() {
             error = null,
             lockedForMs = LockoutPolicy.remainingMs(_uiState.value.settings.lockout, nowMs),
         )
+    }
+
+    /** 재생 화면의 잠금을 풀려고 PIN 을 묻는다. */
+    fun startChildUnlock(nowMs: Long) {
+        _uiState.value = _uiState.value.copy(
+            mode = PinMode.CHILD_UNLOCK,
+            entered = "",
+            error = null,
+            lockedForMs = LockoutPolicy.remainingMs(_uiState.value.settings.lockout, nowMs),
+        )
+    }
+
+    fun consumeChildUnlock() {
+        _uiState.value = _uiState.value.copy(childUnlocked = false)
     }
 
     fun cancel() {
@@ -113,7 +147,7 @@ class VaultViewModel(private val store: VaultStore) : ViewModel() {
                 }
             }
 
-            PinMode.UNLOCK -> unlock(pin, nowMs)
+            PinMode.UNLOCK, PinMode.CHILD_UNLOCK -> unlock(pin, nowMs)
             PinMode.NONE -> Unit
         }
     }
@@ -130,8 +164,15 @@ class VaultViewModel(private val store: VaultStore) : ViewModel() {
         viewModelScope.launch {
             if (store.verifyPin(pin)) {
                 store.saveLockout(LockoutPolicy.onSuccess())
+                val forChildLock = _uiState.value.mode == PinMode.CHILD_UNLOCK
                 _uiState.value = _uiState.value.copy(
-                    mode = PinMode.NONE, entered = "", error = null, lockedForMs = 0L, unlocked = true,
+                    mode = PinMode.NONE,
+                    entered = "",
+                    error = null,
+                    lockedForMs = 0L,
+                    // 어린이 잠금을 푼 것으로 감춘 폴더까지 열지는 않는다.
+                    unlocked = _uiState.value.unlocked || !forChildLock,
+                    childUnlocked = forChildLock,
                 )
             } else {
                 val next = LockoutPolicy.onFailure(lockout, nowMs)

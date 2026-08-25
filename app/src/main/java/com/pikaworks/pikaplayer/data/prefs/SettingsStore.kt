@@ -29,6 +29,7 @@ class SettingsStore(private val context: Context) {
         val THEME = stringPreferencesKey("theme")
         val LIBRARY_SORT = stringPreferencesKey("library_sort")
         val AUTO_PIP = booleanPreferencesKey("auto_pip")
+        val CHILD_LOCK = booleanPreferencesKey("child_lock")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -46,6 +47,7 @@ class SettingsStore(private val context: Context) {
             theme = p[Keys.THEME] ?: ThemeMode.SYSTEM,
             librarySort = p[Keys.LIBRARY_SORT] ?: SortOrder.DATE_DESC,
             autoPip = p[Keys.AUTO_PIP] ?: false,
+            childLock = p[Keys.CHILD_LOCK] ?: false,
         )
     }
 
@@ -87,6 +89,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setAutoPip(value: Boolean) =
         context.dataStore.edit { it[Keys.AUTO_PIP] = value }
+
+    suspend fun setChildLock(value: Boolean) =
+        context.dataStore.edit { it[Keys.CHILD_LOCK] = value }
 }
 
 object SubtitleScale {
@@ -151,4 +156,9 @@ data class Settings(
      * 매번 닫아야 하는 방해물이다.
      */
     val autoPip: Boolean = false,
+    /**
+     * 어린이 잠금. 켜면 재생 화면의 잠금을 풀 때 PIN 을 묻고, 잠긴 동안에는
+     * 뒤로가기로도 나갈 수 없다. 비공개 폴더와 같은 PIN 을 쓴다.
+     */
+    val childLock: Boolean = false,
 )

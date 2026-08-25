@@ -59,6 +59,7 @@ fun SettingsScreen(
     onThemeChange: (String) -> Unit,
     onOpenLicenses: () -> Unit,
     onAutoPipChange: (Boolean) -> Unit,
+    onChildLockChange: (Boolean) -> Unit,
     /** 비공개 폴더가 켜져 있는가. 켜져 있으면 폴더 고르기로, 아니면 PIN 설정으로 간다. */
     vaultEnabled: Boolean,
     onOpenVault: () -> Unit,
@@ -117,6 +118,16 @@ fun SettingsScreen(
         item { SectionHeader("라이브러리") }
         item { SwitchRow("자동 작은 창", settings.autoPip, onAutoPipChange) }
         item { ValueRow("비공개 폴더", if (vaultEnabled) "켜짐" else "꺼짐", onOpenVault) }
+        // 어린이 잠금은 비공개 폴더와 같은 PIN 을 쓴다. PIN 이 없으면 켤 수 없으므로
+        // 스위치 대신 PIN 을 정하러 가는 줄을 보여 준다 — 눌러도 안 켜지는 스위치는
+        // 고장으로 읽힌다.
+        item {
+            if (vaultEnabled) {
+                SwitchRow("어린이 잠금", settings.childLock, onChildLockChange)
+            } else {
+                ValueRow("어린이 잠금", "PIN 설정 필요", onOpenVault)
+            }
+        }
 
         item { SectionHeader("재생") }
         item { ValueRow("기본 재생속도", label(SPEEDS, settings.playbackSpeed)) { openPicker = Picker.SPEED } }
