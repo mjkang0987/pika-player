@@ -209,6 +209,16 @@ class LibraryViewModel(
     }
 
     /** 거르기와 검색어는 화면을 벗어나면 잊는다. 설정처럼 오래 남을 값이 아니다. */
+    /**
+     * 이어보기에서 뺀다.
+     *
+     * 지우는 것은 저장해 둔 재생 위치뿐이다. 영상은 그대로 남고, 다시 틀면
+     * 처음부터 시작한다.
+     */
+    fun forgetPosition(uri: String) {
+        viewModelScope.launch { positionDao.delete(uri) }
+    }
+
     fun setFilter(value: String) {
         _uiState.value = _uiState.value.copy(filter = value)
     }

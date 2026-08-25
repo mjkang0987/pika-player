@@ -71,6 +71,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.pikaworks.pikaplayer.ui.ThumbHeight
 import com.pikaworks.pikaplayer.ui.ThumbWidth
+import kotlinx.coroutines.delay
+import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.border
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 
 /**
  * 플레이어(S3, 세로).
@@ -78,6 +90,9 @@ import com.pikaworks.pikaplayer.ui.ThumbWidth
  * 시안 구조: 상단바 → 영상(컨트롤 오버레이) → 시크바 → 보조 버튼
  * 컨트롤은 영상 위에 얹는다. 영상 아래 따로 두면 세로 화면에서 빈 공간이 크게 남는다.
  */
+/** 가만두면 컨트롤이 사라지기까지. 짧으면 읽기 전에 없어지고, 길면 계속 떠 있는 것과 같다. */
+private const val CONTROLS_HIDE_MS = 3_000L
+
 @OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(
@@ -136,6 +151,33 @@ fun PlayerScreen(
     // 반복·랜덤·자동 재생은 모두 "이 영상이 끝나면 무엇이 일어나는가" 한 가지
     // 질문의 답이다. 흩어 놓으면 서로 어떻게 맞물리는지 알기 어려워 한데 묶었다.
     var playbackSheetVisible by remember { mutableStateOf(false) }
+
+    // 만지면 다시 보이고, 가만두면 사라진다. 컨트롤이 계속 떠 있으면 영상 위에
+    // 반투명 막이 남아 어두운 장면이 늘 뿌옇다.
+    //
+    // nudge 는 "방금 뭔가 만졌다" 는 신호다. 이것이 없으면 시크바를 끌거나 10초를
+    // 옮기는 동안 손 밑에서 컨트롤이 사라진다 — controlsVisible 은 그대로라서
+    // 아래 효과가 다시 시작되지 않기 때문이다.
+    var nudge by remember { mutableIntStateOf(0) }
+    val seek: (Long) -> Unit = { nudge++; onSeek(it) }
+    var upNextSheetVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(state.controlsVisible, state.isPlaying, state.locked, nudge) {
+        if (state.controlsVisible && state.isPlaying && !state.locked) {
+            delay(CONTROLS_HIDE_MS)
+            onToggleControls()
+        }
+    }
+
+    if (upNextSheetVisible) {
+        UpNextSheet(
+            videos = state.upNext,
+            onClick = {
+                upNextSheetVisible = false
+                onPlayVideo(it)
+            },
+            onDismiss = { upNextSheetVisible = false },
+        )
+    }
 
     if (playbackSheetVisible) {
         ToggleSheet(
@@ -208,6 +250,11 @@ fun PlayerScreen(
 
         if (!isFullscreen) TopBar(title = state.title, onBack = onBack)
 
+        // 세로에서는 영상과 컨트롤 덩어리를 화면 가운데 둔다. 위에 붙여 두면
+        // 아래로 남는 검은 자리가 화면이 잘린 것처럼 보인다. 위아래로 같은
+        // 몫을 주면 덩어리가 가운데로 온다.
+        if (!isFullscreen) Spacer(Modifier.weight(1f))
+
         Box(
             modifier = (if (isFullscreen) Modifier.weight(1f).fillMaxWidth()
                         else Modifier.fillMaxWidth().aspectRatio(16f / 9f))
@@ -244,43 +291,53 @@ fun PlayerScreen(
                 ) {
                     Icon(AppIcons.Lock, "잠금 해제", tint = Color.White, modifier = Modifier.size(20.dp))
                 }
-            } else if (state.controlsVisible) {
-                // 밝은 장면에서 흰 아이콘이 묻히지 않도록 스크림을 깐다.
-                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.30f)))
-                TransportControls(
-                    isPlaying = state.isPlaying,
-                    onTogglePlay = onTogglePlay,
-                    onSkip = onSkip,
-                    onPrevious = state.previous?.let { { onPlayVideo(it) } },
-                    onNext = state.upNext.firstOrNull()?.let { { onPlayVideo(it) } },
-                    modifier = Modifier.align(Alignment.Center),
-                )
-
-                if (isFullscreen) {
-                    // 가로에서는 컨트롤이 전부 영상 위에 얹힌다. 아래에 둘 자리가 없다.
-                    FullscreenTopBar(
-                        title = state.title,
-                        onBack = onBack,
-                        modifier = Modifier.align(Alignment.TopStart),
-                    )
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
-                    ) {
-                        SeekBar(state = state, onSeek = onSeek, onMarkAb = onMarkAb)
-                        Spacer(Modifier.height(2.dp))
-                        SecondaryControls(
-                            state = state,
-                            isFullscreen = isFullscreen,
-                            onOpenSubtitleSheet = { subtitleSheetVisible = true },
-                            onCycleResize = onCycleResize,
-                            onOpenSpeedSheet = { speedSheetVisible = true },
-                            onToggleFullscreen = onToggleFullscreen,
-                            onToggleLock = onToggleLock,
-                            onOpenPlaybackSheet = { playbackSheetVisible = true },
-                            onEnterPip = onEnterPip,
+            } else {
+                // 사라질 때 툭 꺼지면 영상이 깜빡인 것처럼 보인다. 스크림과 버튼이
+                // 같이 옅어져야 "가려져 있던 것이 걷혔다" 로 읽힌다.
+                AnimatedVisibility(
+                    visible = state.controlsVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    Box(Modifier.fillMaxSize()) {
+                        // 밝은 장면에서 흰 아이콘이 묻히지 않도록 스크림을 깐다.
+                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.30f)))
+                        TransportControls(
+                            isPlaying = state.isPlaying,
+                            onTogglePlay = onTogglePlay,
+                            onSkip = { nudge++; onSkip(it) },
+                            onPrevious = state.previous?.let { { onPlayVideo(it) } },
+                            onNext = state.upNext.firstOrNull()?.let { { onPlayVideo(it) } },
+                            modifier = Modifier.align(Alignment.Center),
                         )
+
+                        if (isFullscreen) {
+                            // 가로에서는 컨트롤이 전부 영상 위에 얹힌다. 아래에 둘 자리가 없다.
+                            FullscreenTopBar(
+                                title = state.title,
+                                onBack = onBack,
+                                modifier = Modifier.align(Alignment.TopStart),
+                            )
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
+                            ) {
+                                SeekBar(state = state, onSeek = seek, onMarkAb = onMarkAb)
+                                Spacer(Modifier.height(2.dp))
+                                SecondaryControls(
+                                    state = state,
+                                    isFullscreen = isFullscreen,
+                                    onOpenSubtitleSheet = { subtitleSheetVisible = true },
+                                    onCycleResize = onCycleResize,
+                                    onOpenSpeedSheet = { speedSheetVisible = true },
+                                    onToggleFullscreen = onToggleFullscreen,
+                                    onToggleLock = onToggleLock,
+                                    onOpenPlaybackSheet = { playbackSheetVisible = true },
+                                    onEnterPip = onEnterPip,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -320,7 +377,7 @@ fun PlayerScreen(
             Spacer(Modifier.height(20.dp))
             SeekBar(
                 state = state,
-                onSeek = onSeek,
+                onSeek = seek,
                 onMarkAb = onMarkAb,
                 modifier = Modifier.padding(horizontal = 24.dp),
             )
@@ -337,49 +394,79 @@ fun PlayerScreen(
                 onOpenPlaybackSheet = { playbackSheetVisible = true },
                 onEnterPip = onEnterPip,
             )
-            // 남는 세로 공간만 쓴다. 좁은 화면에서는 높이가 0이 되어 조용히 사라진다.
-            UpNext(
-                videos = state.upNext,
-                onClick = onPlayVideo,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+            Spacer(Modifier.height(14.dp))
+            // 목록을 펼쳐 두면 남는 높이만큼만 보여서, 화면이 좁으면 한 줄도
+            // 안 나오고 넓으면 영상을 위로 밀어 올린다. 자리를 차지하지 않는
+            // 버튼 하나로 두고 목록은 시트에서 편다.
+            UpNextButton(
+                count = state.upNext.size,
+                onClick = { upNextSheetVisible = true },
+                modifier = Modifier.padding(horizontal = 24.dp),
             )
+            Spacer(Modifier.weight(1f))
         }
     }
 }
 
 /**
- * 플레이어 하단의 다음 영상 목록.
+ * 다음 영상으로 가는 문.
+ *
+ * 목록이 없어도 자리를 지운다기보다 왜 없는지 말한다 — 있었다가 사라지면
+ * 버튼이 있었는지조차 알 수 없다. 대신 누를 수 없게 두어 손이 헛돌지 않는다.
+ */
+@Composable
+private fun UpNextButton(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = PikaTheme.colors
+    val shape = RoundedCornerShape(10.dp)
+    val has = count > 0
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .border(1.dp, Color.White.copy(alpha = if (has) 0.22f else 0.10f), shape)
+            .then(if (has) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 14.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            if (has) "다음 영상" else "다음 영상이 없습니다",
+            fontSize = 12.sp,
+            color = if (has) colors.onMediaText else colors.onMediaTextFaint,
+        )
+        if (has) {
+            Text("$count", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = colors.onMediaKey)
+        }
+    }
+}
+
+/**
+ * 다음 영상 목록.
  *
  * 플레이어는 라이트 테마에서도 검은 배경이라 목록 행을 그대로 쓸 수 없다.
  * 여기서는 영상 위에 얹는 색(onMedia*)만 쓴다.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun UpNext(videos: List<VideoItem>, onClick: (VideoItem) -> Unit, modifier: Modifier = Modifier) {
-    val colors = PikaTheme.colors
-    Column(modifier = modifier) {
+private fun UpNextSheet(
+    videos: List<VideoItem>,
+    onClick: (VideoItem) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = PikaDarkColors
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = colors.surface,
+    ) {
         Text(
             "다음 영상",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 0.8.sp,
-            color = colors.onMediaKey,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 18.dp, bottom = 6.dp),
+            fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
         )
-        // 비었다고 통째로 빼면 아래가 검게 남아 화면이 잘린 것처럼 보인다.
-        // 자리는 그대로 두고 왜 비었는지만 말한다.
-        if (videos.isEmpty()) {
-            Text(
-                "이 폴더의 마지막 영상입니다",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Light,
-                color = colors.onMediaTextFaint,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp),
-            )
-        } else {
-            LazyColumn {
-                items(videos, key = { it.uri.toString() }) { video ->
-                    UpNextRow(video = video, onClick = { onClick(video) })
-                }
+        LazyColumn(modifier = Modifier.padding(bottom = 28.dp)) {
+            items(videos, key = { it.uri.toString() }) { video ->
+                UpNextRow(video = video, onClick = { onClick(video) })
             }
         }
     }
@@ -604,6 +691,16 @@ private fun SeekBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(24.dp) // 터치 영역. 보이는 바는 3dp 지만 그대로 두면 잡기 어렵다
+                // 끌기와 따로 건다. 한 블록에서 둘을 다루면 먼저 등록한 쪽이
+                // 몸짓을 삼켜서, 짧게 누른 것이 아무 일도 아닌 것이 된다.
+                .pointerInput(state.durationMs) {
+                    detectTapGestures { offset ->
+                        if (size.width > 0 && state.durationMs > 0) {
+                            val ratio = (offset.x / size.width).coerceIn(0f, 1f)
+                            onSeek((state.durationMs * ratio).toLong())
+                        }
+                    }
+                }
                 .pointerInput(state.durationMs) {
                     detectHorizontalDragGestures { change, _ ->
                         if (size.width > 0 && state.durationMs > 0) {

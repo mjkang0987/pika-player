@@ -477,6 +477,19 @@ class MainActivity : ComponentActivity() {
                                         explicitQueue = true,
                                     )
                                 },
+                                onContinueRemove = { item ->
+                                    confirming = Confirm(
+                                        title = "이어보기에서 빼기",
+                                        // 영상이 지워지는 줄 알고 못 누르는 일이 없게 한다.
+                                        body = "${item.video.displayName}\n\n" +
+                                            "저장해 둔 재생 위치만 지웁니다. 영상 파일은 그대로 남고, " +
+                                            "다시 틀면 처음부터 시작합니다.",
+                                        confirmLabel = "빼기",
+                                        onConfirm = {
+                                            libraryVm.forgetPosition(item.video.uri.toString())
+                                        },
+                                    )
+                                },
                                 onVideoLongClick = { row -> pendingAdd = row.video },
                                 onVideoMenu = { row -> pendingMenu = row.video },
                                 onSortChange = { scope.launch { app.settings.setLibrarySort(it) } },

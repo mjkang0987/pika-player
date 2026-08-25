@@ -45,6 +45,10 @@ interface PlaybackPositionDao {
 
     @Query("SELECT * FROM playback_position")
     fun observeAll(): Flow<List<PlaybackPosition>>
+
+    /** 이어보기에서 지운다. 다시 틀면 처음부터. */
+    @Query("DELETE FROM playback_position WHERE uri = :uri")
+    suspend fun delete(uri: String)
 }
 
 @Database(

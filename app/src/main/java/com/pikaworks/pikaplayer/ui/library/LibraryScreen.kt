@@ -50,6 +50,9 @@ import com.pikaworks.pikaplayer.ui.sortLabel
 import com.pikaworks.pikaplayer.ui.formatRemaining
 import com.pikaworks.pikaplayer.ui.formatSize
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import com.pikaworks.pikaplayer.ui.AppIcons
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Icon
 
 /**
  * 라이브러리(S1).
@@ -66,6 +69,8 @@ fun LibraryScreen(
     /** 줄 오른쪽 더보기(⋯). */
     onVideoMenu: (LibraryRow) -> Unit,
     onContinueClick: (ContinueItem) -> Unit,
+    /** 이어보기 줄에서 뺀다. 지우는 것은 저장된 재생 위치뿐이다. */
+    onContinueRemove: (ContinueItem) -> Unit,
     onSortChange: (String) -> Unit,
     onFilterChange: (String) -> Unit,
     onQueryChange: (String) -> Unit,
@@ -108,7 +113,7 @@ fun LibraryScreen(
 
             if (state.continueWatching.isNotEmpty()) {
                 item { SectionTitle("이어보기", state.continueWatching.size) }
-                item { ContinueRow(state.continueWatching, onContinueClick) }
+                item { ContinueRow(state.continueWatching, onContinueClick, onContinueRemove) }
             }
 
             item { LibraryTabs(state = state, onSelect = onFilterChange) }
@@ -201,7 +206,11 @@ private fun SectionTitle(title: String, count: Int) {
 }
 
 @Composable
-private fun ContinueRow(items: List<ContinueItem>, onClick: (ContinueItem) -> Unit) {
+private fun ContinueRow(
+    items: List<ContinueItem>,
+    onClick: (ContinueItem) -> Unit,
+    onRemove: (ContinueItem) -> Unit,
+) {
     val colors = PikaTheme.colors
     LazyRow(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
@@ -237,6 +246,25 @@ private fun ContinueRow(items: List<ContinueItem>, onClick: (ContinueItem) -> Un
                             modifier = Modifier
                                 .fillMaxWidth(item.progress).height(4.dp)
                                 .background(colors.onMediaKey),
+                        )
+                    }
+                    // 다 본 것도 아니고 다시 볼 것도 아닌 영상이 이 줄에 남는다.
+                    // 길게 누르기로 두면 그런 것이 있는 줄도 모른다.
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .clickable { onRemove(item) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            AppIcons.Close,
+                            "이어보기에서 빼기",
+                            tint = colors.onMediaText,
+                            modifier = Modifier.size(12.dp),
                         )
                     }
                 }
