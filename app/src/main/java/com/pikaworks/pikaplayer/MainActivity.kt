@@ -732,8 +732,9 @@ class MainActivity : ComponentActivity() {
         val systemControls = remember { SystemControls(this) }
         val pipController = remember { PipController(this) }
 
-        val isLandscape =
-            LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+        // 아래 몰입 모드 효과의 열쇠로도 쓴다. 접었다 펴면 이 값이 바뀐다.
+        val configuration = LocalConfiguration.current
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         var forcedLandscape by remember { mutableStateOf<Boolean?>(null) }
 
         /**
@@ -796,8 +797,13 @@ class MainActivity : ComponentActivity() {
          *
          * 잠금 해제를 묻는 동안에는 되돌린다. 숫자판이 화면 아래까지 내려가는데,
          * 바가 감춰진 자리는 몸짓으로 뒤로 가는 영역이라 손이 엇갈린다.
+         *
+         * 화면 구성이 바뀔 때도 다시 건다. 폴더블을 접었다 펴면 디스플레이가
+         * 갈리면서 시스템이 바를 되돌리는데, 매니페스트의 configChanges 때문에
+         * Activity 가 다시 만들어지지 않아 이 효과도 다시 돌지 않았다. 접어서
+         * 세로로 보다가 펴서 가로로 돌리면 배터리 잔량만 화면에 남던 이유다.
          */
-        LaunchedEffect(playerState.controlsVisible, askingPin) {
+        LaunchedEffect(playerState.controlsVisible, askingPin, configuration) {
             PlayerOrientation.setImmersive(
                 activity = this@MainActivity,
                 immersive = !playerState.controlsVisible && !askingPin,
