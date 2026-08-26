@@ -70,6 +70,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import com.pikaworks.pikaplayer.ui.UpNextSheet
 import androidx.compose.ui.text.style.TextOverflow
 import com.pikaworks.pikaplayer.ui.PlaybackSheet
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.displayCutout
 
 /**
  * 플레이어(S3, 세로).
@@ -286,9 +288,11 @@ fun PlayerScreen(
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                // 3버튼 내비게이션에 가리지 않게. 전체화면에서는
-                                // 시스템 바를 감춘 상태라 이 값이 0 이 된다.
-                                .windowInsetsPadding(WindowInsets.navigationBars)
+                                // 3버튼 내비게이션과 노치를 피한다. 가로에서는
+                                // 노치가 옆에 오므로 좌우 여백으로 들어온다.
+                                .windowInsetsPadding(
+                                    WindowInsets.navigationBars.union(WindowInsets.displayCutout)
+                                )
                                 .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 10.dp),
                         ) {
                             SeekBar(state = state, onSeek = seek, onMarkAb = onMarkAb)
@@ -396,8 +400,11 @@ private fun PlayerTopBar(
         // 왼쪽·위아래 여백은 IconTap 이 아이콘보다 커진 만큼(가로 10dp, 세로 10dp)
         // 덜어낸 값이다. 아이콘이 놓이는 자리는 전과 같다.
         modifier = modifier.fillMaxWidth()
-            // 상태 표시줄에 가리지 않게. 전체화면에서는 0 이 된다.
-            .windowInsetsPadding(WindowInsets.statusBars)
+            // 상태 표시줄과 노치를 피한다.
+            //
+            // 바를 감추면 statusBars 는 0 이 되지만 노치는 그대로 남는다. 둘을
+            // 합쳐 두면 어느 쪽이 있든 가려지지 않는다.
+            .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))
             .padding(start = 10.dp, end = 20.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),

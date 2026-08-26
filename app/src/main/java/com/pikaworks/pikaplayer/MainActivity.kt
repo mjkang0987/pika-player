@@ -771,9 +771,6 @@ class MainActivity : ComponentActivity() {
                 forcedLandscape = forcedLandscape,
             )
         }
-        LaunchedEffect(isFullscreen) {
-            PlayerOrientation.setImmersive(this@MainActivity, isFullscreen)
-        }
         LaunchedEffect(playerState.isPlaying) {
             systemControls.keepScreenOn(playerState.isPlaying)
         }
@@ -789,6 +786,23 @@ class MainActivity : ComponentActivity() {
         }
         val vaultState by vaultVm.uiState.collectAsStateWithLifecycle()
         val askingPin = vaultState.mode == PinMode.CHILD_UNLOCK
+
+        /*
+         * 시스템 바를 컨트롤과 같이 여닫는다.
+         *
+         * 전에는 전체화면일 때만 감췄다. 세로에서는 컨트롤이 다 걷혀 영상만 남았는데
+         * 배터리와 시계는 그대로 떠 있었다 — 화면에서 지워지지 않는 것이 하나 남으면
+         * 나머지를 지운 값이 반으로 준다.
+         *
+         * 잠금 해제를 묻는 동안에는 되돌린다. 숫자판이 화면 아래까지 내려가는데,
+         * 바가 감춰진 자리는 몸짓으로 뒤로 가는 영역이라 손이 엇갈린다.
+         */
+        LaunchedEffect(playerState.controlsVisible, askingPin) {
+            PlayerOrientation.setImmersive(
+                activity = this@MainActivity,
+                immersive = !playerState.controlsVisible && !askingPin,
+            )
+        }
 
         // PIN 이 맞으면 그때 잠금을 푼다. 신호는 한 번 쓰고 되돌린다.
         LaunchedEffect(vaultState.childUnlocked) {
