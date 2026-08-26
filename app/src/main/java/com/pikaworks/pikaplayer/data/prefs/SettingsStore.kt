@@ -92,15 +92,17 @@ class SettingsStore(private val context: Context) {
 /**
  * 자막 글자 배율. 기준 15sp 에 곱해 쓴다 — PlayerScreen 의 SubtitleText.
  *
- * 가장 큰 값을 1.5 까지 둔 이유: 1.25 는 폰을 조금 멀리 두고 보는 사람에게
- * 여전히 작다는 쪽이었다. 그보다 더 키우면 가로 영상에서 한 줄이 두 줄로
- * 접히기 시작해서, 자막이 화면을 먹는 대가가 읽기 편해지는 이득을 넘는다.
+ * 위쪽 두 칸(1.5·1.75)은 한 줄이 두 줄로 접히는 값이다. 가로 영상에서
+ * 긴 대사는 대개 두 줄이 되고, 그만큼 자막이 화면을 더 먹는다. 그걸
+ * 알면서도 남겨 둔 이유는 글자가 작아 못 읽는 쪽이 먼저 손해이기
+ * 때문이다 — 접히는 대가는 고른 사람이 감수하는 쪽으로 둔다.
  */
 object SubtitleScale {
     const val SMALL = 0.85f
     const val NORMAL = 1.0f
     const val LARGE = 1.25f
     const val EXTRA_LARGE = 1.5f
+    const val HUGE = 1.75f
 }
 
 /**
