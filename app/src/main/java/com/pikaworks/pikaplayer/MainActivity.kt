@@ -438,6 +438,7 @@ class MainActivity : ComponentActivity() {
                         defaultSpeed = settings?.playbackSpeed ?: 1f,
                         defaultCharset = settings?.subtitleEncoding ?: SubtitleEncoding.AUTO,
                         subtitleScale = settings?.subtitleScale ?: 1f,
+                        onSubtitleScaleChange = { scope.launch { app.settings.setSubtitleScale(it) } },
                         pipMode = pip,
                         autoPip = settings?.autoPip ?: false,
                         // PIN 이 없으면 물을 것이 없다. 설정만 켜 두고 PIN 을 지운
@@ -713,6 +714,8 @@ class MainActivity : ComponentActivity() {
         defaultSpeed: Float,
         defaultCharset: String,
         subtitleScale: Float,
+        /** 자막 시트에서 글자 크기를 바꾸면 설정에도 남긴다 — 두 곳이 같은 값을 본다. */
+        onSubtitleScaleChange: (Float) -> Unit,
         pipMode: Boolean,
         autoPip: Boolean,
         /** 어린이 잠금. 잠금을 풀 때 PIN 을 묻고, 잠긴 동안에는 나갈 수 없다. */
@@ -908,6 +911,7 @@ class MainActivity : ComponentActivity() {
                 onToggleControls = playerVm::toggleControls,
                 onSelectSubtitle = playerVm::selectSubtitle,
                 onSelectCharset = playerVm::setSubtitleCharset,
+                onSelectSubtitleScale = onSubtitleScaleChange,
                 onAdjustSubtitleOffset = playerVm::adjustSubtitleOffset,
                 onResetSubtitleOffset = playerVm::resetSubtitleOffset,
                 // 잠긴 것을 풀 때만 PIN 을 묻는다. 잠그는 것은 아무나 해도 된다.

@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
+import com.pikaworks.pikaplayer.ui.SUBTITLE_SCALE_OPTIONS
 import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
 
 /**
@@ -44,6 +45,9 @@ fun SubtitleSheet(
     state: PlayerUiState,
     onSelectSubtitle: (Int) -> Unit,
     onSelectCharset: (String) -> Unit,
+    /** 설정에 저장된 자막 배율. 시트에서 고른 값이 설정에도 그대로 남는다. */
+    subtitleScale: Float,
+    onSelectScale: (Float) -> Unit,
     onAdjustOffset: (Long) -> Unit,
     onResetOffset: () -> Unit,
     onDismiss: () -> Unit,
@@ -108,6 +112,26 @@ fun SubtitleSheet(
                 fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp),
             )
+
+            // 글자 크기도 여기 둔다. 자막이 작다는 것은 영상을 보는 중에
+            // 알게 되는데, 그 순간 설정은 재생 화면을 나갔다 와야 하는 자리에
+            // 있다. 여기서 고르면 시트를 닫는 즉시 바뀐 크기가 보인다.
+            // 고른 값은 설정에 그대로 남는다 — 두 곳이 다른 값을 들고 있으면
+            // 어느 쪽이 진짜인지 알 수 없다.
+            SectionHeader("글자 크기")
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp),
+            ) {
+                SUBTITLE_SCALE_OPTIONS.forEach { (value, label) ->
+                    Chip(
+                        label = label,
+                        selected = subtitleScale == value,
+                        onClick = { onSelectScale(value) },
+                    )
+                }
+            }
 
             SectionHeader("싱크")
             Row(

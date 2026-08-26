@@ -2,6 +2,7 @@ package com.pikaworks.pikaplayer.ui
 
 import com.pikaworks.pikaplayer.data.prefs.SortOrder
 import com.pikaworks.pikaplayer.data.prefs.SubtitleEncoding
+import com.pikaworks.pikaplayer.data.prefs.SubtitleScale
 
 /** 정렬 시트의 선택지. 보관함과 폴더가 같은 목록을 쓴다. */
 val SORT_OPTIONS = listOf(
@@ -27,4 +28,13 @@ val ENCODING_OPTIONS = listOf(
     SubtitleEncoding.CP949 to "CP949",
     SubtitleEncoding.EUC_KR to "EUC-KR",
     SubtitleEncoding.SHIFT_JIS to "Shift-JIS",
+)
+
+/** 자막 글자 크기 선택지. 설정 화면과 플레이어의 자막 시트가 같은 목록을 쓴다. */
+val SUBTITLE_SCALE_OPTIONS = listOf(
+    SubtitleScale.SMALL to "작게",
+    SubtitleScale.NORMAL to "보통",
+    SubtitleScale.LARGE to "크게",
+    SubtitleScale.EXTRA_LARGE to "아주 크게",
+    SubtitleScale.HUGE to "가장 크게",
 )
