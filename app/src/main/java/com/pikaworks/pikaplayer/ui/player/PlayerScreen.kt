@@ -359,18 +359,16 @@ fun PlayerScreen(
             // 자리는 고정한다. 컨트롤이 뜰 때 비켜서게 해 봤는데, 자막이 화면
             // 한가운데까지 뛰어올랐다가 3초 뒤에 도로 내려온다. 겹쳐서 한 줄 못
             // 읽는 것보다 눈이 자막을 따라다녀야 하는 쪽이 더 거슬린다.
+            val frame = videoFrame(state.resizeMode, videoAspect, videoBoxSize)
             state.cue?.let { cue ->
                 SubtitleText(
                     text = cue.text,
                     scale = subtitleScale,
+                    frameWidthPx = frame.widthPx,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .padding(
-                            start = 26.dp,
-                            end = 26.dp,
-                            bottom = 28.dp + letterboxBottom(state.resizeMode, videoAspect, videoBoxSize),
-                        ),
+                        .padding(start = 26.dp, end = 26.dp, bottom = 28.dp + frame.bottomInset),
                 )
             }
 
@@ -408,17 +406,35 @@ private fun UpNextButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 /**
  * 자막 한 줄.
  *
- * 크기는 15sp 를 기준으로 배율만 곱한다 — 설정과 자막 시트가 같은 값을 쓴다.
+ * 크기는 **그림 크기에 비례**한다. 예전에는 15sp 고정이었는데, 그러면 접는 폰을
+ * 펴거나 전체화면으로 눕힐 때 그림만 커지고 글자는 그대로라 "자막이 작아졌다" 가
+ * 된다. 실제로 작아진 것은 글자가 아니라 그림 대비 비율이다. 기준을 그림에 걸어
+ * 두면 화면이 커질 때 자막도 같이 커진다.
+ *
+ * 설정에서 고른 배율은 이 값에 곱한다 — 설정과 자막 시트가 같은 값을 쓴다.
+ *
  * 그림자를 넣는 이유는 밝은 장면 위에서 흰 글자가 사라지기 때문이다. 자막이
  * 그림 안에 놓이면서 흰 배경 위에 겹칠 일이 늘어 더 중요해졌다.
  */
 @Composable
-private fun SubtitleText(text: String, scale: Float, modifier: Modifier = Modifier) {
+private fun SubtitleText(text: String, scale: Float, frameWidthPx: Float, modifier: Modifier = Modifier) {
+    // 픽셀로 재서 sp 로 되돌린다. 이렇게 하면 시스템 '글꼴 크기' 설정이 자막에
+    // 겹쳐 곱해지지 않는다 — 자막에는 앱 안에 따로 고른 배율이 이미 있고, 둘이
+    // 겹치면 접근성 설정을 키워 둔 기기에서만 자막이 화면을 덮는다.
+    //
+    // 상·하한을 두는 이유: 작은 커버 화면에서 세로로 긴 영상을 틀면 그림이 아주
+    // 납작해져 글자가 읽을 수 없는 크기가 되고, 반대로 큰 화면에서 세로 영상을
+    // 틀면 그림 높이가 화면을 다 먹어 자막이 화면을 덮는다.
+    val size = with(LocalDensity.current) {
+        (frameWidthPx * SUBTITLE_WIDTH_FRACTION)
+            .coerceIn(SUBTITLE_MIN.toPx(), SUBTITLE_MAX.toPx())
+            .toSp() * scale
+    }
     Text(
         text = text,
         color = Color.White,
-        fontSize = (15 * scale).sp,
-        lineHeight = (21 * scale).sp,
+        fontSize = size,
+        lineHeight = size * SUBTITLE_LINE_HEIGHT_RATIO,
         fontWeight = FontWeight.Medium,
         textAlign = TextAlign.Center,
         style = LocalTextStyle.current.copy(
@@ -491,19 +507,34 @@ private fun VideoSurface(player: ExoPlayer, resizeMode: Int, modifier: Modifier 
     )
 }
 
+/** 상자 안에서 그림이 실제로 차지하는 칸. 자막의 크기와 자리가 모두 여기서 나온다. */
+private data class VideoFrame(
+    /** 그림의 너비(픽셀). 자막 글자 크기의 기준이다. */
+    val widthPx: Float,
+    /** 그림 아래에 남는 검은 띠. 자막을 이만큼 끌어올린다. */
+    val bottomInset: Dp,
+)
+
 /**
- * 영상 상자 아래에 남는 검은 띠의 높이.
+ * 영상 상자 안에서 그림이 그려지는 칸을 잰다.
  *
- * '맞춤' 에서만 생긴다 — '채움'·'늘이기' 는 그림이 상자를 가득 채우고, 세로로 긴
- * 영상은 높이를 다 쓰고 좌우가 남는다. 이 값들에서는 0 이 나와 자막이 예전 자리에
- * 그대로 놓인다. 크기나 비율을 아직 모르는 동안(첫 프레임 전)도 마찬가지다.
+ * 띠는 '맞춤' 에서만 생긴다 — '채움'·'늘이기' 는 그림이 상자를 가득 채우고, 세로로
+ * 긴 영상은 높이를 다 쓰고 좌우가 남는다. 그 경우 그림 높이는 상자 높이 그대로이고
+ * 띠는 0 이다. 크기나 비율을 아직 모르는 동안(첫 프레임 전)도 마찬가지다.
  */
 @Composable
-private fun letterboxBottom(resizeMode: Int, aspect: Float, box: IntSize): Dp {
-    if (resizeMode != RESIZE_MODE_FIT_INDEX || aspect <= 0f || box.width == 0 || box.height == 0) return 0.dp
-    val drawnHeight = (box.width / aspect).coerceAtMost(box.height.toFloat())
-    return with(LocalDensity.current) { ((box.height - drawnHeight) / 2f).toDp() }
-}
+private fun videoFrame(resizeMode: Int, aspect: Float, box: IntSize): VideoFrame =
+    with(LocalDensity.current) {
+        val boxWidth = box.width.toFloat()
+        val boxHeight = box.height.toFloat()
+        if (resizeMode != RESIZE_MODE_FIT_INDEX || aspect <= 0f || box.width == 0 || box.height == 0) {
+            VideoFrame(widthPx = boxWidth, bottomInset = 0.dp)
+        } else {
+            val drawnWidth = (boxHeight * aspect).coerceAtMost(boxWidth)
+            val drawnHeight = (boxWidth / aspect).coerceAtMost(boxHeight)
+            VideoFrame(widthPx = drawnWidth, bottomInset = ((boxHeight - drawnHeight) / 2f).toDp())
+        }
+    }
 
 /** 맞춤 / 채움 / 늘이기 */
 private val RESIZE_MODES = intArrayOf(
@@ -514,6 +545,29 @@ private val RESIZE_MODES = intArrayOf(
 
 /** '맞춤'. 세 가지 중 이것만 그림 둘레에 빈자리를 남긴다. */
 private const val RESIZE_MODE_FIT_INDEX = 0
+
+/**
+ * 자막 글자 크기 = 그림 **너비**의 3.4%.
+ *
+ * 높이를 기준으로 잡는 쪽이 흔하지만(media3 의 자막 뷰가 그렇다), 그러면 세로로
+ * 긴 영상에서 글자가 과하게 커진다 — 그림 높이가 화면을 다 쓰기 때문이다. 한 줄에
+ * 몇 글자가 들어가는지를 정하는 것은 너비이고, 자막이 읽히는 느낌도 그쪽을 따른다.
+ *
+ * 3.4% 는 세로 화면에서 가로 영상을 볼 때 — 가장 흔한 경우 — 예전 15sp 와 거의
+ * 같은 크기가 되도록 맞춘 값이다. 눕히거나 접는 폰을 펴면 그림이 커진 만큼 자막도
+ * 같이 커진다.
+ */
+private const val SUBTITLE_WIDTH_FRACTION = 0.034f
+/**
+ * 하한을 14dp 로 둔 이유: 접는 폰의 커버 화면처럼 폭이 좁은 기기에서 비율만
+ * 따르면 예전(15sp)보다 작아진다. 화면이 작아졌다고 자막까지 작아지면 그 화면에서
+ * 자막이 제 몫을 못 한다. 상한은 태블릿에서 자막이 그림을 덮지 않게 하는 선이다.
+ */
+private val SUBTITLE_MIN = 14.dp
+private val SUBTITLE_MAX = 30.dp
+
+/** 줄 간격. 15sp 에 21sp 를 쓰던 예전 비율 그대로다. */
+private const val SUBTITLE_LINE_HEIGHT_RATIO = 1.4f
 
 
 @Composable
