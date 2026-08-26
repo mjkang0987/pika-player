@@ -89,10 +89,18 @@ class SettingsStore(private val context: Context) {
         context.dataStore.edit { it[Keys.CHILD_LOCK] = value }
 }
 
+/**
+ * 자막 글자 배율. 기준 15sp 에 곱해 쓴다 — PlayerScreen 의 SubtitleText.
+ *
+ * 가장 큰 값을 1.5 까지 둔 이유: 1.25 는 폰을 조금 멀리 두고 보는 사람에게
+ * 여전히 작다는 쪽이었다. 그보다 더 키우면 가로 영상에서 한 줄이 두 줄로
+ * 접히기 시작해서, 자막이 화면을 먹는 대가가 읽기 편해지는 이득을 넘는다.
+ */
 object SubtitleScale {
     const val SMALL = 0.85f
     const val NORMAL = 1.0f
     const val LARGE = 1.25f
+    const val EXTRA_LARGE = 1.5f
 }
 
 /**

@@ -177,6 +177,7 @@ private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, THEME }
 
 private val SCALES = listOf(
     SubtitleScale.SMALL to "작게", SubtitleScale.NORMAL to "보통", SubtitleScale.LARGE to "크게",
+    SubtitleScale.EXTRA_LARGE to "아주 크게",
 )
 private val THEMES = listOf(
     ThemeMode.SYSTEM to "시스템 설정", ThemeMode.DARK to "다크", ThemeMode.LIGHT to "라이트",
