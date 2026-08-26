@@ -28,6 +28,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,11 +42,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -130,6 +138,27 @@ fun PlayerScreen(
     val colors = PikaTheme.colors
     var feedback by remember { mutableStateOf<GestureFeedback?>(null) }
     var subtitleSheetVisible by remember { mutableStateOf(false) }
+
+    // 영상 상자의 크기와 영상 자체의 가로세로비. 둘이 있어야 그림이 상자 안
+    // 어디까지 차 있는지 — 위아래로 남는 검은 띠가 얼마인지 — 알 수 있다.
+    // 자막을 그림 안에 놓으려면 그 띠만큼 끌어올려야 한다.
+    var videoBoxSize by remember { mutableStateOf(IntSize.Zero) }
+    var videoAspect by remember(player) { mutableFloatStateOf(0f) }
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onVideoSizeChanged(size: VideoSize) {
+                val par = if (size.pixelWidthHeightRatio > 0f) size.pixelWidthHeightRatio else 1f
+                videoAspect =
+                    if (size.width == 0 || size.height == 0) 0f
+                    else size.width * par / size.height
+            }
+        }
+        // 리스너는 '다음 변화' 부터 온다. 이미 틀고 있던 영상으로 돌아온
+        // 경우에는 그 뒤로 아무 일도 일어나지 않아 값이 0 으로 남는다.
+        listener.onVideoSizeChanged(player.videoSize)
+        player.addListener(listener)
+        onDispose { player.removeListener(listener) }
+    }
     // 속도는 순환 버튼이었다. 0.5 에서 2.0 으로 가려면 다섯 번을 눌러야 했고,
     // 지금 몇 배인지 보려고 또 눌러 보게 된다. 목록에서 고르게 바꾼다.
     var speedSheetVisible by remember { mutableStateOf(false) }
@@ -214,6 +243,7 @@ fun PlayerScreen(
                 // '채움' 은 넘치는 부분을 잘라내는 게 목적이다. 잘리지 않으면
                 // 영상이 아래 버튼 줄 위로 흘러나온다.
                 .clipToBounds()
+                .onSizeChanged { videoBoxSize = it }
                 .playerGestures(
                     enabled = !state.locked,
                     brightnessVolumeEnabled = brightnessVolumeGestures,
@@ -316,12 +346,15 @@ fun PlayerScreen(
                 }
             }
 
-            // 자막은 늘 영상 위에 얹는다.
+            // 자막은 영상 그림 안, 아래쪽에 놓는다.
             //
-            // 영상 아래에 띠를 만들어 거기 그리는 선택지가 있었다. 영상을 가리지
-            // 않는 대신 띠 높이만큼 영상이 작아졌는데, 영상이 화면을 다 쓰게 된
-            // 지금은 그 대가가 그대로 손해다. 게다가 가로 영상은 이미 위아래가
-            // 검게 남아서, 아래에 얹은 자막이 대개 그 검은 자리에 놓인다.
+            // 화면 맨 아래에 고정해 두었을 때는 가로 영상에서 자막이 그림에서
+            // 한참 떨어진 검은 띠에 홀로 떨어졌다. 대사를 읽으려면 눈이 그림을
+            // 벗어나 아래까지 내려갔다 와야 한다. 그림 안에 두면 시선이 영상을
+            // 벗어나지 않는다 — 대신 그림 아래쪽 일부를 자막이 가린다.
+            //
+            // 띠가 없는 경우(세로 영상·'채움'·'늘이기')에는 예전과 같은 자리다.
+            // 아래 여백이 0 이 되어 화면 아래에서 28dp 띄운 그 자리로 돌아온다.
             //
             // 자리는 고정한다. 컨트롤이 뜰 때 비켜서게 해 봤는데, 자막이 화면
             // 한가운데까지 뛰어올랐다가 3초 뒤에 도로 내려온다. 겹쳐서 한 줄 못
@@ -333,7 +366,11 @@ fun PlayerScreen(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .padding(start = 26.dp, end = 26.dp, bottom = 28.dp),
+                        .padding(
+                            start = 26.dp,
+                            end = 26.dp,
+                            bottom = 28.dp + letterboxBottom(state.resizeMode, videoAspect, videoBoxSize),
+                        ),
                 )
             }
 
@@ -371,9 +408,9 @@ private fun UpNextButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 /**
  * 자막 한 줄.
  *
- * 크기는 15sp 를 기준으로 배율만 곱한다. 설정에서 고른 값이 두 위치(영상 안·레터박스)에
- * 똑같이 적용되어야 해서 한 곳에 모았다. 그림자를 넣는 이유는 밝은 장면 위에서
- * 흰 글자가 사라지기 때문이다.
+ * 크기는 15sp 를 기준으로 배율만 곱한다 — 설정과 자막 시트가 같은 값을 쓴다.
+ * 그림자를 넣는 이유는 밝은 장면 위에서 흰 글자가 사라지기 때문이다. 자막이
+ * 그림 안에 놓이면서 흰 배경 위에 겹칠 일이 늘어 더 중요해졌다.
  */
 @Composable
 private fun SubtitleText(text: String, scale: Float, modifier: Modifier = Modifier) {
@@ -454,12 +491,29 @@ private fun VideoSurface(player: ExoPlayer, resizeMode: Int, modifier: Modifier 
     )
 }
 
+/**
+ * 영상 상자 아래에 남는 검은 띠의 높이.
+ *
+ * '맞춤' 에서만 생긴다 — '채움'·'늘이기' 는 그림이 상자를 가득 채우고, 세로로 긴
+ * 영상은 높이를 다 쓰고 좌우가 남는다. 이 값들에서는 0 이 나와 자막이 예전 자리에
+ * 그대로 놓인다. 크기나 비율을 아직 모르는 동안(첫 프레임 전)도 마찬가지다.
+ */
+@Composable
+private fun letterboxBottom(resizeMode: Int, aspect: Float, box: IntSize): Dp {
+    if (resizeMode != RESIZE_MODE_FIT_INDEX || aspect <= 0f || box.width == 0 || box.height == 0) return 0.dp
+    val drawnHeight = (box.width / aspect).coerceAtMost(box.height.toFloat())
+    return with(LocalDensity.current) { ((box.height - drawnHeight) / 2f).toDp() }
+}
+
 /** 맞춤 / 채움 / 늘이기 */
 private val RESIZE_MODES = intArrayOf(
     AspectRatioFrameLayout.RESIZE_MODE_FIT,
     AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
     AspectRatioFrameLayout.RESIZE_MODE_FILL,
 )
+
+/** '맞춤'. 세 가지 중 이것만 그림 둘레에 빈자리를 남긴다. */
+private const val RESIZE_MODE_FIT_INDEX = 0
 
 
 @Composable
