@@ -775,15 +775,11 @@ class MainActivity : ComponentActivity() {
             systemControls.keepScreenOn(playerState.isPlaying)
         }
         DisposableEffect(Unit) {
-            // 재생 화면에 있는 동안만 노치 자리까지 창을 넓힌다. 컨트롤이 걷힐
-            // 때마다 켰다 껐다 하면 그때마다 화면이 한 번씩 튄다.
-            PlayerOrientation.setExtendIntoCutout(this@MainActivity, true)
             onDispose {
                 // ViewModel 은 Activity 에 매여 있어 여기서 멈추지 않으면 소리가 계속 난다.
                 playerVm.close()
                 systemControls.keepScreenOn(false)
                 systemControls.resetBrightness()
-                PlayerOrientation.setExtendIntoCutout(this@MainActivity, false)
                 PlayerOrientation.setImmersive(this@MainActivity, false)
                 PlayerOrientation.apply(this@MainActivity, locked = false, followAutoRotate = true, forcedLandscape = null)
             }
