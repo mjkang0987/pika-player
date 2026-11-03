@@ -1,5 +1,6 @@
 package com.pikaworks.pikaplayer.ui
 
+import com.pikaworks.pikaplayer.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,13 +50,13 @@ fun VideoActionSheet(
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 10.dp),
             )
-            ActionRow(AppIcons.Plus, "재생목록에 담기", colors.textPrimary, colors.key) {
+            ActionRow(AppIcons.Plus, stringResource(R.string.common_add_to_playlist), colors.textPrimary, colors.key) {
                 onAddToPlaylist()
                 onDismiss()
             }
             // 지우는 것만 색을 달리한다. 되돌릴 수 없는 동작은 손이 미끄러지기
             // 전에 눈에 먼저 걸려야 한다.
-            ActionRow(AppIcons.Trash, "기기에서 삭제", colors.textPrimary, colors.textMeta) {
+            ActionRow(AppIcons.Trash, stringResource(R.string.common_delete_from_device), colors.textPrimary, colors.textMeta) {
                 onDelete()
                 onDismiss()
             }

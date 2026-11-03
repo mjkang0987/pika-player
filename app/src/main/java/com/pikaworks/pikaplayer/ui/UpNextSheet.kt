@@ -1,5 +1,6 @@
 package com.pikaworks.pikaplayer.ui
 
+import com.pikaworks.pikaplayer.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +19,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +55,7 @@ fun UpNextSheet(
         containerColor = colors.surface,
     ) {
         Text(
-            "재생목록",
+            stringResource(R.string.common_playlist),
             fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
         )
@@ -104,7 +106,7 @@ private fun UpNextRow(video: VideoItem, playing: Boolean, onClick: () -> Unit) {
             modifier = Modifier.weight(1f),
         )
         Text(
-            if (playing) "재생 중" else formatDuration(video.durationMs),
+            if (playing) stringResource(R.string.common_playing) else formatDuration(video.durationMs),
             fontSize = 10.sp,
             fontWeight = FontWeight.Light,
             color = if (playing) colors.onMediaKey else Color.White.copy(alpha = 0.55f),

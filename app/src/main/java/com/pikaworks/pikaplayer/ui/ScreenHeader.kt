@@ -1,5 +1,6 @@
 package com.pikaworks.pikaplayer.ui
 
+import com.pikaworks.pikaplayer.R
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,7 +41,7 @@ fun ScreenHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifie
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = colors.textPrimary)
+        IconTap(AppIcons.Back, stringResource(R.string.common_back), onClick = onBack, tint = colors.textPrimary)
         Text(title, fontSize = 20.sp, color = colors.textPrimary)
     }
 }
