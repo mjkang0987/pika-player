@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.player.RepeatMode
 import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /**
  * 지금 이 재생을 어떤 순서로 볼 것인가.
@@ -57,31 +59,31 @@ fun PlaybackSheet(
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
             Text(
-                "반복",
+                stringResource(R.string.player_repeat),
                 fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 4.dp),
             )
 
             Choice(
-                label = "반복 안 함",
+                label = stringResource(R.string.player_repeat_off),
                 selected = repeatMode == RepeatMode.OFF,
                 onSelect = { onRepeatModeChange(RepeatMode.OFF) },
             )
             Choice(
-                label = "한 편 반복",
-                description = "지금 영상이 끝나면 처음부터 다시 틉니다.",
+                label = stringResource(R.string.player_repeat_one),
+                description = stringResource(R.string.player_repeat_one_desc),
                 selected = repeatMode == RepeatMode.ONE,
                 onSelect = { onRepeatModeChange(RepeatMode.ONE) },
             )
             Choice(
-                label = "목록 반복",
-                description = "마지막 영상 다음에 목록의 처음으로 돌아갑니다.",
+                label = stringResource(R.string.player_repeat_all),
+                description = stringResource(R.string.player_repeat_all_desc),
                 selected = repeatMode == RepeatMode.ALL,
                 onSelect = { onRepeatModeChange(RepeatMode.ALL) },
             )
             Choice(
-                label = "랜덤 반복",
-                description = "순서를 섞은 채로 목록을 계속 돕니다.",
+                label = stringResource(R.string.player_repeat_shuffle),
+                description = stringResource(R.string.player_repeat_shuffle_desc),
                 selected = repeatMode == RepeatMode.SHUFFLE,
                 onSelect = { onRepeatModeChange(RepeatMode.SHUFFLE) },
             )

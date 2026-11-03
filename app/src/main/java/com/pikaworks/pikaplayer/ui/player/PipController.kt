@@ -107,7 +107,7 @@ class PipController(private val activity: Activity) {
      */
     @RequiresApi(Build.VERSION_CODES.O)
     private fun togglePlayAction(isPlaying: Boolean): RemoteAction {
-        val label = if (isPlaying) "일시정지" else "재생"
+        val label = activity.getString(if (isPlaying) R.string.player_pause else R.string.player_play)
         val icon = if (isPlaying) R.drawable.ic_pip_pause else R.drawable.ic_pip_play
         // 앱 밖으로 나가면 안 되는 방송이다. 패키지를 박아 우리에게만 간다.
         val intent = Intent(ACTION_TOGGLE_PLAY).setPackage(activity.packageName)

@@ -32,6 +32,8 @@ import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
 import com.pikaworks.pikaplayer.ui.SUBTITLE_SCALE_OPTIONS
 import com.pikaworks.pikaplayer.ui.theme.PikaDarkColors
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /**
  * 자막 설정 시트(S4).
@@ -64,15 +66,15 @@ fun SubtitleSheet(
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
 
             Text(
-                "자막",
+                stringResource(R.string.player_subtitles),
                 fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 4.dp),
             )
 
-            SectionHeader("트랙")
+            SectionHeader(stringResource(R.string.player_subtitle_tracks))
             if (state.subtitleOptions.isEmpty()) {
                 Text(
-                    "이 영상 옆에 자막 파일이 없습니다",
+                    stringResource(R.string.player_subtitle_no_files),
                     fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                 )
@@ -80,20 +82,20 @@ fun SubtitleSheet(
                 state.subtitleOptions.forEachIndexed { index, option ->
                     TrackRow(
                         name = option.name,
-                        subtitle = "외부 파일 · ${option.formatLabel}",
+                        subtitle = stringResource(R.string.player_subtitle_external_file, option.formatLabel),
                         selected = state.selectedSubtitle == index,
                         onClick = { onSelectSubtitle(index) },
                     )
                 }
                 TrackRow(
-                    name = "자막 끄기",
+                    name = stringResource(R.string.player_subtitle_turn_off),
                     subtitle = null,
                     selected = state.selectedSubtitle == -1,
                     onClick = { onSelectSubtitle(-1) },
                 )
             }
 
-            SectionHeader("인코딩")
+            SectionHeader(stringResource(R.string.player_subtitle_encoding))
             FlowRow(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -108,7 +110,7 @@ fun SubtitleSheet(
                 }
             }
             Text(
-                "글자가 깨져 보이면 CP949를 먼저 시도해 보세요.",
+                stringResource(R.string.player_subtitle_encoding_hint),
                 fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp),
             )
@@ -118,7 +120,7 @@ fun SubtitleSheet(
             // 있다. 여기서 고르면 시트를 닫는 즉시 바뀐 크기가 보인다.
             // 고른 값은 설정에 그대로 남는다 — 두 곳이 다른 값을 들고 있으면
             // 어느 쪽이 진짜인지 알 수 없다.
-            SectionHeader("글자 크기")
+            SectionHeader(stringResource(R.string.player_subtitle_text_size))
             FlowRow(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -133,7 +135,7 @@ fun SubtitleSheet(
                 }
             }
 
-            SectionHeader("싱크")
+            SectionHeader(stringResource(R.string.player_subtitle_sync))
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -154,9 +156,10 @@ fun SubtitleSheet(
     }
 }
 
+@Composable
 private fun formatOffset(ms: Long): String {
     val sec = ms / 1000.0
-    return if (sec >= 0) "+%.1f초".format(sec) else "%.1f초".format(sec)
+    return stringResource(R.string.player_subtitle_offset_seconds, sec)
 }
 
 @Composable
@@ -193,7 +196,7 @@ private fun TrackRow(name: String, subtitle: String?, selected: Boolean, onClick
             }
         }
         if (selected) {
-            Icon(AppIcons.Check, "선택됨", tint = colors.key, modifier = Modifier.size(18.dp))
+            Icon(AppIcons.Check, stringResource(R.string.player_selected), tint = colors.key, modifier = Modifier.size(18.dp))
         }
     }
 }
