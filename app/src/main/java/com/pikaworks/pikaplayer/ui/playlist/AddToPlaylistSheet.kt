@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.data.db.PlaylistSummary
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /**
  * 영상을 길게 눌렀을 때 나오는 담기 시트.
@@ -50,7 +53,7 @@ fun AddToPlaylistSheet(
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
             Text(
-                "재생목록에 담기",
+                stringResource(R.string.playlist_add_to),
                 fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 2.dp),
             )
@@ -88,11 +91,11 @@ fun AddToPlaylistSheet(
                             horizontalArrangement = Arrangement.spacedBy(5.dp),
                         ) {
                             Icon(AppIcons.Check, null, tint = colors.key, modifier = Modifier.size(14.dp))
-                            Text("담김", fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta)
+                            Text(stringResource(R.string.playlist_added), fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta)
                         }
                     } else {
                         Text(
-                            "${playlist.itemCount}개",
+                            pluralStringResource(R.plurals.playlist_item_count, playlist.itemCount, playlist.itemCount),
                             fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                         )
                     }
@@ -112,7 +115,7 @@ fun AddToPlaylistSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(AppIcons.Plus, null, tint = colors.key, modifier = Modifier.size(16.dp))
-                Text("새 재생목록", fontSize = 14.sp, color = colors.key)
+                Text(stringResource(R.string.playlist_new), fontSize = 14.sp, color = colors.key)
             }
         }
     }

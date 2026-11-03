@@ -38,6 +38,10 @@ import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /** PIN 길이. 짧으면 외우기 쉽고 길면 대입이 어렵다. 4는 너무 얕다. */
 const val PIN_LENGTH = 6
@@ -58,7 +62,7 @@ fun PinScreen(
     entered: String,
     /** 남은 잠금 시간. 0 이면 입력할 수 있다. */
     lockedForMs: Long,
-    error: String?,
+    @StringRes error: Int?,
     onDigit: (Char) -> Unit,
     onBackspace: () -> Unit,
     onBack: () -> Unit,
@@ -115,8 +119,8 @@ fun PinScreen(
             contentAlignment = Alignment.Center,
         ) {
             val message = when {
-                locked -> "너무 많이 틀렸습니다 · ${formatWait(lockedForMs)} 후에 다시"
-                error != null -> error
+                locked -> stringResource(R.string.vault_locked, formatWait(lockedForMs))
+                error != null -> stringResource(error)
                 else -> ""
             }
             Text(message, fontSize = 12.sp, color = colors.textMeta, textAlign = TextAlign.Center)
@@ -151,7 +155,7 @@ fun PinScreen(
         // 필요한 사람만 열어 보게 한 줄로 줄인다.
         if (recoverable) {
             Text(
-                "PIN 을 잊었다면?",
+                stringResource(R.string.vault_forgot_pin_link),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Light,
                 color = colors.textMeta,
@@ -168,9 +172,12 @@ fun PinScreen(
 private val KEY_GAP = 10.dp
 
 /** 남은 시간을 사람이 읽는 단위로. 초 단위까지 보여주면 계속 다시 그려야 한다. */
+@Composable
 private fun formatWait(ms: Long): String {
     val totalSec = (ms + 999) / 1000
-    return if (totalSec < 60) "${totalSec}초" else "${(totalSec + 59) / 60}분"
+    if (totalSec < 60) return pluralStringResource(R.plurals.vault_wait_seconds, totalSec.toInt(), totalSec)
+    val minutes = (totalSec + 59) / 60
+    return pluralStringResource(R.plurals.vault_wait_minutes, minutes.toInt(), minutes)
 }
 
 @Composable
@@ -244,14 +251,12 @@ private fun RecoverySheet(onDismiss: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                "PIN 을 잊었다면",
+                stringResource(R.string.vault_forgot_pin_title),
                 fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
             )
-            Paragraph("되돌릴 방법이 없습니다. PIN 은 이 기기 안에만 남고 서버도 계정도 " +
-                "없어서, 만든 사람도 확인할 수 없습니다.")
-            Paragraph("풀려면 기기 설정 → 앱 → Pika Player → 저장공간 에서 데이터를 지워야 합니다.")
-            Paragraph("영상 파일은 지워지지 않습니다. 비공개 폴더는 목록에서 감출 뿐 파일을 " +
-                "지우거나 암호화하지 않습니다. 다만 이어보기 기록과 앱 설정은 함께 사라집니다.")
+            Paragraph(stringResource(R.string.vault_recovery_no_reset))
+            Paragraph(stringResource(R.string.vault_recovery_clear_data))
+            Paragraph(stringResource(R.string.vault_recovery_files_safe))
         }
     }
 }

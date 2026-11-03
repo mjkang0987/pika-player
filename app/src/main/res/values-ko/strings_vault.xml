@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 비공개 폴더 -->
+    <string name="vault_title">비공개 폴더</string>
+    <string name="vault_description">고른 폴더를 이 앱의 목록에서 감춥니다. 파일을 암호화하지는 않으므로 다른 앱이나 PC 에 연결하면 그대로 보입니다.</string>
+    <string name="vault_section_folders">감출 폴더</string>
+    <string name="vault_no_folders">감출 수 있는 폴더가 없습니다</string>
+    <plurals name="vault_folder_video_count">
+        <item quantity="other">영상 %1$d</item>
+    </plurals>
+    <string name="vault_hidden">감춤</string>
+    <string name="vault_change_pin">PIN 바꾸기</string>
+    <string name="vault_disable">비공개 폴더 끄기</string>
+    <string name="vault_disable_note">끄면 감춘 폴더 목록도 함께 지워집니다.</string>
+
+    <!-- PIN 입력 -->
+    <string name="vault_error_pin_mismatch">두 번 입력한 값이 다릅니다</string>
+    <string name="vault_error_wrong_pin">PIN 이 맞지 않습니다</string>
+    <string name="vault_locked">너무 많이 틀렸습니다 · %1$s 후에 다시</string>
+    <plurals name="vault_wait_seconds">
+        <item quantity="other">%1$d초</item>
+    </plurals>
+    <plurals name="vault_wait_minutes">
+        <item quantity="other">%1$d분</item>
+    </plurals>
+    <string name="vault_forgot_pin_link">PIN 을 잊었다면?</string>
+    <string name="vault_forgot_pin_title">PIN 을 잊었다면</string>
+    <string name="vault_recovery_no_reset">되돌릴 방법이 없습니다. PIN 은 이 기기 안에만 남고 서버도 계정도 없어서, 만든 사람도 확인할 수 없습니다.</string>
+    <string name="vault_recovery_clear_data">풀려면 기기 설정 → 앱 → Pika Player → 저장공간 에서 데이터를 지워야 합니다.</string>
+    <string name="vault_recovery_files_safe">영상 파일은 지워지지 않습니다. 비공개 폴더는 목록에서 감출 뿐 파일을 지우거나 암호화하지 않습니다. 다만 이어보기 기록과 앱 설정은 함께 사라집니다.</string>
+
+    <!-- 재생목록 -->
+    <string name="playlist_title">재생목록</string>
+    <string name="playlist_create">재생목록 만들기</string>
+    <string name="playlist_empty_title">재생목록이 없습니다</string>
+    <string name="playlist_empty_body">여러 폴더에 흩어진 영상을 한 줄로 묶어 이어서 볼 수 있습니다. 목록을 만든 뒤 영상을 길게 눌러 담으세요.</string>
+    <plurals name="playlist_item_count">
+        <item quantity="other">%1$d개</item>
+    </plurals>
+    <string name="playlist_delete">재생목록 삭제</string>
+    <string name="playlist_add_videos">영상 추가</string>
+    <string name="playlist_rename">이름 변경</string>
+    <string name="playlist_edit">편집</string>
+    <string name="playlist_cancel">취소</string>
+    <string name="playlist_done">완료</string>
+    <string name="playlist_detail_empty">아직 담긴 영상이 없습니다.\n위의 영상 추가를 누르거나, 보관함에서 영상을 길게 눌러 담으세요.</string>
+    <string name="playlist_not_found">찾을 수 없음</string>
+    <string name="playlist_move_up">위로</string>
+    <string name="playlist_move_down">아래로</string>
+    <string name="playlist_remove">빼기</string>
+    <string name="playlist_pick_empty">담을 영상이 없습니다. 기기에 영상이 있는지 확인해 보세요.</string>
+    <string name="playlist_added">담김</string>
+    <string name="playlist_add_to">재생목록에 담기</string>
+    <string name="playlist_new">새 재생목록</string>
+</resources>

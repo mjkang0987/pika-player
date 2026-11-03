@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.annotation.StringRes
+import com.pikaworks.pikaplayer.R
 
 /** PIN 화면이 지금 무엇을 하는 중인가. */
 enum class PinMode {
@@ -33,7 +35,7 @@ data class VaultUiState(
     val settings: VaultSettings = VaultSettings(),
     val mode: PinMode = PinMode.NONE,
     val entered: String = "",
-    val error: String? = null,
+    @StringRes val error: Int? = null,
     /** 남은 잠금 시간(ms). 화면이 초 단위로 다시 그리지 않도록 값만 준다. */
     val lockedForMs: Long = 0L,
     /**
@@ -142,7 +144,7 @@ class VaultViewModel(private val store: VaultStore) : ViewModel() {
                     _uiState.value = _uiState.value.copy(
                         mode = PinMode.SET,
                         entered = "",
-                        error = "두 번 입력한 값이 다릅니다",
+                        error = R.string.vault_error_pin_mismatch,
                     )
                 }
             }
@@ -179,7 +181,7 @@ class VaultViewModel(private val store: VaultStore) : ViewModel() {
                 store.saveLockout(next)
                 _uiState.value = _uiState.value.copy(
                     entered = "",
-                    error = "PIN 이 맞지 않습니다",
+                    error = R.string.vault_error_wrong_pin,
                     lockedForMs = LockoutPolicy.remainingMs(next, nowMs),
                 )
             }

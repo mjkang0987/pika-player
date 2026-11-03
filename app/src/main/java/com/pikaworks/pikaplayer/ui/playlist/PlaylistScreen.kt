@@ -34,6 +34,9 @@ import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.IconTap
 import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /**
  * 재생목록 탭.
@@ -61,10 +64,10 @@ fun PlaylistScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("재생목록", fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
+            Text(stringResource(R.string.playlist_title), fontSize = 26.sp, fontWeight = FontWeight.Light, color = colors.textPrimary)
             IconTap(
                 icon = AppIcons.Plus,
-                contentDescription = "재생목록 만들기",
+                contentDescription = stringResource(R.string.playlist_create),
                 onClick = onCreate,
                 tint = colors.key,
                 iconSize = 22.dp,
@@ -78,13 +81,12 @@ fun PlaylistScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "재생목록이 없습니다",
+                        stringResource(R.string.playlist_empty_title),
                         fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textSecondary,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "여러 폴더에 흩어진 영상을 한 줄로 묶어 이어서 볼 수 있습니다. " +
-                            "목록을 만든 뒤 영상을 길게 눌러 담으세요.",
+                        stringResource(R.string.playlist_empty_body),
                         fontSize = 12.sp, fontWeight = FontWeight.Light, lineHeight = 18.sp,
                         color = colors.textFaint, textAlign = TextAlign.Center, style = KoreanWrap,
                     )
@@ -116,7 +118,7 @@ fun PlaylistScreen(
                         Text(playlist.name, fontSize = 14.sp, color = colors.textPrimary)
                         Spacer(Modifier.height(3.dp))
                         Text(
-                            "${playlist.itemCount}개",
+                            pluralStringResource(R.plurals.playlist_item_count, playlist.itemCount, playlist.itemCount),
                             fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                         )
                     }
@@ -124,7 +126,7 @@ fun PlaylistScreen(
                     // 지우는 것은 가끔 하는 일이다.
                     IconTap(
                         icon = AppIcons.Trash,
-                        contentDescription = "재생목록 삭제",
+                        contentDescription = stringResource(R.string.playlist_delete),
                         onClick = { onDelete(playlist) },
                         tint = colors.textFaint,
                         iconSize = 17.dp,
