@@ -1,6 +1,7 @@
 package com.pikaworks.pikaplayer.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +49,7 @@ fun <T> OptionSheet(
         sheetState = sheetState,
         containerColor = colors.elevated,
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp).selectableGroup()) {
             Text(
                 title,
                 fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
@@ -58,7 +60,8 @@ fun <T> OptionSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
+                        // 화면 읽기 프로그램이 "여럿 중 하나 고르기" 로 읽게 한다.
+                        .selectable(selected = isSelected, role = Role.RadioButton) {
                             onSelect(value)
                             onDismiss()
                         }
@@ -73,7 +76,8 @@ fun <T> OptionSheet(
                         color = if (isSelected) colors.textPrimary else colors.textSecondary,
                     )
                     if (isSelected) {
-                        Icon(AppIcons.Check, "선택됨", tint = colors.key, modifier = Modifier.size(18.dp))
+                        // 고른 상태는 위 selectable 이 알린다. 아이콘까지 읽으면 두 번 듣는다.
+                        Icon(AppIcons.Check, null, tint = colors.key, modifier = Modifier.size(18.dp))
                     }
                 }
             }

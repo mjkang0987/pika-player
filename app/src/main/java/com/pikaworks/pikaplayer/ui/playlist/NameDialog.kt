@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /** 재생목록 이름을 받는다. 만들기와 이름 바꾸기가 같은 것을 쓴다. */
 @Composable
@@ -67,7 +69,7 @@ fun NameDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
             ) {
-                DialogAction("취소", colors.textMeta, onClick = onDismiss)
+                DialogAction(stringResource(R.string.playlist_cancel), colors.textMeta, onClick = onDismiss)
                 // 빈 이름은 만들 수 없다. 눌러도 안 되는 대신 글자를 낮춰 알린다.
                 DialogAction(
                     confirmLabel,

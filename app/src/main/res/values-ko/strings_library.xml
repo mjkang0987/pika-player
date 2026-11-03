@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 정렬·자막 선택지 (ui/SortOptions.kt) -->
+    <string name="sort_title">정렬</string>
+    <string name="sort_date_desc">최근 수정순</string>
+    <string name="sort_name">이름순</string>
+    <string name="sort_size_desc">크기순</string>
+    <string name="sort_duration_desc">재생시간순</string>
+    <string name="sort_encoding_auto">자동 감지</string>
+    <string name="sort_subtitle_scale_small">작게</string>
+    <string name="sort_subtitle_scale_normal">보통</string>
+    <string name="sort_subtitle_scale_large">크게</string>
+    <string name="sort_subtitle_scale_extra_large">아주 크게</string>
+    <string name="sort_subtitle_scale_huge">가장 크게</string>
+
+    <!-- 보관함 -->
+    <string name="library_title">보관함</string>
+    <string name="library_search_placeholder">영상 · 폴더 이름</string>
+    <string name="library_continue_watching">이어보기</string>
+    <string name="library_continue_remove">이어보기에서 빼기</string>
+    <string name="library_filter_all">영상</string>
+    <string name="library_filter_subtitle">자막</string>
+    <string name="library_filter_watching">보던 중</string>
+    <string name="library_filter_unwatched">안 봄</string>
+    <string name="library_empty_filtered">조건에 맞는 영상이 없습니다</string>
+    <string name="library_empty">영상이 없습니다</string>
+    <string name="library_empty_hint">기기에 영상은 있는데 여기 안 보인다면 다시 검색해 보세요.</string>
+    <string name="library_rescanning">검색 중…</string>
+    <string name="library_rescan">다시 검색</string>
+    <string name="library_storage_internal">내부 저장소</string>
+    <string name="library_storage_free">내부 저장소 %1$s 남음</string>
+
+    <!-- 폴더 -->
+    <string name="folder_title">폴더</string>
+    <string name="folder_search_placeholder">폴더 · 영상 이름</string>
+    <string name="folder_play_all">전체 재생</string>
+    <string name="folder_root_internal">내부 저장소</string>
+    <string name="folder_root_selected">선택한 폴더</string>
+    <string name="folder_other">기타</string>
+    <string name="folder_row_folder">폴더</string>
+    <plurals name="folder_video_count">
+        <item quantity="other">영상 %d</item>
+    </plurals>
+    <plurals name="folder_folder_count">
+        <item quantity="other">폴더 %d</item>
+    </plurals>
+
+    <!-- 최근 -->
+    <string name="recent_title">최근</string>
+    <string name="recent_search_placeholder">영상 · 폴더 이름</string>
+    <string name="recent_empty">아직 재생한 영상이 없습니다</string>
+</resources>

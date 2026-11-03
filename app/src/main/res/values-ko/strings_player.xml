@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PlayerScreen -->
+    <string name="player_speed_title">재생속도</string>
+    <string name="player_unlock">잠금 해제</string>
+    <string name="player_up_next">재생목록</string>
+    <string name="player_back">뒤로</string>
+    <string name="player_previous_video">이전 영상</string>
+    <string name="player_next_video">다음 영상</string>
+    <string name="player_rewind_10s">10초 뒤로</string>
+    <string name="player_forward_10s">10초 앞으로</string>
+    <string name="player_pause">일시정지</string>
+    <string name="player_play">재생</string>
+    <string name="player_ab_repeat">구간 반복</string>
+    <string name="player_ab_set_end">A %1$s · 끝 지정</string>
+    <string name="player_subtitles">자막</string>
+    <string name="player_repeat">반복</string>
+    <string name="player_fullscreen">전체화면</string>
+    <string name="player_pip">작은 창</string>
+    <string name="player_lock">잠금</string>
+    <string name="player_speed">속도</string>
+    <string name="player_brightness">밝기</string>
+    <string name="player_volume">볼륨</string>
+
+    <!-- PlayerViewModel -->
+    <string name="player_subtitle_none">자막 없음</string>
+    <string name="player_subtitle_off">자막 끔</string>
+    <string name="player_subtitle_format">자막 · %1$s</string>
+    <string name="player_resize_fit">맞춤</string>
+    <string name="player_resize_fill">채움</string>
+    <string name="player_resize_stretch">늘이기</string>
+
+    <!-- SubtitleSheet -->
+    <string name="player_subtitle_tracks">트랙</string>
+    <string name="player_subtitle_no_files">이 영상 옆에 자막 파일이 없습니다</string>
+    <string name="player_subtitle_external_file">외부 파일 · %1$s</string>
+    <string name="player_subtitle_turn_off">자막 끄기</string>
+    <string name="player_subtitle_encoding">인코딩</string>
+    <string name="player_subtitle_encoding_hint">글자가 깨져 보이면 CP949를 먼저 시도해 보세요.</string>
+    <string name="player_subtitle_text_size">글자 크기</string>
+    <string name="player_subtitle_sync">싱크</string>
+    <string name="player_subtitle_offset_seconds">%1$+.1f초</string>
+    <string name="player_selected">선택됨</string>
+
+    <!-- PlaybackSheet -->
+    <string name="player_repeat_off">반복 안 함</string>
+    <string name="player_repeat_one">한 편 반복</string>
+    <string name="player_repeat_one_desc">지금 영상이 끝나면 처음부터 다시 틉니다.</string>
+    <string name="player_repeat_all">목록 반복</string>
+    <string name="player_repeat_all_desc">마지막 영상 다음에 목록의 처음으로 돌아갑니다.</string>
+    <string name="player_repeat_shuffle">랜덤 반복</string>
+    <string name="player_repeat_shuffle_desc">순서를 섞은 채로 목록을 계속 돕니다.</string>
+</resources>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 정렬·자막 선택지 (ui/SortOptions.kt) -->
+    <string name="sort_title">排序</string>
+    <string name="sort_date_desc">最近修改</string>
+    <string name="sort_name">名称</string>
+    <string name="sort_size_desc">大小</string>
+    <string name="sort_duration_desc">时长</string>
+    <string name="sort_encoding_auto">自动检测</string>
+    <string name="sort_subtitle_scale_small">小</string>
+    <string name="sort_subtitle_scale_normal">标准</string>
+    <string name="sort_subtitle_scale_large">大</string>
+    <string name="sort_subtitle_scale_extra_large">特大</string>
+    <string name="sort_subtitle_scale_huge">超大</string>
+
+    <!-- 보관함 -->
+    <string name="library_title">视频库</string>
+    <string name="library_search_placeholder">视频 · 文件夹名称</string>
+    <string name="library_continue_watching">继续观看</string>
+    <string name="library_continue_remove">从继续观看中移除</string>
+    <string name="library_filter_all">全部</string>
+    <string name="library_filter_subtitle">有字幕</string>
+    <string name="library_filter_watching">观看中</string>
+    <string name="library_filter_unwatched">未观看</string>
+    <string name="library_empty_filtered">没有符合条件的视频</string>
+    <string name="library_empty">没有视频</string>
+    <string name="library_empty_hint">如果设备中有视频却没有显示，请尝试重新扫描。</string>
+    <string name="library_rescanning">正在扫描…</string>
+    <string name="library_rescan">重新扫描</string>
+    <string name="library_storage_internal">内部存储</string>
+    <string name="library_storage_free">内部存储剩余 %1$s</string>
+
+    <!-- 폴더 -->
+    <string name="folder_title">文件夹</string>
+    <string name="folder_search_placeholder">文件夹 · 视频名称</string>
+    <string name="folder_play_all">全部播放</string>
+    <string name="folder_root_internal">内部存储</string>
+    <string name="folder_root_selected">已选文件夹</string>
+    <string name="folder_other">其他</string>
+    <string name="folder_row_folder">文件夹</string>
+    <plurals name="folder_video_count">
+        <item quantity="other">%d 个视频</item>
+    </plurals>
+    <plurals name="folder_folder_count">
+        <item quantity="other">%d 个文件夹</item>
+    </plurals>
+
+    <!-- 최근 -->
+    <string name="recent_title">最近</string>
+    <string name="recent_search_placeholder">视频 · 文件夹名称</string>
+    <string name="recent_empty">还没有播放过视频</string>
+</resources>

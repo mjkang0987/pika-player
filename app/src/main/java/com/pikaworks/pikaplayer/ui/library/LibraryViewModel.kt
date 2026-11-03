@@ -1,8 +1,10 @@
 package com.pikaworks.pikaplayer.ui.library
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.data.db.PlaybackPosition
 import com.pikaworks.pikaplayer.data.db.PlaybackPositionDao
 import com.pikaworks.pikaplayer.data.media.FolderOption
@@ -52,11 +54,12 @@ object LibraryFilter {
 
     val ORDER = listOf(ALL, SUBTITLE, WATCHING, UNWATCHED)
 
-    fun label(filter: String): String = when (filter) {
-        SUBTITLE -> "자막"
-        WATCHING -> "보던 중"
-        UNWATCHED -> "안 봄"
-        else -> "영상"
+    @StringRes
+    fun label(filter: String): Int = when (filter) {
+        SUBTITLE -> R.string.library_filter_subtitle
+        WATCHING -> R.string.library_filter_watching
+        UNWATCHED -> R.string.library_filter_unwatched
+        else -> R.string.library_filter_all
     }
 
     fun matches(filter: String, row: LibraryRow): Boolean = when (filter) {

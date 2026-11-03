@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PlayerScreen -->
+    <string name="player_speed_title">Playback speed</string>
+    <string name="player_unlock">Unlock</string>
+    <string name="player_up_next">Playlist</string>
+    <string name="player_back">Back</string>
+    <string name="player_previous_video">Previous video</string>
+    <string name="player_next_video">Next video</string>
+    <string name="player_rewind_10s">Back 10 seconds</string>
+    <string name="player_forward_10s">Forward 10 seconds</string>
+    <string name="player_pause">Pause</string>
+    <string name="player_play">Play</string>
+    <string name="player_ab_repeat">A-B repeat</string>
+    <string name="player_ab_set_end">A %1$s · Set end</string>
+    <string name="player_subtitles">Subtitles</string>
+    <string name="player_repeat">Repeat</string>
+    <string name="player_fullscreen">Full</string>
+    <string name="player_pip">PiP</string>
+    <string name="player_lock">Lock</string>
+    <string name="player_speed">Speed</string>
+    <string name="player_brightness">Brightness</string>
+    <string name="player_volume">Volume</string>
+
+    <!-- PlayerViewModel -->
+    <string name="player_subtitle_none">No subtitles</string>
+    <string name="player_subtitle_off">Subtitles off</string>
+    <string name="player_subtitle_format">Subtitles · %1$s</string>
+    <string name="player_resize_fit">Fit</string>
+    <string name="player_resize_fill">Fill</string>
+    <string name="player_resize_stretch">Stretch</string>
+
+    <!-- SubtitleSheet -->
+    <string name="player_subtitle_tracks">Tracks</string>
+    <string name="player_subtitle_no_files">No subtitle files found next to this video</string>
+    <string name="player_subtitle_external_file">External file · %1$s</string>
+    <string name="player_subtitle_turn_off">Turn off subtitles</string>
+    <string name="player_subtitle_encoding">Encoding</string>
+    <string name="player_subtitle_encoding_hint">If text looks garbled, try a different encoding.</string>
+    <string name="player_subtitle_text_size">Text size</string>
+    <string name="player_subtitle_sync">Sync</string>
+    <string name="player_subtitle_offset_seconds">%1$+.1fs</string>
+    <string name="player_selected">Selected</string>
+
+    <!-- PlaybackSheet -->
+    <string name="player_repeat_off">No repeat</string>
+    <string name="player_repeat_one">Repeat one</string>
+    <string name="player_repeat_one_desc">Plays the current video again from the start when it ends.</string>
+    <string name="player_repeat_all">Repeat all</string>
+    <string name="player_repeat_all_desc">Goes back to the start of the list after the last video.</string>
+    <string name="player_repeat_shuffle">Shuffle</string>
+    <string name="player_repeat_shuffle_desc">Keeps playing the list in shuffled order.</string>
+</resources>

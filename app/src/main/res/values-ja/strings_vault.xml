@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 非公開フォルダ -->
+    <string name="vault_title">非公開フォルダ</string>
+    <string name="vault_description">選んだフォルダをこのアプリの一覧に表示しません。ファイルは暗号化されないため、他のアプリや PC に接続するとそのまま見えます。</string>
+    <string name="vault_section_folders">非表示にするフォルダ</string>
+    <string name="vault_no_folders">非表示にできるフォルダがありません</string>
+    <plurals name="vault_folder_video_count">
+        <item quantity="other">動画 %1$d</item>
+    </plurals>
+    <string name="vault_hidden">非表示</string>
+    <string name="vault_change_pin">PIN を変更</string>
+    <string name="vault_disable">非公開フォルダをオフにする</string>
+    <string name="vault_disable_note">オフにすると、非表示フォルダのリストも削除されます。</string>
+
+    <!-- PIN 入力 -->
+    <string name="vault_error_pin_mismatch">入力した PIN が一致しません</string>
+    <string name="vault_error_wrong_pin">PIN が違います</string>
+    <string name="vault_locked">間違いが多すぎます · %1$s後にもう一度お試しください</string>
+    <plurals name="vault_wait_seconds">
+        <item quantity="other">%1$d 秒</item>
+    </plurals>
+    <plurals name="vault_wait_minutes">
+        <item quantity="other">%1$d 分</item>
+    </plurals>
+    <string name="vault_forgot_pin_link">PIN を忘れた場合</string>
+    <string name="vault_forgot_pin_title">PIN を忘れた場合</string>
+    <string name="vault_recovery_no_reset">元に戻す方法はありません。PIN はこの端末内にのみ保存され、サーバーもアカウントもないため、開発者も確認できません。</string>
+    <string name="vault_recovery_clear_data">解除するには、端末の設定 → アプリ → Pika Player → ストレージ でデータを削除してください。</string>
+    <string name="vault_recovery_files_safe">動画ファイルは削除されません。非公開フォルダは一覧から隠すだけで、ファイルを削除・暗号化することはありません。ただし、続きから再生の履歴とアプリの設定は削除されます。</string>
+
+    <!-- プレイリスト -->
+    <string name="playlist_title">プレイリスト</string>
+    <string name="playlist_create">プレイリストを作成</string>
+    <string name="playlist_empty_title">プレイリストがありません</string>
+    <string name="playlist_empty_body">複数のフォルダにある動画をひとつにまとめて、続けて再生できます。リストを作成したら、動画を長押しして追加してください。</string>
+    <plurals name="playlist_item_count">
+        <item quantity="other">%1$d 本</item>
+    </plurals>
+    <string name="playlist_delete">プレイリストを削除</string>
+    <string name="playlist_add_videos">動画を追加</string>
+    <string name="playlist_rename">名前を変更</string>
+    <string name="playlist_edit">編集</string>
+    <string name="playlist_cancel">キャンセル</string>
+    <string name="playlist_done">完了</string>
+    <string name="playlist_detail_empty">まだ動画がありません。\n上の「動画を追加」をタップするか、ライブラリで動画を長押しして追加してください。</string>
+    <string name="playlist_not_found">見つかりません</string>
+    <string name="playlist_move_up">上へ</string>
+    <string name="playlist_move_down">下へ</string>
+    <string name="playlist_remove">外す</string>
+    <string name="playlist_pick_empty">追加できる動画がありません。端末に動画があるか確認してください。</string>
+    <string name="playlist_added">追加済み</string>
+    <string name="playlist_add_to">プレイリストに追加</string>
+    <string name="playlist_new">新しいプレイリスト</string>
+</resources>

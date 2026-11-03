@@ -1,9 +1,11 @@
 package com.pikaworks.pikaplayer.ui.folder
 
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.data.media.MediaStoreSource
 import com.pikaworks.pikaplayer.data.media.SafFolderSource
 import com.pikaworks.pikaplayer.data.media.VideoItem
@@ -21,7 +23,8 @@ import kotlinx.coroutines.launch
 data class FolderSummary(
     /** MediaStore 는 폴더 이름, SAF 는 document id. 내려갈 때 이 값을 쓴다. */
     val id: String,
-    val name: String,
+    /** MediaStore 가 폴더 이름을 주지 않은 영상 묶음은 null. 화면에서 기타 묶음으로 그린다. */
+    val name: String?,
     /** SAF 는 하위를 세기 전까지 모른다. 그때는 null. */
     val videoCount: Int?,
     val totalBytes: Long?,
@@ -36,7 +39,7 @@ data class FolderSummary(
  * 안정적이라 이름 순서가 그대로 유지된다 — 그래서 기준선을 이름순으로 잡는다.
  */
 fun List<FolderSummary>.sortedFor(order: String): List<FolderSummary> {
-    val byName = sortedBy { it.name.lowercase() }
+    val byName = sortedWith(compareBy(nullsLast()) { it.name?.lowercase() })
     return when (order) {
         SortOrder.SIZE_DESC -> byName.sortedByDescending { it.totalBytes ?: -1L }
         SortOrder.DATE_DESC -> byName.sortedByDescending { it.latestModifiedSec ?: -1L }
@@ -45,11 +48,13 @@ fun List<FolderSummary>.sortedFor(order: String): List<FolderSummary> {
 }
 
 /** 지금 어느 폴더 안에 있는지. 비어 있으면 최상단. */
-data class Crumb(val id: String, val name: String)
+data class Crumb(val id: String, val name: String?)
 
 data class FolderUiState(
     val loading: Boolean = true,
-    val rootLabel: String = "내부 저장소",
+    /** 사용자가 고른 SAF 폴더의 이름. 없으면 [rootFallback] 을 그린다. */
+    val rootLabel: String? = null,
+    @StringRes val rootFallback: Int = R.string.folder_root_internal,
     val crumbs: List<Crumb> = emptyList(),
     val folders: List<FolderSummary> = emptyList(),
     val videos: List<VideoItem> = emptyList(),
@@ -138,10 +143,10 @@ class FolderViewModel(
             allVideos = mediaStore.queryVideos()
             mediaFolders = allVideos
                 .filter { it.folderKey !in hiddenFolders }
-                .groupBy { it.folderName ?: "기타" }
+                .groupBy { it.folderName }
                 .map { (name, items) ->
                     FolderSummary(
-                        id = name,
+                        id = name ?: "\u0000other", // 실제 폴더 이름과 겹치지 않아야 목록 키가 안 부딪힌다
                         name = name,
                         videoCount = items.size,
                         totalBytes = items.sumOf { it.sizeBytes },
@@ -163,8 +168,8 @@ class FolderViewModel(
         _uiState.value = FolderUiState(loading = true, sort = sort)
         // 폴더 이름 조회는 목록보다 늦게 끝날 수 있다. 상태를 갈아끼우지 말고 이름만 덧붙인다.
         viewModelScope.launch {
-            val name = safFolders.treeName(uri) ?: "선택한 폴더"
-            _uiState.update { it.copy(rootLabel = name) }
+            val name = safFolders.treeName(uri)
+            _uiState.update { it.copy(rootLabel = name, rootFallback = R.string.folder_root_selected) }
         }
         openSaf(parentDocumentId = null, crumbs = emptyList())
     }

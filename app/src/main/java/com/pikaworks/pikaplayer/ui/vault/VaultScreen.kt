@@ -30,6 +30,9 @@ import com.pikaworks.pikaplayer.data.media.FolderOption
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /**
  * 비공개 폴더 설정(Pro).
@@ -56,25 +59,24 @@ fun VaultScreen(
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
         // 제목은 목록과 함께 밀려 올라가지 않는다. 어느 화면에 있는지와
         // 뒤로 갈 길은 스크롤 위치와 상관없이 늘 보여야 한다.
-        ScreenHeader("비공개 폴더", onBack)
+        ScreenHeader(stringResource(R.string.vault_title), onBack)
 
         LazyColumn(modifier = Modifier.weight(1f)) {
 
             item {
                 Text(
-                    "고른 폴더를 이 앱의 목록에서 감춥니다. 파일을 암호화하지는 않으므로 " +
-                        "다른 앱이나 PC 에 연결하면 그대로 보입니다.",
+                    stringResource(R.string.vault_description),
                     fontSize = 12.sp, fontWeight = FontWeight.Light,
                     lineHeight = 18.sp, color = colors.textMeta,
                     modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
                 )
             }
 
-            item { SectionHeader("감출 폴더") }
+            item { SectionHeader(stringResource(R.string.vault_section_folders)) }
             if (folders.isEmpty()) {
                 item {
                     Text(
-                        "감출 수 있는 폴더가 없습니다",
+                        stringResource(R.string.vault_no_folders),
                         fontSize = 13.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                     )
@@ -96,7 +98,7 @@ fun VaultScreen(
                         Text(folder.name, fontSize = 14.sp, color = colors.textPrimary,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.height(3.dp))
-                        Text("영상 ${folder.videoCount}", fontSize = 10.sp,
+                        Text(pluralStringResource(R.plurals.vault_folder_video_count, folder.videoCount, folder.videoCount), fontSize = 10.sp,
                             fontWeight = FontWeight.Light, color = colors.textMeta)
                     }
                     Box(
@@ -107,18 +109,18 @@ fun VaultScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         if (isHidden) {
-                            Icon(AppIcons.Check, "감춤", tint = colors.background, modifier = Modifier.size(13.dp))
+                            Icon(AppIcons.Check, stringResource(R.string.vault_hidden), tint = colors.background, modifier = Modifier.size(13.dp))
                         }
                     }
                 }
             }
 
             item { SectionHeader("PIN") }
-            item { ActionRow("PIN 바꾸기", colors.textPrimary, onChangePin) }
-            item { ActionRow("비공개 폴더 끄기", colors.textMeta, onDisable) }
+            item { ActionRow(stringResource(R.string.vault_change_pin), colors.textPrimary, onChangePin) }
+            item { ActionRow(stringResource(R.string.vault_disable), colors.textMeta, onDisable) }
             item {
                 Text(
-                    "끄면 감춘 폴더 목록도 함께 지워집니다.",
+                    stringResource(R.string.vault_disable_note),
                     fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textFaint,
                     modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 32.dp),
                 )

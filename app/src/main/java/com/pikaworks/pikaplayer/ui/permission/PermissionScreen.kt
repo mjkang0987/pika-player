@@ -20,10 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
@@ -66,7 +68,7 @@ fun PermissionScreen(
             Spacer(Modifier.height(30.dp))
 
             Text(
-                if (denied) "폴더를 직접 골라주세요" else "기기에 있는 동영상을\n불러올게요",
+                if (denied) stringResource(R.string.permission_title_denied) else stringResource(R.string.permission_title),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Normal,
                 color = colors.textPrimary,
@@ -76,9 +78,9 @@ fun PermissionScreen(
             Spacer(Modifier.height(14.dp))
             Text(
                 if (denied) {
-                    "권한 없이도 쓸 수 있습니다. 동영상이 들어있는 폴더를 고르면 그 안만 읽습니다."
+                    stringResource(R.string.permission_body_denied)
                 } else {
-                    "보관함을 만들려면 동영상 파일에 접근할 수 있어야 합니다. 파일을 읽기만 하고, 어디에도 보내지 않습니다."
+                    stringResource(R.string.permission_body)
                 },
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Light,
@@ -93,9 +95,9 @@ fun PermissionScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Promise("네트워크 없이 완전히 오프라인으로 동작")
-                Promise("파일을 수정하거나 삭제하지 않음")
-                Promise("계정 가입이나 로그인 없음")
+                Promise(stringResource(R.string.permission_promise_offline))
+                Promise(stringResource(R.string.permission_promise_no_modify))
+                Promise(stringResource(R.string.permission_promise_no_account))
             }
         }
 
@@ -104,7 +106,7 @@ fun PermissionScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             PrimaryButton(
-                label = if (denied) "폴더 선택" else "동영상 접근 허용",
+                label = if (denied) stringResource(R.string.permission_pick_folder) else stringResource(R.string.permission_allow),
                 onClick = if (denied) onPickFolder else onAllow,
             )
             if (!denied) {
@@ -112,7 +114,7 @@ fun PermissionScreen(
                     modifier = Modifier.fillMaxWidth().height(48.dp).clickable(onClick = onPickFolder),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("폴더를 직접 선택할게요", fontSize = 14.sp,
+                    Text(stringResource(R.string.permission_pick_folder_self), fontSize = 14.sp,
                         fontWeight = FontWeight.Light, color = colors.textSecondary)
                 }
             }

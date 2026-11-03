@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 비공개 폴더 -->
+    <string name="vault_title">Private folders</string>
+    <string name="vault_description">Hides the selected folders from this app\'s lists. Files aren\'t encrypted, so they\'re still visible in other apps or on a connected PC.</string>
+    <string name="vault_section_folders">Folders to hide</string>
+    <string name="vault_no_folders">No folders to hide</string>
+    <plurals name="vault_folder_video_count">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+    <string name="vault_hidden">Hidden</string>
+    <string name="vault_change_pin">Change PIN</string>
+    <string name="vault_disable">Turn off private folders</string>
+    <string name="vault_disable_note">Turning this off also clears the list of hidden folders.</string>
+
+    <!-- PIN 입력 -->
+    <string name="vault_error_pin_mismatch">The PINs don\'t match</string>
+    <string name="vault_error_wrong_pin">Incorrect PIN</string>
+    <string name="vault_locked">Too many attempts · Try again in %1$s</string>
+    <plurals name="vault_wait_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <plurals name="vault_wait_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <string name="vault_forgot_pin_link">Forgot your PIN?</string>
+    <string name="vault_forgot_pin_title">Forgot your PIN</string>
+    <string name="vault_recovery_no_reset">There\'s no way to recover it. Your PIN is stored only on this device, with no server or account, so not even the developer can check it.</string>
+    <string name="vault_recovery_clear_data">To reset it, clear the app\'s data in Settings → Apps → Pika Player → Storage.</string>
+    <string name="vault_recovery_files_safe">Your video files won\'t be deleted. Private folders only hide folders from the lists; they don\'t delete or encrypt files. Your resume history and app settings will be cleared, though.</string>
+
+    <!-- 재생목록 -->
+    <string name="playlist_title">Playlists</string>
+    <string name="playlist_create">Create playlist</string>
+    <string name="playlist_empty_title">No playlists</string>
+    <string name="playlist_empty_body">Group videos from different folders into one list and watch them back to back. Create a list, then long-press a video to add it.</string>
+    <plurals name="playlist_item_count">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+    <string name="playlist_delete">Delete playlist</string>
+    <string name="playlist_add_videos">Add videos</string>
+    <string name="playlist_rename">Rename</string>
+    <string name="playlist_edit">Edit</string>
+    <string name="playlist_cancel">Cancel</string>
+    <string name="playlist_done">Done</string>
+    <string name="playlist_detail_empty">No videos yet.\nTap Add videos above, or long-press a video in your library to add it.</string>
+    <string name="playlist_not_found">Not found</string>
+    <string name="playlist_move_up">Move up</string>
+    <string name="playlist_move_down">Move down</string>
+    <string name="playlist_remove">Remove</string>
+    <string name="playlist_pick_empty">No videos to add. Check that there are videos on your device.</string>
+    <string name="playlist_added">Added</string>
+    <string name="playlist_add_to">Add to playlist</string>
+    <string name="playlist_new">New playlist</string>
+</resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- MainActivity -->
+    <string name="main_deleted">削除しました</string>
+    <string name="main_not_deleted">削除しませんでした</string>
+    <string name="main_delete_video_body">%1$s\n\nファイルが端末から削除されます。元に戻すことはできません。</string>
+    <string name="main_delete">削除</string>
+    <string name="main_delete_unsupported">この端末ではアプリから削除できません</string>
+    <string name="main_added_to_playlist">%1$s に追加しました</string>
+    <string name="main_new_playlist">新しいプレイリスト</string>
+    <string name="main_create">作成</string>
+    <string name="main_rename">名前を変更</string>
+    <string name="main_save">保存</string>
+    <string name="main_remove_from_continue_title">続きから再生から外す</string>
+    <string name="main_remove_from_continue_body">%1$s\n\nこの一覧から外れるだけです。再生位置は残るため、ライブラリから開くと続きから再生します。</string>
+    <string name="main_remove">外す</string>
+    <string name="main_delete_playlist_title">プレイリストを削除</string>
+    <string name="main_delete_playlist_body">%1$s\n\nリストのみ削除されます。追加した動画ファイルはそのまま残ります。</string>
+    <string name="main_video_added">%1$s を追加しました</string>
+    <string name="main_unlock">ロック解除</string>
+    <string name="main_set_pin">PIN を設定</string>
+    <string name="main_pin_set_subtitle">%1$d 桁の数字を決めてください\n忘れると元に戻せません</string>
+    <string name="main_pin_confirm_subtitle">確認のため、もう一度入力してください</string>
+    <string name="main_pin_unlock_subtitle">非表示のフォルダを見るには PIN を入力してください</string>
+    <string name="main_disable_vault_title">非公開フォルダをオフにする</string>
+    <string name="main_disable_vault_body">PIN と非表示フォルダのリストが削除されます。非表示にしていたフォルダはライブラリに再び表示されます。</string>
+    <string name="main_turn_off">オフにする</string>
+    <string name="main_child_lock_on">キッズロックがオンになっています</string>
+
+    <!-- 共通 UI -->
+    <string name="common_tab_library">ライブラリ</string>
+    <string name="common_tab_folders">フォルダ</string>
+    <string name="common_tab_playlists">プレイリスト</string>
+    <string name="common_tab_recent">最近</string>
+    <string name="common_tab_settings">設定</string>
+    <string name="common_back">戻る</string>
+    <string name="common_search_placeholder">動画の名前</string>
+    <string name="common_close_search">検索を閉じる</string>
+    <string name="common_search">検索</string>
+    <string name="common_cancel">キャンセル</string>
+    <string name="common_add_to_playlist">プレイリストに追加</string>
+    <string name="common_delete_from_device">端末から削除</string>
+    <string name="common_more">その他</string>
+    <string name="common_playlist">プレイリスト</string>
+    <string name="common_playing">再生中</string>
+    <string name="common_remaining_hm">残り %1$d 時間 %2$d 分</string>
+    <string name="common_remaining_m">残り %1$d 分</string>
+    <string name="common_ending_soon">まもなく終了</string>
+</resources>

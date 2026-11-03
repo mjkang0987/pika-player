@@ -1,5 +1,7 @@
 package com.pikaworks.pikaplayer.ui
 
+import com.pikaworks.pikaplayer.R
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -24,12 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 
-enum class Tab(val label: String, val icon: ImageVector) {
-    LIBRARY("보관함", AppIcons.NavLibrary),
-    FOLDER("폴더", AppIcons.NavFolder),
-    PLAYLIST("재생목록", AppIcons.NavPlaylist),
-    RECENT("최근", AppIcons.NavRecent),
-    SETTINGS("설정", AppIcons.NavSettings),
+enum class Tab(@StringRes val label: Int, val icon: ImageVector) {
+    LIBRARY(R.string.common_tab_library, AppIcons.NavLibrary),
+    FOLDER(R.string.common_tab_folders, AppIcons.NavFolder),
+    PLAYLIST(R.string.common_tab_playlists, AppIcons.NavPlaylist),
+    RECENT(R.string.common_tab_recent, AppIcons.NavRecent),
+    SETTINGS(R.string.common_tab_settings, AppIcons.NavSettings),
 }
 
 /**
@@ -65,13 +68,13 @@ fun BottomNav(current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifi
             ) {
                 Icon(
                     imageVector = tab.icon,
-                    contentDescription = tab.label,
+                    contentDescription = stringResource(tab.label),
                     tint = if (active) colors.key else colors.textFaint,
                     modifier = Modifier.size(21.dp),
                 )
                 Spacer(Modifier.height(5.dp))
                 Text(
-                    tab.label,
+                    stringResource(tab.label),
                     fontSize = 10.sp,
                     fontWeight = if (active) FontWeight.Normal else FontWeight.Light,
                     color = if (active) colors.key else colors.textFaint,

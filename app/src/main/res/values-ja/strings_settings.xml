@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SettingsScreen -->
+    <string name="settings_title">設定</string>
+    <string name="settings_section_library">ライブラリ</string>
+    <string name="settings_auto_pip">自動 PiP</string>
+    <string name="settings_auto_pip_desc">ホームに戻ると、動画がピクチャーインピクチャーで再生を続けます</string>
+    <string name="settings_vault">非公開フォルダ</string>
+    <string name="settings_on">オン</string>
+    <string name="settings_off">オフ</string>
+    <string name="settings_vault_desc">選んだフォルダを一覧に表示しません</string>
+    <string name="settings_child_lock">キッズロック</string>
+    <string name="settings_child_lock_desc">ロック解除時に PIN を求め、ロック中はアプリを離れられません</string>
+    <string name="settings_child_lock_needs_pin">PIN の設定が必要</string>
+    <string name="settings_child_lock_needs_pin_desc">非公開フォルダと同じ PIN を使います</string>
+    <string name="settings_section_playback">再生</string>
+    <string name="settings_playback_speed">デフォルトの再生速度</string>
+    <string name="settings_resume">続きから再生</string>
+    <string name="settings_auto_play_next">次の動画を自動再生</string>
+    <string name="settings_section_subtitles">字幕</string>
+    <string name="settings_default_encoding">デフォルトの文字コード</string>
+    <string name="settings_subtitle_size_title">字幕の文字サイズ</string>
+    <string name="settings_subtitle_size">文字サイズ</string>
+    <string name="settings_section_gestures">ジェスチャー</string>
+    <string name="settings_swipe_gestures">スワイプで明るさ・音量</string>
+    <string name="settings_double_tap_seek">ダブルタップで 10 秒移動</string>
+    <string name="settings_section_display">表示</string>
+    <string name="settings_language">言語</string>
+    <string name="settings_language_system">システム設定</string>
+    <string name="settings_theme">テーマ</string>
+    <string name="settings_theme_system">システム設定</string>
+    <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_theme_light">ライト</string>
+    <string name="settings_follow_auto_rotate">自動回転に合わせる</string>
+    <string name="settings_section_about">情報</string>
+    <string name="settings_version">バージョン</string>
+    <string name="settings_licenses">オープンソースライセンス</string>
+
+    <!-- LicenseScreen -->
+    <string name="settings_license_kotlin_stdlib">Kotlin 標準ライブラリ</string>
+
+    <!-- PermissionScreen -->
+    <string name="permission_title">端末内の動画を\n読み込みます</string>
+    <string name="permission_title_denied">フォルダを選んでください</string>
+    <string name="permission_body">ライブラリを作るには、動画ファイルへのアクセスが必要です。ファイルは読み取るだけで、どこにも送信しません。</string>
+    <string name="permission_body_denied">権限がなくても使えます。動画が入ったフォルダを選ぶと、その中だけを読み取ります。</string>
+    <string name="permission_promise_offline">ネットワーク不要、完全オフラインで動作</string>
+    <string name="permission_promise_no_modify">ファイルの変更・削除はしません</string>
+    <string name="permission_promise_no_account">アカウント登録・ログイン不要</string>
+    <string name="permission_allow">動画へのアクセスを許可</string>
+    <string name="permission_pick_folder">フォルダを選択</string>
+    <string name="permission_pick_folder_self">自分でフォルダを選ぶ</string>
+</resources>

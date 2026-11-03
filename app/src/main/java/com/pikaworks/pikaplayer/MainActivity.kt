@@ -10,12 +10,12 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +28,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -95,7 +98,7 @@ private data class Confirm(
     val onConfirm: () -> Unit,
 )
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val mediaPermission: String
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -175,11 +178,13 @@ class MainActivity : ComponentActivity() {
 
             PikaTheme(themeMode = settings?.theme ?: ThemeMode.SYSTEM) {
                 val scope = rememberCoroutineScope()
+                val resources = LocalResources.current
                 val granted by permissionGranted
                 val resumed by resumeTick
 
                 var denied by remember { mutableStateOf(false) }
-                var tab by remember { mutableStateOf(Tab.LIBRARY) }
+                // 언어를 바꾸면 화면이 새로 만들어진다. 고른 자리(설정)에 그대로 머물러야 한다.
+                var tab by rememberSaveable { mutableStateOf(Tab.LIBRARY) }
                 var showLicenses by remember { mutableStateOf(false) }
                 var showVault by remember { mutableStateOf(false) }
                 val pip by inPip
@@ -243,9 +248,9 @@ class MainActivity : ComponentActivity() {
                 ) { result ->
                     message = if (MediaDeleter.confirmed(result.resultCode)) {
                         // 목록은 MediaStore 감시가 알아서 따라온다.
-                        "삭제했습니다"
+                        resources.getString(R.string.main_deleted)
                     } else {
-                        "삭제하지 않았습니다"
+                        resources.getString(R.string.main_not_deleted)
                     }
                 }
 
@@ -340,19 +345,19 @@ class MainActivity : ComponentActivity() {
 
                 pendingDelete?.let { target ->
                     ConfirmDialog(
-                        title = "기기에서 삭제",
+                        title = stringResource(R.string.common_delete_from_device),
                         // 무엇이 사라지는지 이름으로 말한다. "이 영상" 이라고만
                         // 하면 잘못 고른 것을 알아챌 방법이 없다.
-                        body = "${target.displayName}\n\n파일이 기기에서 지워집니다. 되돌릴 수 없습니다.",
-                        confirmLabel = "삭제",
+                        body = stringResource(R.string.main_delete_video_body, target.displayName),
+                        confirmLabel = stringResource(R.string.main_delete),
                         onConfirm = {
                             scope.launch {
                                 when (val outcome = app.mediaDeleter.delete(listOf(target.uri))) {
                                     is MediaDeleter.Result.NeedsConfirm ->
                                         deleteLauncher.launch(IntentSenderRequest.Builder(outcome.request).build())
-                                    MediaDeleter.Result.Deleted -> message = "삭제했습니다"
+                                    MediaDeleter.Result.Deleted -> message = resources.getString(R.string.main_deleted)
                                     MediaDeleter.Result.Denied ->
-                                        message = "이 기기에서는 앱에서 지울 수 없습니다"
+                                        message = resources.getString(R.string.main_delete_unsupported)
                                 }
                             }
                         },
@@ -380,7 +385,10 @@ class MainActivity : ComponentActivity() {
                         containing = containingPlaylists,
                         onSelect = { id ->
                             playlistVm.add(id, target)
-                            message = "${playlists.firstOrNull { it.id == id }?.name.orEmpty()} 에 담았습니다"
+                            message = resources.getString(
+                                R.string.main_added_to_playlist,
+                                playlists.firstOrNull { it.id == id }?.name.orEmpty(),
+                            )
                         },
                         onCreate = { naming = Naming.Create(target) },
                         onDismiss = { pendingAdd = null },
@@ -390,16 +398,16 @@ class MainActivity : ComponentActivity() {
                 when (val request = naming) {
                     null -> Unit
                     is Naming.Create -> NameDialog(
-                        title = "새 재생목록",
+                        title = stringResource(R.string.main_new_playlist),
                         initial = "",
-                        confirmLabel = "만들기",
+                        confirmLabel = stringResource(R.string.main_create),
                         onConfirm = { playlistVm.create(it, request.andAdd) },
                         onDismiss = { naming = null },
                     )
                     is Naming.Rename -> NameDialog(
-                        title = "이름 바꾸기",
+                        title = stringResource(R.string.main_rename),
                         initial = request.current,
-                        confirmLabel = "저장",
+                        confirmLabel = stringResource(R.string.main_save),
                         onConfirm = { playlistVm.rename(request.id, it) },
                         onDismiss = { naming = null },
                     )
@@ -478,12 +486,13 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onContinueRemove = { item ->
                                     confirming = Confirm(
-                                        title = "이어보기에서 빼기",
+                                        title = resources.getString(R.string.main_remove_from_continue_title),
                                         // 무엇이 사라지고 무엇이 남는지 말한다.
-                                        body = "${item.video.displayName}\n\n" +
-                                            "이 줄에서만 빠집니다. 보던 위치는 그대로 남아, " +
-                                            "보관함에서 다시 열면 이어서 재생합니다.",
-                                        confirmLabel = "빼기",
+                                        body = resources.getString(
+                                            R.string.main_remove_from_continue_body,
+                                            item.video.displayName,
+                                        ),
+                                        confirmLabel = resources.getString(R.string.main_remove),
                                         onConfirm = {
                                             libraryVm.dismissFromContinue(item.video.uri.toString())
                                         },
@@ -529,10 +538,9 @@ class MainActivity : ComponentActivity() {
                                         onCreate = { naming = Naming.Create() },
                                         onDelete = { target ->
                                             confirming = Confirm(
-                                                title = "재생목록 삭제",
-                                                body = "${target.name}\n\n목록만 지워집니다. " +
-                                                    "담아 둔 영상 파일은 그대로 남습니다.",
-                                                confirmLabel = "삭제",
+                                                title = resources.getString(R.string.main_delete_playlist_title),
+                                                body = resources.getString(R.string.main_delete_playlist_body, target.name),
+                                                confirmLabel = resources.getString(R.string.main_delete),
                                                 onConfirm = { playlistVm.delete(target.id) },
                                             )
                                         },
@@ -570,7 +578,7 @@ class MainActivity : ComponentActivity() {
                                             alreadyIn = openPlaylistItems.map { it.uri }.toSet(),
                                             onPick = { video ->
                                                 playlistVm.add(open.id, video)
-                                                message = "${video.displayName} 을 담았습니다"
+                                                message = resources.getString(R.string.main_video_added, video.displayName)
                                             },
                                             onDismiss = { picking = false },
                                         )
@@ -599,13 +607,15 @@ class MainActivity : ComponentActivity() {
                                 BackHandler { vaultVm.cancel() }
                                 PinScreen(
                                     modifier = Modifier.weight(1f),
-                                    title = if (vaultState.mode == PinMode.UNLOCK) "잠금 해제" else "PIN 설정",
+                                    title = stringResource(
+                                        if (vaultState.mode == PinMode.UNLOCK) R.string.main_unlock else R.string.main_set_pin
+                                    ),
                                     subtitle = when (vaultState.mode) {
                                         // 잊으면 못 되돌린다는 말은 정하는 자리에서 한다.
                                         // 잠긴 뒤의 탈출구는 PinScreen 이 알아서 띄운다.
-                                        PinMode.SET -> "숫자 ${PIN_LENGTH}자리를 정하세요\n잊으면 되돌릴 수 없습니다"
-                                        PinMode.CONFIRM -> "확인을 위해 한 번 더 입력하세요"
-                                        else -> "감춘 폴더를 보려면 PIN 을 입력하세요"
+                                        PinMode.SET -> stringResource(R.string.main_pin_set_subtitle, PIN_LENGTH)
+                                        PinMode.CONFIRM -> stringResource(R.string.main_pin_confirm_subtitle)
+                                        else -> stringResource(R.string.main_pin_unlock_subtitle)
                                     },
                                     entered = vaultState.entered,
                                     lockedForMs = vaultState.lockedForMs,
@@ -629,10 +639,9 @@ class MainActivity : ComponentActivity() {
                                     onChangePin = { vaultVm.startSet() },
                                     onDisable = {
                                         confirming = Confirm(
-                                            title = "비공개 폴더 끄기",
-                                            body = "PIN 과 감춰 둔 폴더 목록이 지워집니다. " +
-                                                "감춰 뒀던 폴더는 다시 보관함에 나타납니다.",
-                                            confirmLabel = "끄기",
+                                            title = resources.getString(R.string.main_disable_vault_title),
+                                            body = resources.getString(R.string.main_disable_vault_body),
+                                            confirmLabel = resources.getString(R.string.main_turn_off),
                                             onConfirm = {
                                                 vaultVm.disable()
                                                 showVault = false
@@ -958,8 +967,8 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(Color.Black)
                         .windowInsetsPadding(WindowInsets.navigationBars),
-                    title = "잠금 해제",
-                    subtitle = "어린이 잠금이 켜져 있습니다",
+                    title = stringResource(R.string.main_unlock),
+                    subtitle = stringResource(R.string.main_child_lock_on),
                     entered = vaultState.entered,
                     lockedForMs = vaultState.lockedForMs,
                     error = vaultState.error,

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PlayerScreen -->
+    <string name="player_speed_title">播放倍速</string>
+    <string name="player_unlock">解锁</string>
+    <string name="player_up_next">播放列表</string>
+    <string name="player_back">返回</string>
+    <string name="player_previous_video">上一个</string>
+    <string name="player_next_video">下一个</string>
+    <string name="player_rewind_10s">后退 10 秒</string>
+    <string name="player_forward_10s">快进 10 秒</string>
+    <string name="player_pause">暂停</string>
+    <string name="player_play">播放</string>
+    <string name="player_ab_repeat">AB 循环</string>
+    <string name="player_ab_set_end">A %1$s · 设置终点</string>
+    <string name="player_subtitles">字幕</string>
+    <string name="player_repeat">循环</string>
+    <string name="player_fullscreen">全屏</string>
+    <string name="player_pip">画中画</string>
+    <string name="player_lock">锁定</string>
+    <string name="player_speed">倍速</string>
+    <string name="player_brightness">亮度</string>
+    <string name="player_volume">音量</string>
+
+    <!-- PlayerViewModel -->
+    <string name="player_subtitle_none">无字幕</string>
+    <string name="player_subtitle_off">字幕已关闭</string>
+    <string name="player_subtitle_format">字幕 · %1$s</string>
+    <string name="player_resize_fit">适应</string>
+    <string name="player_resize_fill">填充</string>
+    <string name="player_resize_stretch">拉伸</string>
+
+    <!-- SubtitleSheet -->
+    <string name="player_subtitle_tracks">字幕轨道</string>
+    <string name="player_subtitle_no_files">此视频所在位置没有字幕文件</string>
+    <string name="player_subtitle_external_file">外部文件 · %1$s</string>
+    <string name="player_subtitle_turn_off">关闭字幕</string>
+    <string name="player_subtitle_encoding">编码</string>
+    <string name="player_subtitle_encoding_hint">如果字幕出现乱码，请尝试其他编码。</string>
+    <string name="player_subtitle_text_size">字号</string>
+    <string name="player_subtitle_sync">同步</string>
+    <string name="player_subtitle_offset_seconds">%1$+.1f 秒</string>
+    <string name="player_selected">已选择</string>
+
+    <!-- PlaybackSheet -->
+    <string name="player_repeat_off">不循环</string>
+    <string name="player_repeat_one">单个循环</string>
+    <string name="player_repeat_one_desc">当前视频播完后从头重新播放。</string>
+    <string name="player_repeat_all">列表循环</string>
+    <string name="player_repeat_all_desc">播完最后一个视频后回到列表开头。</string>
+    <string name="player_repeat_shuffle">随机播放</string>
+    <string name="player_repeat_shuffle_desc">打乱顺序，循环播放列表。</string>
+</resources>
