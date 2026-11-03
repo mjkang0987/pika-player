@@ -16,10 +16,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.data.media.LibraryRow
 import com.pikaworks.pikaplayer.ui.SearchHeader
 import com.pikaworks.pikaplayer.ui.VideoListRow
@@ -49,7 +51,7 @@ fun RecentScreen(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                "아직 재생한 영상이 없습니다",
+                stringResource(R.string.recent_empty),
                 fontSize = 14.sp, fontWeight = FontWeight.Light,
                 color = colors.textMeta, textAlign = TextAlign.Center,
             )
@@ -67,12 +69,12 @@ fun RecentScreen(
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 SearchHeader(
-                    title = "최근",
+                    title = stringResource(R.string.recent_title),
                     query = query,
                     onQueryChange = { query = it },
                     searching = searching,
                     onSearchingChange = { searching = it },
-                    placeholder = "영상 · 폴더 이름",
+                    placeholder = stringResource(R.string.recent_search_placeholder),
                     modifier = Modifier.padding(bottom = 14.dp),
                 )
             }
