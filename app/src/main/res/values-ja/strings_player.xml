@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PlayerScreen -->
+    <string name="player_speed_title">再生速度</string>
+    <string name="player_unlock">ロック解除</string>
+    <string name="player_up_next">プレイリスト</string>
+    <string name="player_back">戻る</string>
+    <string name="player_previous_video">前の動画</string>
+    <string name="player_next_video">次の動画</string>
+    <string name="player_rewind_10s">10 秒戻る</string>
+    <string name="player_forward_10s">10 秒進む</string>
+    <string name="player_pause">一時停止</string>
+    <string name="player_play">再生</string>
+    <string name="player_ab_repeat">区間リピート</string>
+    <string name="player_ab_set_end">A %1$s · 終点を指定</string>
+    <string name="player_subtitles">字幕</string>
+    <string name="player_repeat">リピート</string>
+    <string name="player_fullscreen">全画面</string>
+    <string name="player_pip">PiP</string>
+    <string name="player_lock">ロック</string>
+    <string name="player_speed">速度</string>
+    <string name="player_brightness">明るさ</string>
+    <string name="player_volume">音量</string>
+
+    <!-- PlayerViewModel -->
+    <string name="player_subtitle_none">字幕なし</string>
+    <string name="player_subtitle_off">字幕オフ</string>
+    <string name="player_subtitle_format">字幕 · %1$s</string>
+    <string name="player_resize_fit">フィット</string>
+    <string name="player_resize_fill">ズーム</string>
+    <string name="player_resize_stretch">引き伸ばし</string>
+
+    <!-- SubtitleSheet -->
+    <string name="player_subtitle_tracks">トラック</string>
+    <string name="player_subtitle_no_files">この動画と同じ場所に字幕ファイルがありません</string>
+    <string name="player_subtitle_external_file">外部ファイル · %1$s</string>
+    <string name="player_subtitle_turn_off">字幕をオフにする</string>
+    <string name="player_subtitle_encoding">文字コード</string>
+    <string name="player_subtitle_encoding_hint">文字化けする場合は、まず Shift-JIS を試してください。</string>
+    <string name="player_subtitle_text_size">文字サイズ</string>
+    <string name="player_subtitle_sync">同期</string>
+    <string name="player_subtitle_offset_seconds">%1$+.1f 秒</string>
+    <string name="player_selected">選択中</string>
+
+    <!-- PlaybackSheet -->
+    <string name="player_repeat_off">リピートしない</string>
+    <string name="player_repeat_one">1 本リピート</string>
+    <string name="player_repeat_one_desc">今の動画が終わると、最初からもう一度再生します。</string>
+    <string name="player_repeat_all">全体リピート</string>
+    <string name="player_repeat_all_desc">最後の動画の次は、リストの先頭に戻ります。</string>
+    <string name="player_repeat_shuffle">シャッフル</string>
+    <string name="player_repeat_shuffle_desc">順番をシャッフルしてリストを繰り返し再生します。</string>
+</resources>

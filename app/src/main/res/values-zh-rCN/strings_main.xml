@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- MainActivity -->
+    <string name="main_deleted">已删除</string>
+    <string name="main_not_deleted">未删除</string>
+    <string name="main_delete_video_body">%1$s\n\n文件将从设备中删除，且无法恢复。</string>
+    <string name="main_delete">删除</string>
+    <string name="main_delete_unsupported">此设备不支持在应用内删除文件</string>
+    <string name="main_added_to_playlist">已添加到“%1$s”</string>
+    <string name="main_new_playlist">新建播放列表</string>
+    <string name="main_create">创建</string>
+    <string name="main_rename">重命名</string>
+    <string name="main_save">保存</string>
+    <string name="main_remove_from_continue_title">从继续观看中移除</string>
+    <string name="main_remove_from_continue_body">%1$s\n\n仅从此列表中移除。播放进度会保留，从视频库再次打开时仍会接着播放。</string>
+    <string name="main_remove">移除</string>
+    <string name="main_delete_playlist_title">删除播放列表</string>
+    <string name="main_delete_playlist_body">%1$s\n\n仅删除列表，其中的视频文件不受影响。</string>
+    <string name="main_video_added">已添加“%1$s”</string>
+    <string name="main_unlock">解锁</string>
+    <string name="main_set_pin">设置 PIN</string>
+    <string name="main_pin_set_subtitle">请设置 %1$d 位数字\n忘记后将无法找回</string>
+    <string name="main_pin_confirm_subtitle">请再输入一次以确认</string>
+    <string name="main_pin_unlock_subtitle">输入 PIN 以查看隐藏的文件夹</string>
+    <string name="main_disable_vault_title">关闭私密文件夹</string>
+    <string name="main_disable_vault_body">PIN 和隐藏文件夹列表将被清除，隐藏的文件夹会重新出现在视频库中。</string>
+    <string name="main_turn_off">关闭</string>
+    <string name="main_child_lock_on">儿童锁已开启</string>
+
+    <!-- 공용 ui -->
+    <string name="common_tab_library">视频库</string>
+    <string name="common_tab_folders">文件夹</string>
+    <string name="common_tab_playlists">播放列表</string>
+    <string name="common_tab_recent">最近</string>
+    <string name="common_tab_settings">设置</string>
+    <string name="common_back">返回</string>
+    <string name="common_search_placeholder">视频名称</string>
+    <string name="common_close_search">关闭搜索</string>
+    <string name="common_search">搜索</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_selected">已选择</string>
+    <string name="common_add_to_playlist">添加到播放列表</string>
+    <string name="common_delete_from_device">从设备中删除</string>
+    <string name="common_more">更多</string>
+    <string name="common_playlist">播放列表</string>
+    <string name="common_playing">正在播放</string>
+    <string name="common_remaining_hm">剩余 %1$d 小时 %2$d 分钟</string>
+    <string name="common_remaining_m">剩余 %1$d 分钟</string>
+    <string name="common_ending_soon">即将结束</string>
+</resources>

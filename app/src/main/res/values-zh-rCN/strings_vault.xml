@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 비공개 폴더 -->
+    <string name="vault_title">私密文件夹</string>
+    <string name="vault_description">在本应用的列表中隐藏选定的文件夹。文件不会被加密，在其他应用中或连接电脑时仍可看到。</string>
+    <string name="vault_section_folders">要隐藏的文件夹</string>
+    <string name="vault_no_folders">没有可隐藏的文件夹</string>
+    <plurals name="vault_folder_video_count">
+        <item quantity="other">%1$d 个视频</item>
+    </plurals>
+    <string name="vault_hidden">已隐藏</string>
+    <string name="vault_change_pin">更改 PIN</string>
+    <string name="vault_disable">关闭私密文件夹</string>
+    <string name="vault_disable_note">关闭后，隐藏文件夹列表也会一并清除。</string>
+
+    <!-- PIN 입력 -->
+    <string name="vault_error_pin_mismatch">两次输入不一致</string>
+    <string name="vault_error_wrong_pin">PIN 不正确</string>
+    <string name="vault_locked">错误次数过多 · 请 %1$s后重试</string>
+    <plurals name="vault_wait_seconds">
+        <item quantity="other">%1$d 秒</item>
+    </plurals>
+    <plurals name="vault_wait_minutes">
+        <item quantity="other">%1$d 分钟</item>
+    </plurals>
+    <string name="vault_forgot_pin_link">忘记 PIN？</string>
+    <string name="vault_forgot_pin_title">忘记 PIN 怎么办</string>
+    <string name="vault_recovery_no_reset">PIN 无法找回。PIN 只保存在本设备上，没有服务器也没有账号，连开发者也无法查看。</string>
+    <string name="vault_recovery_clear_data">如需解除，请前往设备设置 → 应用 → Pika Player → 存储，清除数据。</string>
+    <string name="vault_recovery_files_safe">视频文件不会被删除。私密文件夹只是在列表中隐藏，不会删除或加密文件。但继续观看记录和应用设置会一并清除。</string>
+
+    <!-- 재생목록 -->
+    <string name="playlist_title">播放列表</string>
+    <string name="playlist_create">新建播放列表</string>
+    <string name="playlist_empty_title">没有播放列表</string>
+    <string name="playlist_empty_body">可以把分散在不同文件夹中的视频归到一个列表里连续观看。创建列表后，长按视频即可添加。</string>
+    <plurals name="playlist_item_count">
+        <item quantity="other">%1$d 个</item>
+    </plurals>
+    <string name="playlist_delete">删除播放列表</string>
+    <string name="playlist_add_videos">添加视频</string>
+    <string name="playlist_rename">重命名</string>
+    <string name="playlist_edit">编辑</string>
+    <string name="playlist_cancel">取消</string>
+    <string name="playlist_done">完成</string>
+    <string name="playlist_detail_empty">列表中还没有视频。\n点击上方的“添加视频”，或在视频库中长按视频进行添加。</string>
+    <string name="playlist_not_found">找不到</string>
+    <string name="playlist_move_up">上移</string>
+    <string name="playlist_move_down">下移</string>
+    <string name="playlist_remove">移除</string>
+    <string name="playlist_pick_empty">没有可添加的视频，请确认设备中是否有视频。</string>
+    <string name="playlist_added">已添加</string>
+    <string name="playlist_add_to">添加到播放列表</string>
+    <string name="playlist_new">新建播放列表</string>
+</resources>
