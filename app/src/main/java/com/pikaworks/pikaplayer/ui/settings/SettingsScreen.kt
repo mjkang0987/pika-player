@@ -76,7 +76,10 @@ fun SettingsScreen(
     val themes = THEMES.map { (mode, labelRes) -> mode to stringResource(labelRes) }
     val languages = LANGUAGES.map { (tag, labelRes) -> tag to stringResource(labelRes) }
     // 언어는 DataStore 가 아니라 AppCompat 이 들고 있다. 빈 값이 "시스템 언어 따르기".
-    val language = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    // 기기 설정·adb 로 들어온 "en-US", "zh-Hans-CN" 같은 값도 목록의 태그로 맞춘다.
+    val language = AppCompatDelegate.getApplicationLocales()[0]?.let {
+        if (it.language == "zh" && (it.country == "CN" || it.script == "Hans")) "zh-CN" else it.language
+    }.orEmpty()
 
     when (openPicker) {
         Picker.SPEED -> OptionSheet(
