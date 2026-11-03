@@ -1,5 +1,6 @@
 package com.pikaworks.pikaplayer.ui
 
+import com.pikaworks.pikaplayer.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
@@ -14,6 +15,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +48,7 @@ fun SearchHeader(
     onQueryChange: (String) -> Unit,
     searching: Boolean,
     onSearchingChange: (Boolean) -> Unit,
-    placeholder: String = "영상 이름",
+    placeholder: String = stringResource(R.string.common_search_placeholder),
     modifier: Modifier = Modifier,
 ) {
     val colors = PikaTheme.colors
@@ -91,7 +93,7 @@ fun SearchHeader(
         }
         IconTap(
             icon = if (searching) AppIcons.Close else AppIcons.Search,
-            contentDescription = if (searching) "검색 닫기" else "검색",
+            contentDescription = stringResource(if (searching) R.string.common_close_search else R.string.common_search),
             tint = colors.textSecondary,
             iconSize = 22.dp,
             onClick = {

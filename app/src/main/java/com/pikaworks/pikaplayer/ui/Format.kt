@@ -1,5 +1,8 @@
 package com.pikaworks.pikaplayer.ui
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 import java.util.Locale
 
 /** 1:40:36 / 08:55 */
@@ -14,14 +17,15 @@ fun formatDuration(ms: Long): String {
 }
 
 /** 38분 남음 / 1시간 24분 남음 */
+@Composable
 fun formatRemaining(durationMs: Long, positionMs: Long): String {
     val remainSec = ((durationMs - positionMs).coerceAtLeast(0)) / 1000
     val h = remainSec / 3600
     val m = (remainSec % 3600) / 60
     return when {
-        h > 0 -> "${h}시간 ${m}분 남음"
-        m > 0 -> "${m}분 남음"
-        else -> "곧 끝남"
+        h > 0 -> stringResource(R.string.common_remaining_hm, h, m)
+        m > 0 -> stringResource(R.string.common_remaining_m, m)
+        else -> stringResource(R.string.common_ending_soon)
     }
 }
 

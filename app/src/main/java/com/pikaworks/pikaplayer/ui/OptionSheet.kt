@@ -1,5 +1,6 @@
 package com.pikaworks.pikaplayer.ui
 
+import com.pikaworks.pikaplayer.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -73,7 +75,7 @@ fun <T> OptionSheet(
                         color = if (isSelected) colors.textPrimary else colors.textSecondary,
                     )
                     if (isSelected) {
-                        Icon(AppIcons.Check, "선택됨", tint = colors.key, modifier = Modifier.size(18.dp))
+                        Icon(AppIcons.Check, stringResource(R.string.common_selected), tint = colors.key, modifier = Modifier.size(18.dp))
                     }
                 }
             }

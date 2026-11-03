@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SettingsScreen -->
+    <string name="settings_title">설정</string>
+    <string name="settings_section_library">라이브러리</string>
+    <string name="settings_auto_pip">자동 작은 창</string>
+    <string name="settings_auto_pip_desc">홈으로 나갈 때 영상이 작은 창으로 따라 나옵니다</string>
+    <string name="settings_vault">비공개 폴더</string>
+    <string name="settings_on">켜짐</string>
+    <string name="settings_off">꺼짐</string>
+    <string name="settings_vault_desc">고른 폴더를 목록에서 감춥니다</string>
+    <string name="settings_child_lock">어린이 잠금</string>
+    <string name="settings_child_lock_desc">잠금을 풀 때 PIN 을 묻고, 잠긴 동안 나갈 수 없습니다</string>
+    <string name="settings_child_lock_needs_pin">PIN 설정 필요</string>
+    <string name="settings_child_lock_needs_pin_desc">비공개 폴더와 같은 PIN 을 씁니다</string>
+    <string name="settings_section_playback">재생</string>
+    <string name="settings_playback_speed">기본 재생속도</string>
+    <string name="settings_resume">이어보기</string>
+    <string name="settings_auto_play_next">다음 영상 자동 재생</string>
+    <string name="settings_section_subtitles">자막</string>
+    <string name="settings_default_encoding">기본 인코딩</string>
+    <string name="settings_subtitle_size_title">자막 글자 크기</string>
+    <string name="settings_subtitle_size">글자 크기</string>
+    <string name="settings_section_gestures">제스처</string>
+    <string name="settings_swipe_gestures">밝기 · 볼륨 스와이프</string>
+    <string name="settings_double_tap_seek">더블탭 10초 이동</string>
+    <string name="settings_section_display">화면</string>
+    <string name="settings_theme">테마</string>
+    <string name="settings_theme_system">시스템 설정</string>
+    <string name="settings_theme_dark">다크</string>
+    <string name="settings_theme_light">라이트</string>
+    <string name="settings_follow_auto_rotate">자동회전 연동</string>
+    <string name="settings_section_about">정보</string>
+    <string name="settings_version">버전</string>
+    <string name="settings_licenses">오픈소스 라이선스</string>
+
+    <!-- LicenseScreen -->
+    <string name="settings_license_kotlin_stdlib">Kotlin 표준 라이브러리</string>
+
+    <!-- PermissionScreen -->
+    <string name="permission_title">기기에 있는 동영상을\n불러올게요</string>
+    <string name="permission_title_denied">폴더를 직접 골라주세요</string>
+    <string name="permission_body">보관함을 만들려면 동영상 파일에 접근할 수 있어야 합니다. 파일을 읽기만 하고, 어디에도 보내지 않습니다.</string>
+    <string name="permission_body_denied">권한 없이도 쓸 수 있습니다. 동영상이 들어있는 폴더를 고르면 그 안만 읽습니다.</string>
+    <string name="permission_promise_offline">네트워크 없이 완전히 오프라인으로 동작</string>
+    <string name="permission_promise_no_modify">파일을 수정하거나 삭제하지 않음</string>
+    <string name="permission_promise_no_account">계정 가입이나 로그인 없음</string>
+    <string name="permission_allow">동영상 접근 허용</string>
+    <string name="permission_pick_folder">폴더 선택</string>
+    <string name="permission_pick_folder_self">폴더를 직접 선택할게요</string>
+</resources>

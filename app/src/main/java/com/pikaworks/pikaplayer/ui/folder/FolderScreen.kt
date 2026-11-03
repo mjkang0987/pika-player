@@ -22,6 +22,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.data.media.VideoItem
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.OptionSheet
@@ -70,8 +73,8 @@ fun FolderScreen(
 
     if (sortSheetVisible) {
         OptionSheet(
-            title = "정렬",
-            options = SORT_OPTIONS,
+            title = stringResource(R.string.sort_title),
+            options = SORT_OPTIONS.map { (order, label) -> order to stringResource(label) },
             selected = state.sort,
             onSelect = onSortChange,
             onDismiss = { sortSheetVisible = false },
@@ -81,19 +84,20 @@ fun FolderScreen(
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
 
         SearchHeader(
-            title = "폴더",
+            title = stringResource(R.string.folder_title),
             query = query,
             onQueryChange = { query = it },
             searching = searching,
             onSearchingChange = { searching = it },
-            placeholder = "폴더 · 영상 이름",
+            placeholder = stringResource(R.string.folder_search_placeholder),
         )
 
-        Breadcrumb(rootLabel = state.rootLabel, crumbs = state.crumbs, onNavigateTo = onNavigateTo)
+        Breadcrumb(rootLabel = state.rootLabel ?: stringResource(state.rootFallback), crumbs = state.crumbs, onNavigateTo = onNavigateTo)
 
         // 검색은 지금 보고 있는 단계 안에서만 찾는다. 하위 폴더까지 뒤지면
         // 한 단계씩 이동한다는 이 화면의 규칙과 어긋난다.
-        val visibleFolders = state.folders.filter { matchesQuery(query, it.name) }
+        val otherLabel = stringResource(R.string.folder_other)
+        val visibleFolders = state.folders.filter { matchesQuery(query, it.name ?: otherLabel) }
         val visibleVideos = state.videos.filter { matchesQuery(query, it.displayName) }
 
         Row(
@@ -114,7 +118,7 @@ fun FolderScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Text(sortLabel(state.sort), fontSize = 12.sp, color = colors.textPrimary)
+                    Text(stringResource(sortLabel(state.sort)), fontSize = 12.sp, color = colors.textPrimary)
                     Text("▾", fontSize = 11.sp, color = colors.textFaint)
                 }
                 // 이 단계에 영상이 없으면 만들지 않는다. 폴더만 있는 자리에서
@@ -129,7 +133,7 @@ fun FolderScreen(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Icon(AppIcons.Play, null, tint = colors.key, modifier = Modifier.size(13.dp))
-                        Text("전체 재생", fontSize = 12.sp, color = colors.key)
+                        Text(stringResource(R.string.folder_play_all), fontSize = 12.sp, color = colors.key)
                     }
                 }
             }
@@ -165,11 +169,13 @@ fun FolderScreen(
 }
 
 /** SAF 는 폴더별 영상 수를 뒤에서 채운다. 다 차기 전에는 합계를 내지 않는다. */
+@Composable
 private fun summaryLabel(folders: List<FolderSummary>, videoCount: Int): String {
-    if (folders.isEmpty()) return "영상 $videoCount"
-    if (folders.any { it.videoCount == null }) return "폴더 ${folders.size}"
+    if (folders.isEmpty()) return pluralStringResource(R.plurals.folder_video_count, videoCount, videoCount)
+    val folderCount = pluralStringResource(R.plurals.folder_folder_count, folders.size, folders.size)
+    if (folders.any { it.videoCount == null }) return folderCount
     val total = folders.sumOf { it.videoCount ?: 0 } + videoCount
-    return "폴더 ${folders.size} · 영상 $total"
+    return "$folderCount · ${pluralStringResource(R.plurals.folder_video_count, total, total)}"
 }
 
 /**
@@ -205,7 +211,7 @@ private fun Breadcrumb(rootLabel: String, crumbs: List<Crumb>, onNavigateTo: (In
             val isLast = index == crumbs.lastIndex
             Icon(AppIcons.ChevronRight, null, tint = colors.textFaint, modifier = Modifier.size(12.dp))
             Text(
-                crumb.name,
+                crumb.name ?: stringResource(R.string.folder_other),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Light,
                 maxLines = 1,
@@ -234,13 +240,13 @@ private fun FolderRow(folder: FolderSummary, onClick: () -> Unit) {
     ) {
         Icon(AppIcons.NavFolder, null, tint = colors.textSecondary, modifier = Modifier.size(26.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(folder.name, fontSize = 14.sp, color = colors.textPrimary,
+            Text(folder.name ?: stringResource(R.string.folder_other), fontSize = 14.sp, color = colors.textPrimary,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(3.dp))
             Text(
                 if (folder.videoCount != null && folder.totalBytes != null) {
-                    "영상 ${folder.videoCount} · ${formatSize(folder.totalBytes)}"
-                } else "폴더",
+                    "${pluralStringResource(R.plurals.folder_video_count, folder.videoCount, folder.videoCount)} · ${formatSize(folder.totalBytes)}"
+                } else stringResource(R.string.folder_row_folder),
                 fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
             )
         }

@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import androidx.annotation.StringRes
+import com.pikaworks.pikaplayer.R
 
 /**
  * 끝났을 때 무엇을 반복할지. 셋 중 하나다.
@@ -52,7 +54,9 @@ data class PlayerUiState(
     val speed: Float = 1.0f,
     val cue: SubtitleCue? = null,
     /** 자막 상태 표기 — 기획서 7.2 규칙. 외부 파일은 언어를 알 수 없어 형식명을 쓴다. */
-    val subtitleLabel: String = "자막 없음",
+    @StringRes val subtitleLabel: Int = R.string.player_subtitle_none,
+    /** [subtitleLabel] 이 "자막 · 형식" 일 때 형식 자리에 들어가는 이름 */
+    val subtitleFormatLabel: String = "",
     val subtitleEnabled: Boolean = false,
     /** 영상 옆에서 찾은 자막 파일들 */
     val subtitleOptions: List<SubtitleOption> = emptyList(),
@@ -404,7 +408,8 @@ class PlayerViewModel(
             track = SubtitleTrack.EMPTY
             _uiState.update {
                 it.copy(
-                    subtitleLabel = "자막 없음",
+                    subtitleLabel = R.string.player_subtitle_none,
+                    subtitleFormatLabel = "",
                     subtitleEnabled = false,
                     subtitleOptions = emptyList(),
                     selectedSubtitle = -1,
@@ -433,7 +438,7 @@ class PlayerViewModel(
         if (index < 0 || index >= matches.size) {
             track = SubtitleTrack.EMPTY
             _uiState.update {
-                it.copy(selectedSubtitle = -1, subtitleEnabled = false, subtitleLabel = "자막 끔", cue = null)
+                it.copy(selectedSubtitle = -1, subtitleEnabled = false, subtitleLabel = R.string.player_subtitle_off, subtitleFormatLabel = "", cue = null)
             }
             return
         }
@@ -445,7 +450,8 @@ class PlayerViewModel(
                 selectedSubtitle = index,
                 subtitleEnabled = !track.isEmpty(),
                 // 외부 자막 파일에는 언어 정보가 없다. 형식명으로 표기한다.
-                subtitleLabel = "자막 · ${match.format.label}",
+                subtitleLabel = R.string.player_subtitle_format,
+                subtitleFormatLabel = match.format.label,
             )
         }
     }
@@ -580,7 +586,7 @@ class PlayerViewModel(
     }
 
     companion object {
-        val RESIZE_MODE_LABELS = listOf("맞춤", "채움", "늘이기")
+        val RESIZE_MODE_LABELS = listOf(R.string.player_resize_fit, R.string.player_resize_fill, R.string.player_resize_stretch)
 
         /** 하단 목록에 쓰는 개수. 화면에 다 보이지도 않는 분량을 들고 있을 이유가 없다. */
         private const val UP_NEXT_LIMIT = 20

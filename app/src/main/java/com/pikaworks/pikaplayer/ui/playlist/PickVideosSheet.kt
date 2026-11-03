@@ -39,6 +39,8 @@ import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import com.pikaworks.pikaplayer.ui.ThumbHeight
 import com.pikaworks.pikaplayer.ui.ThumbWidth
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /**
  * 재생목록 안에서 영상을 고르는 시트.
@@ -63,7 +65,7 @@ fun PickVideosSheet(
     ) {
         Column(modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp).padding(bottom = 20.dp)) {
             Text(
-                "영상 추가",
+                stringResource(R.string.playlist_add_videos),
                 fontSize = 17.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 10.dp),
             )
@@ -74,7 +76,7 @@ fun PickVideosSheet(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "담을 영상이 없습니다. 기기에 영상이 있는지 확인해 보세요.",
+                        stringResource(R.string.playlist_pick_empty),
                         fontSize = 12.sp, fontWeight = FontWeight.Light, color = colors.textFaint,
                         textAlign = TextAlign.Center, style = KoreanWrap,
                     )
@@ -118,7 +120,7 @@ fun PickVideosSheet(
                                 )
                             }
                             if (added) {
-                                Icon(AppIcons.Check, "담김", tint = colors.key, modifier = Modifier.size(16.dp))
+                                Icon(AppIcons.Check, stringResource(R.string.playlist_added), tint = colors.key, modifier = Modifier.size(16.dp))
                             }
                         }
                     }

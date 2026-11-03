@@ -80,6 +80,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.pikaworks.pikaplayer.ui.PlaybackSheet
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.ui.res.stringResource
 
 /**
  * 플레이어(S3, 세로).
@@ -204,7 +205,7 @@ fun PlayerScreen(
 
     if (speedSheetVisible) {
         OptionSheet(
-            title = "재생속도",
+            title = stringResource(R.string.player_speed_title),
             options = SPEED_OPTIONS,
             selected = state.speed,
             onSelect = onSelectSpeed,
@@ -272,7 +273,7 @@ fun PlayerScreen(
                         .clickable(onClick = onToggleLock),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(AppIcons.Lock, "잠금 해제", tint = Color.White, modifier = Modifier.size(20.dp))
+                    Icon(AppIcons.Lock, stringResource(R.string.player_unlock), tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             } else {
                 // 사라질 때 툭 꺼지면 영상이 깜빡인 것처럼 보인다. 스크림과 버튼이
@@ -392,7 +393,7 @@ private fun UpNextButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = PikaTheme.colors
     val shape = RoundedCornerShape(14.dp)
     Text(
-        "재생목록",
+        stringResource(R.string.player_up_next),
         fontSize = 12.sp,
         color = colors.onMediaText,
         // 폭을 채우지 않는다. 제목 줄 오른쪽 끝에 매달리는 것이라 글자만큼만
@@ -449,7 +450,7 @@ private fun PlayerTopBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        IconTap(AppIcons.Back, "뒤로", onClick = onBack, tint = Color.White, iconSize = 24.dp)
+        IconTap(AppIcons.Back, stringResource(R.string.player_back), onClick = onBack, tint = Color.White, iconSize = 24.dp)
         // 남는 폭을 제목이 갖는다. 그러지 않으면 긴 제목이 오른쪽 버튼 밑으로 들어간다.
         Text(
             title,
@@ -536,9 +537,9 @@ private fun TransportControls(
         // 갈 곳이 없어도 자리는 남긴다. 없앴더니 목록의 처음과 끝에서 줄이
         // 좁아지면서 재생 버튼이 좌우로 움직였다 — 눈 감고도 닿아야 하는
         // 버튼이라 자리가 흔들리는 쪽이 흐린 버튼보다 나쁘다.
-        TrackButton(AppIcons.PreviousTrack, "이전 영상", onPrevious)
+        TrackButton(AppIcons.PreviousTrack, stringResource(R.string.player_previous_video), onPrevious)
 
-        SkipButton(AppIcons.Replay10, "10초 뒤로") { onSkip(-10_000) }
+        SkipButton(AppIcons.Replay10, stringResource(R.string.player_rewind_10s)) { onSkip(-10_000) }
 
         Box(
             modifier = Modifier
@@ -551,15 +552,15 @@ private fun TransportControls(
         ) {
             Icon(
                 imageVector = if (isPlaying) AppIcons.Pause else AppIcons.Play,
-                contentDescription = if (isPlaying) "일시정지" else "재생",
+                contentDescription = stringResource(if (isPlaying) R.string.player_pause else R.string.player_play),
                 tint = Color.White,
                 modifier = Modifier.size(34.dp),
             )
         }
 
-        SkipButton(AppIcons.Forward10, "10초 앞으로") { onSkip(10_000) }
+        SkipButton(AppIcons.Forward10, stringResource(R.string.player_forward_10s)) { onSkip(10_000) }
 
-        TrackButton(AppIcons.NextTrack, "다음 영상", onNext)
+        TrackButton(AppIcons.NextTrack, stringResource(R.string.player_next_video), onNext)
     }
 }
 
@@ -701,8 +702,8 @@ private fun AbButton(state: PlayerUiState, onClick: () -> Unit) {
     val start = state.abStartMs
     val end = state.abEndMs
     val label = when {
-        start == null -> "구간 반복"
-        end == null -> "A " + formatDuration(start) + " · 끝 지정"
+        start == null -> stringResource(R.string.player_ab_repeat)
+        end == null -> stringResource(R.string.player_ab_set_end, formatDuration(start))
         else -> formatDuration(start) + " ~ " + formatDuration(end)
     }
     Text(
@@ -734,10 +735,10 @@ private fun SecondaryControls(
         // 폭을 고정하면 버튼이 하나 늘 때마다 좁은 화면에서 넘친다. 남는 폭을
         // 균등하게 나눠 갖게 해서 개수·화면 크기와 무관하게 들어맞게 한다.
         SpeedItem(state.speed, onOpenSpeedSheet, Modifier.weight(1f))
-        IconItem(AppIcons.Subtitle, "자막", state.subtitleEnabled, onOpenSubtitleSheet, Modifier.weight(1f))
+        IconItem(AppIcons.Subtitle, stringResource(R.string.player_subtitles), state.subtitleEnabled, onOpenSubtitleSheet, Modifier.weight(1f))
         IconItem(
             AppIcons.AspectRatio,
-            PlayerViewModel.RESIZE_MODE_LABELS[state.resizeMode.coerceIn(PlayerViewModel.RESIZE_MODE_LABELS.indices)],
+            stringResource(PlayerViewModel.RESIZE_MODE_LABELS[state.resizeMode.coerceIn(PlayerViewModel.RESIZE_MODE_LABELS.indices)]),
             active = state.resizeMode != 0,
             onClick = onCycleResize,
             modifier = Modifier.weight(1f),
@@ -746,7 +747,7 @@ private fun SecondaryControls(
         // 버튼이 꺼진 것으로 보이면, 순서가 왜 이런지 찾을 곳이 없어진다.
         IconItem(
             icon = AppIcons.Repeat,
-            label = "반복",
+            label = stringResource(R.string.player_repeat),
             active = state.repeatMode != RepeatMode.OFF,
             onClick = onOpenPlaybackSheet,
             modifier = Modifier.weight(1f),
@@ -756,15 +757,15 @@ private fun SecondaryControls(
         // 동사가 되면 결이 깨지고, 무엇을 나가는지도 애매해진다.
         IconItem(
             icon = if (isFullscreen) AppIcons.FullscreenExit else AppIcons.Fullscreen,
-            label = "전체화면",
+            label = stringResource(R.string.player_fullscreen),
             active = isFullscreen,
             onClick = onToggleFullscreen,
             modifier = Modifier.weight(1f),
         )
         // 지원하지 않는 기기에서는 자리를 만들지 않는다. 눌러도 아무 일이 없는
         // 버튼을 두면 고장으로 읽힌다.
-        onEnterPip?.let { IconItem(AppIcons.Pip, "작은 창", false, it, Modifier.weight(1f)) }
-        IconItem(AppIcons.Lock, "잠금", state.locked, onToggleLock, Modifier.weight(1f))
+        onEnterPip?.let { IconItem(AppIcons.Pip, stringResource(R.string.player_pip), false, it, Modifier.weight(1f)) }
+        IconItem(AppIcons.Lock, stringResource(R.string.player_lock), state.locked, onToggleLock, Modifier.weight(1f))
     }
 }
 
@@ -782,7 +783,7 @@ private fun SpeedItem(speed: Float, onClick: () -> Unit, modifier: Modifier = Mo
         // 칸이 커져서 아래 라벨이 다른 버튼보다 내려가 있었다.
         Text("${speed}×", fontSize = 13.sp, lineHeight = 19.sp, color = colors.onMediaKey)
         Spacer(Modifier.height(7.dp))
-        Text("속도", fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.onMediaTextFaint)
+        Text(stringResource(R.string.player_speed), fontSize = 10.sp, fontWeight = FontWeight.Light, color = colors.onMediaTextFaint)
     }
 }
 
@@ -806,7 +807,8 @@ private fun IconItem(
         Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
         Spacer(Modifier.height(7.dp))
         Text(label, fontSize = 10.sp, fontWeight = FontWeight.Light,
-            color = if (active) colors.onMediaKey else colors.onMediaTextFaint)
+            color = if (active) colors.onMediaKey else colors.onMediaTextFaint,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -828,8 +830,8 @@ private fun GestureIndicator(feedback: GestureFeedback, positionMs: Long, modifi
                     fontSize = 15.sp, color = Color.White,
                 )
             }
-            is GestureFeedback.Brightness -> Bar(AppIcons.Brightness, "밝기", feedback.value, colors.onMediaKey)
-            is GestureFeedback.Volume -> Bar(AppIcons.Volume, "볼륨", feedback.value, colors.onMediaKey)
+            is GestureFeedback.Brightness -> Bar(AppIcons.Brightness, stringResource(R.string.player_brightness), feedback.value, colors.onMediaKey)
+            is GestureFeedback.Volume -> Bar(AppIcons.Volume, stringResource(R.string.player_volume), feedback.value, colors.onMediaKey)
         }
     }
 }

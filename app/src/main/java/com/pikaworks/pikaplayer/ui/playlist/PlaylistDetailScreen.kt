@@ -46,6 +46,8 @@ import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
 import com.pikaworks.pikaplayer.ui.ThumbHeight
 import com.pikaworks.pikaplayer.ui.ThumbWidth
+import androidx.compose.ui.res.stringResource
+import com.pikaworks.pikaplayer.R
 
 /**
  * 재생목록 하나의 내용.
@@ -106,19 +108,19 @@ fun PlaylistDetailScreen(
         ) {
             val current = draft
             if (current == null) {
-                Action("영상 추가", colors.key, onAdd)
+                Action(stringResource(R.string.playlist_add_videos), colors.key, onAdd)
                 Spacer(Modifier.weight(1f))
                 // 목록 자체를 지우는 것은 밖(재생목록 화면)에서 한다. 안에 두면
                 // 이 목록을 손보러 들어온 자리에서 목록이 통째로 사라진다.
-                Action("이름 변경", colors.textSecondary, onRename)
-                Action("편집", colors.textSecondary) { startEdit() }
+                Action(stringResource(R.string.playlist_rename), colors.textSecondary, onRename)
+                Action(stringResource(R.string.playlist_edit), colors.textSecondary) { startEdit() }
             } else {
                 // 편집 중에는 나머지를 치운다. 특히 '영상 추가'가 남으면 임시로
                 // 들고 있던 순서에 없는 줄이 생기고, 완료를 누르는 순간 방금
                 // 담은 것이 도로 빠진다.
                 Spacer(Modifier.weight(1f))
-                Action("취소", colors.textMeta) { draft = null }
-                PrimaryAction("완료") {
+                Action(stringResource(R.string.playlist_cancel), colors.textMeta) { draft = null }
+                PrimaryAction(stringResource(R.string.playlist_done)) {
                     onApplyEdit(current.map { it.item.uri })
                     draft = null
                 }
@@ -131,7 +133,7 @@ fun PlaylistDetailScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    "아직 담긴 영상이 없습니다.\n위의 영상 추가를 누르거나, 보관함에서 영상을 길게 눌러 담으세요.",
+                    stringResource(R.string.playlist_detail_empty),
                     fontSize = 12.sp, fontWeight = FontWeight.Light, lineHeight = 18.sp,
                     color = colors.textFaint, textAlign = TextAlign.Center, style = KoreanWrap,
                 )
@@ -162,7 +164,7 @@ fun PlaylistDetailScreen(
                             )
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                row.video?.let { formatDuration(it.durationMs) } ?: "찾을 수 없음",
+                                row.video?.let { formatDuration(it.durationMs) } ?: stringResource(R.string.playlist_not_found),
                                 fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
                             )
                         }
@@ -170,7 +172,7 @@ fun PlaylistDetailScreen(
                             // 끝에 닿은 쪽은 글자를 낮춰 더 갈 곳이 없음을 알린다.
                             IconTap(
                                 icon = AppIcons.ChevronUp,
-                                contentDescription = "위로",
+                                contentDescription = stringResource(R.string.playlist_move_up),
                                 onClick = { swap(index, index - 1) },
                                 tint = if (index == 0) colors.divider else colors.textSecondary,
                                 iconSize = 16.dp,
@@ -178,7 +180,7 @@ fun PlaylistDetailScreen(
                             )
                             IconTap(
                                 icon = AppIcons.ChevronDown,
-                                contentDescription = "아래로",
+                                contentDescription = stringResource(R.string.playlist_move_down),
                                 onClick = { swap(index, index + 1) },
                                 tint = if (index == shown.lastIndex) colors.divider else colors.textSecondary,
                                 iconSize = 16.dp,
@@ -186,7 +188,7 @@ fun PlaylistDetailScreen(
                             )
                             IconTap(
                                 icon = AppIcons.Close,
-                                contentDescription = "빼기",
+                                contentDescription = stringResource(R.string.playlist_remove),
                                 // 아직 저장하지 않는다. 잘못 눌러도 취소로 되돌린다.
                                 onClick = { draft = shown.filterNot { it.item.uri == row.item.uri } },
                                 tint = colors.textFaint,

@@ -15,12 +15,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.ui.AppIcons
 import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
@@ -37,10 +40,12 @@ private data class LicensedLibrary(
     val name: String,
     val owner: String,
     val license: String,
+    /** 이름을 번역해야 할 때만. 없으면 [name] 을 그대로 보여 준다. [name] 은 목록 키로도 쓴다. */
+    @StringRes val nameRes: Int? = null,
 )
 
 private val LIBRARIES = listOf(
-    LicensedLibrary("Kotlin 표준 라이브러리", "JetBrains", "Apache License 2.0"),
+    LicensedLibrary("Kotlin Standard Library", "JetBrains", "Apache License 2.0", R.string.settings_license_kotlin_stdlib),
     LicensedLibrary("Kotlin Coroutines", "JetBrains", "Apache License 2.0"),
     LicensedLibrary("AndroidX Core KTX", "The Android Open Source Project", "Apache License 2.0"),
     LicensedLibrary("AndroidX Lifecycle", "The Android Open Source Project", "Apache License 2.0"),
@@ -66,13 +71,13 @@ fun LicenseScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
         // 제목은 목록과 함께 밀려 올라가지 않는다. 어느 화면에 있는지와
         // 뒤로 갈 길은 스크롤 위치와 상관없이 늘 보여야 한다.
-        ScreenHeader("오픈소스 라이선스", onBack)
+        ScreenHeader(stringResource(R.string.settings_licenses), onBack)
 
         LazyColumn(modifier = Modifier.weight(1f)) {
 
             items(LIBRARIES, key = { it.name }) { library ->
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 9.dp)) {
-                    Text(library.name, fontSize = 14.sp, color = colors.textPrimary)
+                    Text(library.nameRes?.let { stringResource(it) } ?: library.name, fontSize = 14.sp, color = colors.textPrimary)
                     Spacer(Modifier.height(3.dp))
                     Text(
                         "${library.owner} · ${library.license}",

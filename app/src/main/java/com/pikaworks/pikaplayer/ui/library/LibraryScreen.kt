@@ -34,12 +34,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.data.media.LibraryRow
 import com.pikaworks.pikaplayer.data.media.StorageUsage
 import com.pikaworks.pikaplayer.ui.OptionSheet
@@ -85,8 +87,8 @@ fun LibraryScreen(
 
     if (sortSheetVisible) {
         OptionSheet(
-            title = "정렬",
-            options = SORT_OPTIONS,
+            title = stringResource(R.string.sort_title),
+            options = SORT_OPTIONS.map { (order, label) -> order to stringResource(label) },
             selected = state.sort,
             onSelect = onSortChange,
             onDismiss = { sortSheetVisible = false },
@@ -102,17 +104,17 @@ fun LibraryScreen(
 
             item {
                 SearchHeader(
-                    title = "보관함",
+                    title = stringResource(R.string.library_title),
                     query = state.query,
                     onQueryChange = onQueryChange,
                     searching = searching,
                     onSearchingChange = { searching = it },
-                    placeholder = "영상 · 폴더 이름",
+                    placeholder = stringResource(R.string.library_search_placeholder),
                 )
             }
 
             if (state.continueWatching.isNotEmpty()) {
-                item { SectionTitle("이어보기", state.continueWatching.size) }
+                item { SectionTitle(stringResource(R.string.library_continue_watching), state.continueWatching.size) }
                 item { ContinueRow(state.continueWatching, onContinueClick, onContinueRemove) }
             }
 
@@ -163,7 +165,7 @@ private fun EmptyLibrary(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            if (filtered) "조건에 맞는 영상이 없습니다" else "영상이 없습니다",
+            stringResource(if (filtered) R.string.library_empty_filtered else R.string.library_empty),
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
             color = colors.textSecondary,
@@ -171,7 +173,7 @@ private fun EmptyLibrary(
         if (!filtered) {
             Spacer(Modifier.height(8.dp))
             Text(
-                "기기에 영상은 있는데 여기 안 보인다면 다시 검색해 보세요.",
+                stringResource(R.string.library_empty_hint),
                 fontSize = 12.sp,
                 color = colors.textFaint,
                 textAlign = TextAlign.Center,
@@ -179,7 +181,7 @@ private fun EmptyLibrary(
             )
             Spacer(Modifier.height(20.dp))
             Text(
-                if (scanning) "검색 중…" else "다시 검색",
+                stringResource(if (scanning) R.string.library_rescanning else R.string.library_rescan),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = if (scanning) colors.textFaint else colors.key,
@@ -262,7 +264,7 @@ private fun ContinueRow(
                     ) {
                         Icon(
                             AppIcons.Close,
-                            "이어보기에서 빼기",
+                            stringResource(R.string.library_continue_remove),
                             tint = colors.onMediaText,
                             modifier = Modifier.size(12.dp),
                         )
@@ -302,7 +304,7 @@ private fun LibraryTabs(state: LibraryUiState, onSelect: (String) -> Unit) {
             // fillMaxWidth 가 먹지 않으므로 글자 뒤에 직접 그린다.
             val underline = colors.key
             Text(
-                "${LibraryFilter.label(filter)} ${state.countOf(filter)}",
+                "${stringResource(LibraryFilter.label(filter))} ${state.countOf(filter)}",
                 fontSize = 13.sp,
                 fontWeight = if (selected) FontWeight.Medium else FontWeight.Light,
                 color = if (selected) colors.key else colors.textSecondary,
@@ -348,7 +350,7 @@ private fun SortBar(sort: String, storage: StorageUsage?, onSortClick: () -> Uni
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(sortLabel(sort), fontSize = 12.sp, color = colors.textPrimary)
+            Text(stringResource(sortLabel(sort)), fontSize = 12.sp, color = colors.textPrimary)
             Text("▾", fontSize = 11.sp, color = colors.textFaint)
         }
         Row(
@@ -375,8 +377,8 @@ private fun SortBar(sort: String, storage: StorageUsage?, onSortClick: () -> Uni
                 }
             }
             Text(
-                if (storage == null) "내부 저장소"
-                else "내부 저장소 ${formatSize(storage.freeBytes)} 남음",
+                if (storage == null) stringResource(R.string.library_storage_internal)
+                else stringResource(R.string.library_storage_free, formatSize(storage.freeBytes)),
                 fontSize = 11.sp, fontWeight = FontWeight.Light, color = colors.textMeta,
             )
         }

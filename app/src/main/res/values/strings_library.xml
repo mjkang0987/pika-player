@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 정렬·자막 선택지 (ui/SortOptions.kt) -->
+    <string name="sort_title">Sort</string>
+    <string name="sort_date_desc">Recently modified</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_size_desc">Size</string>
+    <string name="sort_duration_desc">Duration</string>
+    <string name="sort_encoding_auto">Auto-detect</string>
+    <string name="sort_subtitle_scale_small">Small</string>
+    <string name="sort_subtitle_scale_normal">Normal</string>
+    <string name="sort_subtitle_scale_large">Large</string>
+    <string name="sort_subtitle_scale_extra_large">Extra large</string>
+    <string name="sort_subtitle_scale_huge">Largest</string>
+
+    <!-- 보관함 -->
+    <string name="library_title">Library</string>
+    <string name="library_search_placeholder">Video or folder name</string>
+    <string name="library_continue_watching">Continue watching</string>
+    <string name="library_continue_remove">Remove from Continue watching</string>
+    <string name="library_filter_all">Videos</string>
+    <string name="library_filter_subtitle">Subtitles</string>
+    <string name="library_filter_watching">In progress</string>
+    <string name="library_filter_unwatched">Unwatched</string>
+    <string name="library_empty_filtered">No matching videos</string>
+    <string name="library_empty">No videos</string>
+    <string name="library_empty_hint">If your videos don\'t show up here, try scanning again.</string>
+    <string name="library_rescanning">Scanning…</string>
+    <string name="library_rescan">Scan again</string>
+    <string name="library_storage_internal">Internal storage</string>
+    <string name="library_storage_free">Internal storage · %1$s free</string>
+
+    <!-- 폴더 -->
+    <string name="folder_title">Folders</string>
+    <string name="folder_search_placeholder">Folder or video name</string>
+    <string name="folder_play_all">Play all</string>
+    <string name="folder_root_internal">Internal storage</string>
+    <string name="folder_root_selected">Selected folder</string>
+    <string name="folder_other">Other</string>
+    <string name="folder_row_folder">Folder</string>
+    <plurals name="folder_video_count">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
+    <plurals name="folder_folder_count">
+        <item quantity="one">%d folder</item>
+        <item quantity="other">%d folders</item>
+    </plurals>
+
+    <!-- 최근 -->
+    <string name="recent_title">Recent</string>
+    <string name="recent_search_placeholder">Video or folder name</string>
+    <string name="recent_empty">No videos played yet</string>
+</resources>
