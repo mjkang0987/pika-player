@@ -40,6 +40,8 @@ import com.pikaworks.pikaplayer.ui.SPEED_OPTIONS
 import com.pikaworks.pikaplayer.ui.ScreenHeader
 import com.pikaworks.pikaplayer.ui.theme.KoreanWrap
 import com.pikaworks.pikaplayer.ui.theme.PikaTheme
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 
 /**
  * 설정(S6). Phase 1 은 Free 항목만.
@@ -72,6 +74,9 @@ fun SettingsScreen(
     val colors = PikaTheme.colors
     var openPicker by remember { mutableStateOf<Picker?>(null) }
     val themes = THEMES.map { (mode, labelRes) -> mode to stringResource(labelRes) }
+    val languages = LANGUAGES.map { (tag, labelRes) -> tag to stringResource(labelRes) }
+    // 언어는 DataStore 가 아니라 AppCompat 이 들고 있다. 빈 값이 "시스템 언어 따르기".
+    val language = AppCompatDelegate.getApplicationLocales().toLanguageTags()
 
     when (openPicker) {
         Picker.SPEED -> OptionSheet(
@@ -100,6 +105,14 @@ fun SettingsScreen(
             options = themes,
             selected = settings.theme,
             onSelect = onThemeChange,
+            onDismiss = { openPicker = null },
+        )
+        Picker.LANGUAGE -> OptionSheet(
+            title = stringResource(R.string.settings_language),
+            options = languages,
+            selected = language,
+            // 화면을 새로 그리며 바뀐 언어로 다시 뜬다.
+            onSelect = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(it)) },
             onDismiss = { openPicker = null },
         )
         null -> Unit
@@ -165,6 +178,7 @@ fun SettingsScreen(
             item { SwitchRow(stringResource(R.string.settings_double_tap_seek), settings.doubleTapSeekEnabled, onDoubleTapSeekChange) }
 
             item { SectionHeader(stringResource(R.string.settings_section_display)) }
+            item { ValueRow(stringResource(R.string.settings_language), label(languages, language)) { openPicker = Picker.LANGUAGE } }
             item { ValueRow(stringResource(R.string.settings_theme), label(themes, settings.theme)) { openPicker = Picker.THEME } }
             item { SwitchRow(stringResource(R.string.settings_follow_auto_rotate), settings.followAutoRotate, onFollowAutoRotateChange) }
 
@@ -176,10 +190,16 @@ fun SettingsScreen(
     }
 }
 
-private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, THEME }
+private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, THEME, LANGUAGE }
 
 private val THEMES: List<Pair<String, Int>> = listOf(
     ThemeMode.SYSTEM to R.string.settings_theme_system, ThemeMode.DARK to R.string.settings_theme_dark, ThemeMode.LIGHT to R.string.settings_theme_light,
+)
+
+/** 언어 이름은 그 언어로 쓴다. 지금 화면 언어를 못 읽는 사람도 자기 언어는 찾을 수 있어야 한다. */
+private val LANGUAGES: List<Pair<String, Int>> = listOf(
+    "" to R.string.settings_language_system,
+    "ko" to R.string.language_ko, "en" to R.string.language_en, "ja" to R.string.language_ja, "zh-CN" to R.string.language_zh_cn,
 )
 
 private fun <T> label(options: List<Pair<T, String>>, value: T): String =

@@ -25,6 +25,8 @@
     <string name="settings_swipe_gestures">밝기 · 볼륨 스와이프</string>
     <string name="settings_double_tap_seek">더블탭 10초 이동</string>
     <string name="settings_section_display">화면</string>
+    <string name="settings_language">언어</string>
+    <string name="settings_language_system">시스템 설정</string>
     <string name="settings_theme">테마</string>
     <string name="settings_theme_system">시스템 설정</string>
     <string name="settings_theme_dark">다크</string>
