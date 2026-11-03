@@ -10,12 +10,12 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,7 +98,7 @@ private data class Confirm(
     val onConfirm: () -> Unit,
 )
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val mediaPermission: String
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -182,7 +183,8 @@ class MainActivity : ComponentActivity() {
                 val resumed by resumeTick
 
                 var denied by remember { mutableStateOf(false) }
-                var tab by remember { mutableStateOf(Tab.LIBRARY) }
+                // 언어를 바꾸면 화면이 새로 만들어진다. 고른 자리(설정)에 그대로 머물러야 한다.
+                var tab by rememberSaveable { mutableStateOf(Tab.LIBRARY) }
                 var showLicenses by remember { mutableStateOf(false) }
                 var showVault by remember { mutableStateOf(false) }
                 val pip by inPip

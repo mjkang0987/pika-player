@@ -25,6 +25,8 @@
     <string name="settings_swipe_gestures">スワイプで明るさ・音量</string>
     <string name="settings_double_tap_seek">ダブルタップで 10 秒移動</string>
     <string name="settings_section_display">表示</string>
+    <string name="settings_language">言語</string>
+    <string name="settings_language_system">システム設定</string>
     <string name="settings_theme">テーマ</string>
     <string name="settings_theme_system">システム設定</string>
     <string name="settings_theme_dark">ダーク</string>

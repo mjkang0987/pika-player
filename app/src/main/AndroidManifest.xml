@@ -28,5 +28,15 @@
             </intent-filter>
         </activity>
 
+        <!-- 안드로이드 12 이하에서 앱에서 고른 언어를 AppCompat 이 저장하고 되살린다. -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
     </application>
 </manifest>

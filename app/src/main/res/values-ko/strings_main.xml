@@ -38,7 +38,6 @@
     <string name="common_close_search">검색 닫기</string>
     <string name="common_search">검색</string>
     <string name="common_cancel">취소</string>
-    <string name="common_selected">선택됨</string>
     <string name="common_add_to_playlist">재생목록에 담기</string>
     <string name="common_delete_from_device">기기에서 삭제</string>
     <string name="common_more">더보기</string>
