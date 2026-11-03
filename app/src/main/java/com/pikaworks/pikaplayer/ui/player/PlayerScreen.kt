@@ -807,7 +807,8 @@ private fun IconItem(
         Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
         Spacer(Modifier.height(7.dp))
         Text(label, fontSize = 10.sp, fontWeight = FontWeight.Light,
-            color = if (active) colors.onMediaKey else colors.onMediaTextFaint)
+            color = if (active) colors.onMediaKey else colors.onMediaTextFaint,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

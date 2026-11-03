@@ -15,7 +15,7 @@
     <string name="player_ab_set_end">A %1$s · Set end</string>
     <string name="player_subtitles">Subtitles</string>
     <string name="player_repeat">Repeat</string>
-    <string name="player_fullscreen">Full screen</string>
+    <string name="player_fullscreen">Full</string>
     <string name="player_pip">PiP</string>
     <string name="player_lock">Lock</string>
     <string name="player_speed">Speed</string>
@@ -36,7 +36,7 @@
     <string name="player_subtitle_external_file">External file · %1$s</string>
     <string name="player_subtitle_turn_off">Turn off subtitles</string>
     <string name="player_subtitle_encoding">Encoding</string>
-    <string name="player_subtitle_encoding_hint">If text looks garbled, try CP949 first.</string>
+    <string name="player_subtitle_encoding_hint">If text looks garbled, try a different encoding.</string>
     <string name="player_subtitle_text_size">Text size</string>
     <string name="player_subtitle_sync">Sync</string>
     <string name="player_subtitle_offset_seconds">%1$+.1fs</string>
