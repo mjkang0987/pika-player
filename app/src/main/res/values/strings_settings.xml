@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SettingsScreen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_library">Library</string>
+    <string name="settings_auto_pip">Auto picture-in-picture</string>
+    <string name="settings_auto_pip_desc">Keep playing in a small window when you go home</string>
+    <string name="settings_vault">Private folders</string>
+    <string name="settings_on">On</string>
+    <string name="settings_off">Off</string>
+    <string name="settings_vault_desc">Hide chosen folders from the list</string>
+    <string name="settings_child_lock">Child lock</string>
+    <string name="settings_child_lock_desc">Asks for your PIN to unlock and blocks leaving while locked</string>
+    <string name="settings_child_lock_needs_pin">PIN required</string>
+    <string name="settings_child_lock_needs_pin_desc">Uses the same PIN as private folders</string>
+    <string name="settings_section_playback">Playback</string>
+    <string name="settings_playback_speed">Default playback speed</string>
+    <string name="settings_resume">Resume playback</string>
+    <string name="settings_auto_play_next">Auto-play next video</string>
+    <string name="settings_section_subtitles">Subtitles</string>
+    <string name="settings_default_encoding">Default encoding</string>
+    <string name="settings_subtitle_size_title">Subtitle text size</string>
+    <string name="settings_subtitle_size">Text size</string>
+    <string name="settings_section_gestures">Gestures</string>
+    <string name="settings_swipe_gestures">Brightness · volume swipe</string>
+    <string name="settings_double_tap_seek">Double-tap to skip 10s</string>
+    <string name="settings_section_display">Display</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_follow_auto_rotate">Follow auto-rotate</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_licenses">Open source licenses</string>
+
+    <!-- LicenseScreen -->
+    <string name="settings_license_kotlin_stdlib">Kotlin Standard Library</string>
+
+    <!-- PermissionScreen -->
+    <string name="permission_title">Let\'s load the videos\non your device</string>
+    <string name="permission_title_denied">Choose a folder yourself</string>
+    <string name="permission_body">To build your library, the app needs access to your video files. It only reads them and never sends them anywhere.</string>
+    <string name="permission_body_denied">You can use the app without permission. Pick a folder with videos and only that folder will be read.</string>
+    <string name="permission_promise_offline">Works fully offline, no network</string>
+    <string name="permission_promise_no_modify">Never edits or deletes your files</string>
+    <string name="permission_promise_no_account">No sign-up or login</string>
+    <string name="permission_allow">Allow video access</string>
+    <string name="permission_pick_folder">Choose folder</string>
+    <string name="permission_pick_folder_self">I\'ll choose a folder myself</string>
+</resources>

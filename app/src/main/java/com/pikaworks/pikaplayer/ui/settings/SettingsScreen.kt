@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.pikaworks.pikaplayer.R
 import com.pikaworks.pikaplayer.data.prefs.Settings
 import com.pikaworks.pikaplayer.data.prefs.ThemeMode
 import com.pikaworks.pikaplayer.ui.ENCODING_OPTIONS
@@ -69,32 +71,33 @@ fun SettingsScreen(
 ) {
     val colors = PikaTheme.colors
     var openPicker by remember { mutableStateOf<Picker?>(null) }
+    val themes = THEMES.map { (mode, labelRes) -> mode to stringResource(labelRes) }
 
     when (openPicker) {
         Picker.SPEED -> OptionSheet(
-            title = "기본 재생속도",
+            title = stringResource(R.string.settings_playback_speed),
             options = SPEED_OPTIONS,
             selected = settings.playbackSpeed,
             onSelect = onPlaybackSpeedChange,
             onDismiss = { openPicker = null },
         )
         Picker.ENCODING -> OptionSheet(
-            title = "기본 인코딩",
+            title = stringResource(R.string.settings_default_encoding),
             options = ENCODING_OPTIONS,
             selected = settings.subtitleEncoding,
             onSelect = onSubtitleEncodingChange,
             onDismiss = { openPicker = null },
         )
         Picker.SUBTITLE_SCALE -> OptionSheet(
-            title = "자막 글자 크기",
+            title = stringResource(R.string.settings_subtitle_size_title),
             options = SUBTITLE_SCALE_OPTIONS,
             selected = settings.subtitleScale,
             onSelect = onSubtitleScaleChange,
             onDismiss = { openPicker = null },
         )
         Picker.THEME -> OptionSheet(
-            title = "테마",
-            options = THEMES,
+            title = stringResource(R.string.settings_theme),
+            options = themes,
             selected = settings.theme,
             onSelect = onThemeChange,
             onDismiss = { openPicker = null },
@@ -105,25 +108,25 @@ fun SettingsScreen(
     Column(modifier = modifier.fillMaxSize().background(colors.background)) {
         // 제목은 목록과 함께 밀려 올라가지 않는다. 어느 화면에 있는지와
         // 뒤로 갈 길은 스크롤 위치와 상관없이 늘 보여야 한다.
-        ScreenHeader("설정", onBack)
+        ScreenHeader(stringResource(R.string.settings_title), onBack)
 
         LazyColumn(modifier = Modifier.weight(1f)) {
 
 
-            item { SectionHeader("라이브러리") }
+            item { SectionHeader(stringResource(R.string.settings_section_library)) }
             item {
                 SwitchRow(
-                    "자동 작은 창",
+                    stringResource(R.string.settings_auto_pip),
                     settings.autoPip,
                     onAutoPipChange,
-                    description = "홈으로 나갈 때 영상이 작은 창으로 따라 나옵니다",
+                    description = stringResource(R.string.settings_auto_pip_desc),
                 )
             }
             item {
                 ValueRow(
-                    "비공개 폴더",
-                    if (vaultEnabled) "켜짐" else "꺼짐",
-                    description = "고른 폴더를 목록에서 감춥니다",
+                    stringResource(R.string.settings_vault),
+                    if (vaultEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
+                    description = stringResource(R.string.settings_vault_desc),
                     onClick = onOpenVault,
                 )
             }
@@ -133,41 +136,41 @@ fun SettingsScreen(
             item {
                 if (vaultEnabled) {
                     SwitchRow(
-                    "어린이 잠금",
+                    stringResource(R.string.settings_child_lock),
                     settings.childLock,
                     onChildLockChange,
-                    description = "잠금을 풀 때 PIN 을 묻고, 잠긴 동안 나갈 수 없습니다",
+                    description = stringResource(R.string.settings_child_lock_desc),
                 )
                 } else {
                     ValueRow(
-                    "어린이 잠금",
-                    "PIN 설정 필요",
-                    description = "비공개 폴더와 같은 PIN 을 씁니다",
+                    stringResource(R.string.settings_child_lock),
+                    stringResource(R.string.settings_child_lock_needs_pin),
+                    description = stringResource(R.string.settings_child_lock_needs_pin_desc),
                     onClick = onOpenVault,
                 )
                 }
             }
 
-            item { SectionHeader("재생") }
-            item { ValueRow("기본 재생속도", label(SPEED_OPTIONS, settings.playbackSpeed)) { openPicker = Picker.SPEED } }
-            item { SwitchRow("이어보기", settings.resumePlayback, onResumeChange) }
-            item { SwitchRow("다음 영상 자동 재생", settings.autoPlayNext, onAutoPlayNextChange) }
+            item { SectionHeader(stringResource(R.string.settings_section_playback)) }
+            item { ValueRow(stringResource(R.string.settings_playback_speed), label(SPEED_OPTIONS, settings.playbackSpeed)) { openPicker = Picker.SPEED } }
+            item { SwitchRow(stringResource(R.string.settings_resume), settings.resumePlayback, onResumeChange) }
+            item { SwitchRow(stringResource(R.string.settings_auto_play_next), settings.autoPlayNext, onAutoPlayNextChange) }
 
-            item { SectionHeader("자막") }
-            item { ValueRow("기본 인코딩", label(ENCODING_OPTIONS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
-            item { ValueRow("글자 크기", label(SUBTITLE_SCALE_OPTIONS, settings.subtitleScale)) { openPicker = Picker.SUBTITLE_SCALE } }
+            item { SectionHeader(stringResource(R.string.settings_section_subtitles)) }
+            item { ValueRow(stringResource(R.string.settings_default_encoding), label(ENCODING_OPTIONS, settings.subtitleEncoding)) { openPicker = Picker.ENCODING } }
+            item { ValueRow(stringResource(R.string.settings_subtitle_size), label(SUBTITLE_SCALE_OPTIONS, settings.subtitleScale)) { openPicker = Picker.SUBTITLE_SCALE } }
 
-            item { SectionHeader("제스처") }
-            item { SwitchRow("밝기 · 볼륨 스와이프", settings.gesturesEnabled, onGesturesChange) }
-            item { SwitchRow("더블탭 10초 이동", settings.doubleTapSeekEnabled, onDoubleTapSeekChange) }
+            item { SectionHeader(stringResource(R.string.settings_section_gestures)) }
+            item { SwitchRow(stringResource(R.string.settings_swipe_gestures), settings.gesturesEnabled, onGesturesChange) }
+            item { SwitchRow(stringResource(R.string.settings_double_tap_seek), settings.doubleTapSeekEnabled, onDoubleTapSeekChange) }
 
-            item { SectionHeader("화면") }
-            item { ValueRow("테마", label(THEMES, settings.theme)) { openPicker = Picker.THEME } }
-            item { SwitchRow("자동회전 연동", settings.followAutoRotate, onFollowAutoRotateChange) }
+            item { SectionHeader(stringResource(R.string.settings_section_display)) }
+            item { ValueRow(stringResource(R.string.settings_theme), label(themes, settings.theme)) { openPicker = Picker.THEME } }
+            item { SwitchRow(stringResource(R.string.settings_follow_auto_rotate), settings.followAutoRotate, onFollowAutoRotateChange) }
 
-            item { SectionHeader("정보") }
-            item { InfoRow("버전", versionName) }
-            item { ValueRow("오픈소스 라이선스", "", onClick = onOpenLicenses) }
+            item { SectionHeader(stringResource(R.string.settings_section_about)) }
+            item { InfoRow(stringResource(R.string.settings_version), versionName) }
+            item { ValueRow(stringResource(R.string.settings_licenses), "", onClick = onOpenLicenses) }
             item { Spacer(Modifier.height(32.dp)) }
         }
     }
@@ -175,8 +178,8 @@ fun SettingsScreen(
 
 private enum class Picker { SPEED, ENCODING, SUBTITLE_SCALE, THEME }
 
-private val THEMES = listOf(
-    ThemeMode.SYSTEM to "시스템 설정", ThemeMode.DARK to "다크", ThemeMode.LIGHT to "라이트",
+private val THEMES: List<Pair<String, Int>> = listOf(
+    ThemeMode.SYSTEM to R.string.settings_theme_system, ThemeMode.DARK to R.string.settings_theme_dark, ThemeMode.LIGHT to R.string.settings_theme_light,
 )
 
 private fun <T> label(options: List<Pair<T, String>>, value: T): String =
