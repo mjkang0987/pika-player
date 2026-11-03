@@ -38,7 +38,6 @@
     <string name="common_close_search">Close search</string>
     <string name="common_search">Search</string>
     <string name="common_cancel">Cancel</string>
-    <string name="common_selected">Selected</string>
     <string name="common_add_to_playlist">Add to playlist</string>
     <string name="common_delete_from_device">Delete from device</string>
     <string name="common_more">More</string>
