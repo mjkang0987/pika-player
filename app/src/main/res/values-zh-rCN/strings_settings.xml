@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SettingsScreen -->
+    <string name="settings_title">设置</string>
+    <string name="settings_section_library">视频库</string>
+    <string name="settings_auto_pip">自动画中画</string>
+    <string name="settings_auto_pip_desc">返回桌面时，视频以画中画小窗继续播放</string>
+    <string name="settings_vault">私密文件夹</string>
+    <string name="settings_on">开启</string>
+    <string name="settings_off">关闭</string>
+    <string name="settings_vault_desc">在列表中隐藏选定的文件夹</string>
+    <string name="settings_child_lock">儿童锁</string>
+    <string name="settings_child_lock_desc">解锁时需输入 PIN，锁定期间无法退出</string>
+    <string name="settings_child_lock_needs_pin">需要设置 PIN</string>
+    <string name="settings_child_lock_needs_pin_desc">与私密文件夹使用同一个 PIN</string>
+    <string name="settings_section_playback">播放</string>
+    <string name="settings_playback_speed">默认倍速</string>
+    <string name="settings_resume">继续播放</string>
+    <string name="settings_auto_play_next">自动播放下一个</string>
+    <string name="settings_section_subtitles">字幕</string>
+    <string name="settings_default_encoding">默认编码</string>
+    <string name="settings_subtitle_size_title">字幕字号</string>
+    <string name="settings_subtitle_size">字号</string>
+    <string name="settings_section_gestures">手势</string>
+    <string name="settings_swipe_gestures">滑动调节亮度 · 音量</string>
+    <string name="settings_double_tap_seek">双击快进/快退 10 秒</string>
+    <string name="settings_section_display">显示</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_follow_auto_rotate">跟随自动旋转</string>
+    <string name="settings_section_about">关于</string>
+    <string name="settings_version">版本</string>
+    <string name="settings_licenses">开源许可</string>
+
+    <!-- LicenseScreen -->
+    <string name="settings_license_kotlin_stdlib">Kotlin 标准库</string>
+
+    <!-- PermissionScreen -->
+    <string name="permission_title">读取设备中的\n视频</string>
+    <string name="permission_title_denied">请手动选择文件夹</string>
+    <string name="permission_body">需要访问视频文件才能建立视频库。仅读取文件，不会发送到任何地方。</string>
+    <string name="permission_body_denied">不授予权限也能使用。选择存放视频的文件夹后，仅读取该文件夹内的内容。</string>
+    <string name="permission_promise_offline">完全离线运行，无需联网</string>
+    <string name="permission_promise_no_modify">不修改或删除文件</string>
+    <string name="permission_promise_no_account">无需注册或登录账号</string>
+    <string name="permission_allow">允许访问视频</string>
+    <string name="permission_pick_folder">选择文件夹</string>
+    <string name="permission_pick_folder_self">我要手动选择文件夹</string>
+</resources>
