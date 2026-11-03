@@ -84,6 +84,10 @@ android {
         compose = true
         buildConfig = true // BuildConfig.VERSION_NAME 을 설정 화면에서 쓴다
     }
+    // 기기 설정 → 앱 → 언어 목록에 뜨게 한다(안드로이드 13+). 기본 언어는 res/resources.properties.
+    androidResources {
+        generateLocaleConfig = true
+    }
 }
 
 // jvmTarget 은 위 compileOptions 를 AGP 내장 Kotlin 이 따라간다. 따로 지정하지 않는다.
@@ -106,6 +110,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
