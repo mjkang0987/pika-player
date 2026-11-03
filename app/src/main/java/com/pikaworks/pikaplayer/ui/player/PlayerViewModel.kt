@@ -409,6 +409,7 @@ class PlayerViewModel(
             _uiState.update {
                 it.copy(
                     subtitleLabel = R.string.player_subtitle_none,
+                    subtitleFormatLabel = "",
                     subtitleEnabled = false,
                     subtitleOptions = emptyList(),
                     selectedSubtitle = -1,
@@ -437,7 +438,7 @@ class PlayerViewModel(
         if (index < 0 || index >= matches.size) {
             track = SubtitleTrack.EMPTY
             _uiState.update {
-                it.copy(selectedSubtitle = -1, subtitleEnabled = false, subtitleLabel = R.string.player_subtitle_off, cue = null)
+                it.copy(selectedSubtitle = -1, subtitleEnabled = false, subtitleLabel = R.string.player_subtitle_off, subtitleFormatLabel = "", cue = null)
             }
             return
         }
