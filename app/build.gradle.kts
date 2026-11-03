@@ -42,8 +42,8 @@ android {
         applicationId = "com.pikaworks.pikaplayer"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
     // buildTypes 보다 먼저 와야 한다. 아래에서 이름으로 찾아 쓴다.
