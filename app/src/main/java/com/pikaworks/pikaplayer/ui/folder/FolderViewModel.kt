@@ -146,7 +146,7 @@ class FolderViewModel(
                 .groupBy { it.folderName }
                 .map { (name, items) ->
                     FolderSummary(
-                        id = name ?: "",
+                        id = name ?: "\u0000other", // 실제 폴더 이름과 겹치지 않아야 목록 키가 안 부딪힌다
                         name = name,
                         videoCount = items.size,
                         totalBytes = items.sumOf { it.sizeBytes },
