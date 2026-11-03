@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 並べ替え・字幕の選択肢 (ui/SortOptions.kt) -->
+    <string name="sort_title">並べ替え</string>
+    <string name="sort_date_desc">更新日が新しい順</string>
+    <string name="sort_name">名前順</string>
+    <string name="sort_size_desc">サイズ順</string>
+    <string name="sort_duration_desc">再生時間順</string>
+    <string name="sort_encoding_auto">自動検出</string>
+    <string name="sort_subtitle_scale_small">小</string>
+    <string name="sort_subtitle_scale_normal">標準</string>
+    <string name="sort_subtitle_scale_large">大</string>
+    <string name="sort_subtitle_scale_extra_large">特大</string>
+    <string name="sort_subtitle_scale_huge">最大</string>
+
+    <!-- ライブラリ -->
+    <string name="library_title">ライブラリ</string>
+    <string name="library_search_placeholder">動画・フォルダの名前</string>
+    <string name="library_continue_watching">続きから再生</string>
+    <string name="library_continue_remove">続きから再生から外す</string>
+    <string name="library_filter_all">動画</string>
+    <string name="library_filter_subtitle">字幕</string>
+    <string name="library_filter_watching">視聴中</string>
+    <string name="library_filter_unwatched">未視聴</string>
+    <string name="library_empty_filtered">条件に合う動画がありません</string>
+    <string name="library_empty">動画がありません</string>
+    <string name="library_empty_hint">端末に動画があるのにここに表示されない場合は、再スキャンしてください。</string>
+    <string name="library_rescanning">スキャン中…</string>
+    <string name="library_rescan">再スキャン</string>
+    <string name="library_storage_internal">内部ストレージ</string>
+    <string name="library_storage_free">内部ストレージ 空き %1$s</string>
+
+    <!-- フォルダ -->
+    <string name="folder_title">フォルダ</string>
+    <string name="folder_search_placeholder">フォルダ・動画の名前</string>
+    <string name="folder_play_all">すべて再生</string>
+    <string name="folder_root_internal">内部ストレージ</string>
+    <string name="folder_root_selected">選択したフォルダ</string>
+    <string name="folder_other">その他</string>
+    <string name="folder_row_folder">フォルダ</string>
+    <plurals name="folder_video_count">
+        <item quantity="other">動画 %d</item>
+    </plurals>
+    <plurals name="folder_folder_count">
+        <item quantity="other">フォルダ %d</item>
+    </plurals>
+
+    <!-- 最近 -->
+    <string name="recent_title">最近</string>
+    <string name="recent_search_placeholder">動画・フォルダの名前</string>
+    <string name="recent_empty">まだ再生した動画はありません</string>
+</resources>
