@@ -4,7 +4,7 @@
     <string name="settings_title">Settings</string>
     <string name="settings_section_library">Library</string>
     <string name="settings_auto_pip">Auto picture-in-picture</string>
-    <string name="settings_auto_pip_desc">Keep playing in a small window when you go home</string>
+    <string name="settings_auto_pip_desc">Keep playing in a small window when you leave the app</string>
     <string name="settings_vault">Private folders</string>
     <string name="settings_on">On</string>
     <string name="settings_off">Off</string>
@@ -22,7 +22,7 @@
     <string name="settings_subtitle_size_title">Subtitle text size</string>
     <string name="settings_subtitle_size">Text size</string>
     <string name="settings_section_gestures">Gestures</string>
-    <string name="settings_swipe_gestures">Brightness · volume swipe</string>
+    <string name="settings_swipe_gestures">Swipe for brightness and volume</string>
     <string name="settings_double_tap_seek">Double-tap to skip 10s</string>
     <string name="settings_section_display">Display</string>
     <string name="settings_theme">Theme</string>
