@@ -45,7 +45,7 @@
     <string name="permission_body">To build your library, the app needs access to your video files. It only reads them and never sends them anywhere.</string>
     <string name="permission_body_denied">You can use the app without permission. Pick a folder with videos and only that folder will be read.</string>
     <string name="permission_promise_offline">Works fully offline, no network</string>
-    <string name="permission_promise_no_modify">Never edits or deletes your files</string>
+    <string name="permission_promise_no_modify">Never deletes files without asking</string>
     <string name="permission_promise_no_account">No sign-up or login</string>
     <string name="permission_allow">Allow video access</string>
     <string name="permission_pick_folder">Choose folder</string>

@@ -45,7 +45,7 @@
     <string name="permission_body">ライブラリを作るには、動画ファイルへのアクセスが必要です。ファイルは読み取るだけで、どこにも送信しません。</string>
     <string name="permission_body_denied">権限がなくても使えます。動画が入ったフォルダを選ぶと、その中だけを読み取ります。</string>
     <string name="permission_promise_offline">ネットワーク不要、完全オフラインで動作</string>
-    <string name="permission_promise_no_modify">ファイルの変更・削除はしません</string>
+    <string name="permission_promise_no_modify">許可なくファイルを削除しません</string>
     <string name="permission_promise_no_account">アカウント登録・ログイン不要</string>
     <string name="permission_allow">動画へのアクセスを許可</string>
     <string name="permission_pick_folder">フォルダを選択</string>
