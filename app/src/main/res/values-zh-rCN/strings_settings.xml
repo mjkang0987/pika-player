@@ -45,7 +45,7 @@
     <string name="permission_body">需要访问视频文件才能建立视频库。仅读取文件，不会发送到任何地方。</string>
     <string name="permission_body_denied">不授予权限也能使用。选择存放视频的文件夹后，仅读取该文件夹内的内容。</string>
     <string name="permission_promise_offline">完全离线运行，无需联网</string>
-    <string name="permission_promise_no_modify">不修改或删除文件</string>
+    <string name="permission_promise_no_modify">未经您同意不会删除文件</string>
     <string name="permission_promise_no_account">无需注册或登录账号</string>
     <string name="permission_allow">允许访问视频</string>
     <string name="permission_pick_folder">选择文件夹</string>
